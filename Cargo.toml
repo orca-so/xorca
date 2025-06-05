@@ -1,0 +1,6 @@
+[workspace]
+resolver = "2"
+members = [
+  "solana-program",
+  "solana-program-test",
+]

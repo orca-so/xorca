@@ -1,0 +1,25 @@
+[package]
+name = "xorca-staking-program"
+description = "The xORCA staking program"
+version = "0.1.0"
+homepage = "https://orca.so"
+license-file = "../LICENSE"
+keywords = ["solana", "crypto", "defi", "dex", "launchpad"]
+authors = ["team@orca.so"]
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "lib"]
+
+[dependencies]
+base58 = { version = "^0.2" }
+borsh = { version = "^0.10" }
+pinocchio = "0.8.4"
+pinocchio-pubkey = { version = "^0.2" }
+pinocchio-log = { version = "^0.3" }
+pinocchio-token = { version = "^0.3.0" }
+shank = { version = "^0.4" }
+spl-token = { version = "8.0.0", features = ["no-entrypoint"] }
+strum = { version = "^0.27", features = ["derive"] }
+thiserror-no-std = { version = "^2.0" }

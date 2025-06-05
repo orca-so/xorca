@@ -1,0 +1,18 @@
+[package]
+name = "xorca_staking_test"
+description = "The xorca solana program test suite."
+version = "0.0.0"
+homepage = "https://orca.so"
+license-file = "../LICENSE"
+keywords = ["solana", "crypto", "defi", "dex", "staking"]
+authors = ["team@orca.so"]
+publish = false
+edition = "2021"
+
+[dependencies]
+solana-sdk = { version = "~2.2.0" }
+
+
+[dev-dependencies]
+litesvm = { version = "^0.6.1" }
+
