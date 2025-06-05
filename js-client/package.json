@@ -1,0 +1,41 @@
+{
+  "name": "@orca-so/xorca",
+  "description": "The xORCA JS client for interacting with the xORCA program.",
+  "version": "0.0.0",
+  "license": "CUSTOM",
+  "keywords": [
+    "solana",
+    "crypto",
+    "defi",
+    "dex",
+    "staking"
+  ],
+  "author": "team@orca.so",
+  "homepage": "https://orca.so",
+  "type": "module",
+  "main": "./dist/index.node.js",
+  "browser": "./dist/index.browser.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "peerDependencies": {
+    "@solana/kit": "^2.1.0"
+  },
+  "devDependencies": {
+    "@solana/kit": "^2.1.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.2",
+    "vite-plugin-dts": "^4.5.3",
+    "vite-plugin-static-copy": "^3.0.0",
+    "vite-plugin-top-level-await": "^1.5.0",
+    "vite-plugin-wasm": "^3.4.1",
+    "vitest": "^3.0.9",
+    "wasm-pack": "^0.13.1"
+  },
+  "scripts": {
+    "build": "vite build --mode browser && vite build --mode node",
+    "test": "vitest run"
+  }
+}

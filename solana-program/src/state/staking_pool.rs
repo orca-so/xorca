@@ -1,5 +1,5 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use pinocchio::{instruction::Seed, pubkey::Pubkey};
+use pinocchio::instruction::Seed;
 use shank::ShankAccount;
 
 use super::{AccountDiscriminator, ProgramAccount};
@@ -8,9 +8,6 @@ use super::{AccountDiscriminator, ProgramAccount};
 #[repr(C)]
 pub struct StakingPool {
     discriminator: AccountDiscriminator,
-
-    pub owner: Pubkey,
-    pub total_staked_amount: u64,
 }
 
 impl StakingPool {

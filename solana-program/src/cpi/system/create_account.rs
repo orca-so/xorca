@@ -1,9 +1,9 @@
 use pinocchio::{
-    ProgramResult,
     account_info::AccountInfo,
     instruction::{AccountMeta, Instruction, Signer},
     program::invoke_signed,
     pubkey::Pubkey,
+    ProgramResult,
 };
 
 const DISCRIMINATOR: [u8; 4] = [0, 0, 0, 0];

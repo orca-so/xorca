@@ -4,12 +4,12 @@ use crate::{
     state::ProgramAccount,
 };
 use pinocchio::{
-    ProgramResult,
     account_info::{AccountInfo, RefMut},
     instruction::Signer,
     program_error::ProgramError,
     pubkey::Pubkey,
-    sysvars::{Sysvar, rent::Rent},
+    sysvars::{rent::Rent, Sysvar},
+    ProgramResult,
 };
 
 pub fn get_account_info(

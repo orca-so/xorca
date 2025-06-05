@@ -1,0 +1,20 @@
+{
+  "type": "module",
+  "packageManager": "yarn@4.9.1",
+  "workspaces": [
+    "test-server",
+    "js-client"
+  ],
+  "devDependencies": {
+    "@codama/nodes-from-anchor": "^1.1.10",
+    "@codama/renderers-js": "^1.2.9",
+    "@codama/renderers-rust": "^1.0.18",
+    "codama": "^1.2.8",
+    "prettier": "^3.5.3",
+    "typescript": "^5.8.2"
+  },
+  "scripts": {
+    "generate": "node codama.js",
+    "fmt": "prettier './**/*.{js,jsx,ts,tsx,json}' --write"
+  }
+}
