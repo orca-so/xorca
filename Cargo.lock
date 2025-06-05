@@ -7391,8 +7391,14 @@ dependencies = [
 name = "xorca_staking_test"
 version = "0.0.0"
 dependencies = [
+<<<<<<< HEAD
+=======
+ "bincode",
+ "borsh 0.10.4",
+>>>>>>> 49ae9fd (Add staking_pool_initialize integration test)
  "litesvm",
  "solana-sdk",
+ "xorca",
 ]
 
 [[package]]

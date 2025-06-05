@@ -1,8 +1,8 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use pinocchio::account_info::{Ref, RefMut};
 use shank::ShankType;
-
 use strum::Display;
+
 pub mod staking_pool;
 
 #[derive(

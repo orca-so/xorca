@@ -13,10 +13,11 @@ use borsh::BorshSerialize;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StakingPool {
     pub discriminator: AccountDiscriminator,
+    pub value: u64,
 }
 
 impl StakingPool {
-    pub const LEN: usize = 1;
+    pub const LEN: usize = 9;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {

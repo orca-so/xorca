@@ -1,12 +1,31 @@
 #![cfg(test)]
 
-use litesvm::LiteSVM;
-
+use borsh::{BorshDeserialize, BorshSerialize};
+use litesvm::{types::TransactionResult, LiteSVM};
 use solana_sdk::{
-    native_token::LAMPORTS_PER_SOL, pubkey::Pubkey, signature::Keypair, signer::Signer,
+    account::Account,
+    compute_budget::ComputeBudgetInstruction,
+    instruction::Instruction,
+    message::{Message, VersionedMessage},
+    native_token::LAMPORTS_PER_SOL,
+    packet::PACKET_DATA_SIZE,
+    program_error::ProgramError,
+    pubkey::Pubkey,
+    signature::{Keypair, Signature},
+    signer::Signer,
+    system_instruction,
+    transaction::VersionedTransaction,
 };
+use std::error::Error;
 use std::str::FromStr;
+use xorca::DecodedAccount;
 
+mod assertions;
+mod tests;
+mod utils;
+
+pub const JITO_TIP_ADDRESS: Pubkey =
+    solana_sdk::pubkey!("96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5");
 struct TestContext {
     svm: LiteSVM,
     signer: Keypair,
@@ -30,5 +49,92 @@ impl TestContext {
             signer,
             verify_tx_size: true,
         }
+    }
+
+    pub fn signer(&self) -> Pubkey {
+        self.signer.pubkey()
+    }
+
+    pub fn write_account<T: BorshSerialize>(
+        &mut self,
+        address: Pubkey,
+        owner: Pubkey,
+        account: T,
+    ) -> Result<(), Box<dyn Error>> {
+        let data = borsh::to_vec(&account)?;
+        self.write_raw_account(address, owner, data)
+    }
+
+    pub fn write_raw_account(
+        &mut self,
+        address: Pubkey,
+        owner: Pubkey,
+        data: Vec<u8>,
+    ) -> Result<(), Box<dyn Error>> {
+        self.svm.set_account(
+            address,
+            Account {
+                data,
+                owner,
+                lamports: LAMPORTS_PER_SOL,
+                executable: false,
+                rent_epoch: 0,
+            },
+        )?;
+        Ok(())
+    }
+
+    pub fn send(&mut self, ix: Instruction) -> TransactionResult {
+        self.sends(&[ix])
+    }
+
+    pub fn sends(&mut self, ix: &[Instruction]) -> TransactionResult {
+        // Add compute budget instructions to make sure the instruction fits in a tx
+        let msg = Message::new(
+            &[
+                &[
+                    ComputeBudgetInstruction::set_compute_unit_limit(1_400_000),
+                    ComputeBudgetInstruction::set_compute_unit_price(0),
+                    system_instruction::transfer(&self.signer(), &JITO_TIP_ADDRESS, 0),
+                ],
+                ix,
+            ]
+            .concat(),
+            Some(&self.signer()),
+        );
+        let tx = VersionedTransaction {
+            signatures: vec![Signature::new_unique(); msg.header.num_required_signatures as usize],
+            message: VersionedMessage::Legacy(msg),
+        };
+        let bytes = bincode::serialize(&tx).map_err(|_| ProgramError::Custom(0))?;
+        if self.verify_tx_size {
+            assert!(
+                bytes.len() <= PACKET_DATA_SIZE,
+                "Transaction of {} bytes is too large",
+                bytes.len()
+            );
+        }
+        self.svm.send_transaction(tx)
+    }
+
+    pub fn get_account<T: BorshDeserialize>(
+        &self,
+        address: Pubkey,
+    ) -> Result<DecodedAccount<T>, Box<dyn Error>> {
+        let account = self.get_raw_account(address)?;
+        let data = T::deserialize(&mut account.data.as_slice())?;
+        Ok(DecodedAccount {
+            address,
+            account,
+            data,
+        })
+    }
+
+    pub fn get_raw_account(&self, address: Pubkey) -> Result<Account, Box<dyn Error>> {
+        let account = self
+            .svm
+            .get_account(&address)
+            .ok_or(format!("Account not found: {}", address))?;
+        Ok(account)
     }
 }

@@ -15,6 +15,8 @@ import {
   fetchEncodedAccounts,
   getStructDecoder,
   getStructEncoder,
+  getU64Decoder,
+  getU64Encoder,
   transformEncoder,
   type Account,
   type Address,
@@ -39,13 +41,19 @@ export function getStakingPoolDiscriminatorBytes() {
   return getAccountDiscriminatorEncoder().encode(STAKING_POOL_DISCRIMINATOR);
 }
 
-export type StakingPool = { discriminator: AccountDiscriminator };
+export type StakingPool = {
+  discriminator: AccountDiscriminator;
+  value: bigint;
+};
 
-export type StakingPoolArgs = {};
+export type StakingPoolArgs = { value: number | bigint };
 
 export function getStakingPoolEncoder(): Encoder<StakingPoolArgs> {
   return transformEncoder(
-    getStructEncoder([["discriminator", getAccountDiscriminatorEncoder()]]),
+    getStructEncoder([
+      ["discriminator", getAccountDiscriminatorEncoder()],
+      ["value", getU64Encoder()],
+    ]),
     (value) => ({ ...value, discriminator: STAKING_POOL_DISCRIMINATOR }),
   );
 }
@@ -53,6 +61,7 @@ export function getStakingPoolEncoder(): Encoder<StakingPoolArgs> {
 export function getStakingPoolDecoder(): Decoder<StakingPool> {
   return getStructDecoder([
     ["discriminator", getAccountDiscriminatorDecoder()],
+    ["value", getU64Decoder()],
   ]);
 }
 
@@ -114,5 +123,5 @@ export async function fetchAllMaybeStakingPool(
 }
 
 export function getStakingPoolSize(): number {
-  return 1;
+  return 9;
 }

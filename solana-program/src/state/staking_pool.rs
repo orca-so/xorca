@@ -8,6 +8,7 @@ use super::{AccountDiscriminator, ProgramAccount};
 #[repr(C)]
 pub struct StakingPool {
     discriminator: AccountDiscriminator,
+    value: u64,
 }
 
 impl StakingPool {
