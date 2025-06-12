@@ -1,0 +1,107 @@
+use crate::{
+    assertions::account::{
+        assert_account_address, assert_account_data_mut, assert_account_owner, assert_account_role,
+        assert_account_seeds, assert_external_account_data, make_owner_token_account_assertions,
+        AccountRole,
+    },
+    cpi::token::{TokenAccount, TokenMint},
+    error::ErrorCode,
+    state::{pending_withdraw::PendingWithdraw, staking_pool::StakingPool},
+    util::account::get_account_info,
+};
+use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
+use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
+use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
+use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
+
+pub fn process_instruction(
+    accounts: &[AccountInfo],
+    unstake_amount: &u64,
+    withdraw_index: &u8,
+) -> ProgramResult {
+    let unstaker_account = get_account_info(accounts, 0)?;
+    let staking_pool_account = get_account_info(accounts, 1)?;
+    let staking_pool_stake_token_account = get_account_info(accounts, 2)?;
+    let pending_withdraw_account = get_account_info(accounts, 3)?;
+    let unstaker_lst_account = get_account_info(accounts, 4)?;
+    let lst_mint_account = get_account_info(accounts, 5)?;
+    let stake_token_mint_account = get_account_info(accounts, 6)?;
+    let system_program_account = get_account_info(accounts, 7)?;
+    let token_program_account = get_account_info(accounts, 8)?;
+
+    // 1. Unstaker Account Assertions
+    assert_account_role(
+        unstaker_account,
+        &[AccountRole::Signer, AccountRole::Writable],
+    )?;
+
+    // 2. Staking Pool Account Assertions
+    assert_account_role(staking_pool_account, &[AccountRole::Writable])?;
+    assert_account_owner(staking_pool_account, &crate::ID)?;
+    let mut staking_pool_seeds = StakingPool::seeds(stake_token_mint_account.key());
+    let staking_pool_bump =
+        assert_account_seeds(staking_pool_account, &crate::ID, &staking_pool_seeds)?;
+    staking_pool_seeds.push(Seed::from(&staking_pool_bump));
+    let mut staking_pool_data = assert_account_data_mut::<StakingPool>(staking_pool_account)?;
+
+    // 3. Staking Pool Stake Token Account Assertions
+    let staking_pool_stake_token_seeds = vec![
+        Seed::from(staking_pool_account.key()),
+        Seed::from(SPL_TOKEN_PROGRAM_ID.as_ref()),
+        Seed::from(staking_pool_data.stake_token_mint.as_ref()),
+    ];
+    assert_account_seeds(
+        staking_pool_stake_token_account,
+        &ASSOCIATED_TOKEN_PROGRAM_ID,
+        &staking_pool_stake_token_seeds,
+    )?;
+    let staking_pool_stake_token_data =
+        assert_external_account_data::<TokenAccount>(staking_pool_stake_token_account)?;
+
+    // 4. Pending Withdraw Account Assertions
+    assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
+    assert_account_owner(pending_withdraw_account, &SYSTEM_PROGRAM_ID)?;
+    let withdraw_index_bytes = [*withdraw_index];
+    let mut pending_withdraw_seeds = PendingWithdraw::seeds(
+        staking_pool_account.key(),
+        unstaker_account.key(),
+        &withdraw_index_bytes,
+    );
+    let pending_withdraw_bump = assert_account_seeds(
+        pending_withdraw_account,
+        &crate::ID,
+        &pending_withdraw_seeds,
+    )?;
+    pending_withdraw_seeds.push(Seed::from(&pending_withdraw_bump));
+
+    // 5. Unstaker LST Account assertions
+    let unstaker_lst_data = make_owner_token_account_assertions(
+        unstaker_lst_account,
+        unstaker_account,
+        lst_mint_account,
+    )?;
+    if unstaker_lst_data.amount < *unstake_amount {
+        return Err(ErrorCode::InsufficientFunds.into());
+    }
+
+    // 6. LST Mint Account Assertions
+    assert_account_owner(lst_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
+    assert_account_address(lst_mint_account, &staking_pool_data.lst_token_mint)?;
+    let lst_mint_data = assert_external_account_data::<TokenMint>(lst_mint_account)?;
+
+    // 7. Stake Token Mint Account Assertions
+    assert_account_owner(stake_token_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
+    assert_account_address(
+        stake_token_mint_account,
+        &staking_pool_data.stake_token_mint,
+    )?;
+    assert_external_account_data::<TokenMint>(stake_token_mint_account)?;
+
+    // 8. System Program Account Assertions
+    assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;
+
+    // 9. Token Account Assertions
+    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    Ok(())
+}

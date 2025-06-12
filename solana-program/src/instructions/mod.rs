@@ -1,5 +1,6 @@
 pub mod deposit;
 pub mod staking_pool_initialize;
+pub mod unstake;
 pub mod withdraw;
 
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -17,6 +18,19 @@ pub enum Instruction {
     StakingPoolInitialize,
     Deposit {
         amount: u64,
+    },
+    #[account(0, writable, signer, name = "unstaker_account")]
+    #[account(1, writable, name = "staking_pool_account")]
+    #[account(2, writable, name = "staking_pool_stake_token_account")]
+    #[account(3, writable, name = "pending_withdraw_account")]
+    #[account(4, writable, name = "unstaker_lst_account")]
+    #[account(5, name = "lst_mint_account")]
+    #[account(6, name = "stake_token_mint_account")]
+    #[account(7, name = "system_program_account")]
+    #[account(8, name = "token_program_account")]
+    Unstake {
+        unstake_amount: u64,
+        withdraw_index: u8,
     },
     #[account(0, writable, signer, name = "unstaker_account")]
     #[account(1, writable, name = "staking_pool_account")]

@@ -38,6 +38,12 @@ pub fn process_instruction(
         Instruction::Deposit { amount } => {
             instructions::deposit::process_instruction(accounts, amount)?;
         }
+        Instruction::Unstake {
+            unstake_amount,
+            withdraw_index,
+        } => {
+            instructions::unstake::process_instruction(accounts, unstake_amount, withdraw_index)?;
+        }
         Instruction::Withdraw { withdraw_index } => {
             instructions::withdraw::process_instruction(accounts, withdraw_index)?;
         }
