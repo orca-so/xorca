@@ -9,6 +9,7 @@ use super::{AccountDiscriminator, ProgramAccount};
 pub struct XorcaState {
     discriminator: AccountDiscriminator,
     pub escrowed_orca_amount: u64,
+    pub xorca_mint: Pubkey,
 }
 
 impl XorcaState {
