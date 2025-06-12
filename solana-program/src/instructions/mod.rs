@@ -1,5 +1,6 @@
 pub mod deposit;
 pub mod staking_pool_initialize;
+pub mod unstake;
 pub mod withdraw;
 
 use borsh::{BorshDeserialize, BorshSerialize};
@@ -15,8 +16,16 @@ use strum::{Display, EnumDiscriminants, FromRepr};
 )]
 pub enum Instruction {
     StakingPoolInitialize,
-    Deposit { amount: u64 },
-    Withdraw { amount: u64 },
+    Deposit {
+        amount: u64,
+    },
+    Unstake {
+        unstake_amount: u64,
+        withdraw_index: u8,
+    },
+    Withdraw {
+        amount: u64,
+    },
 }
 
 impl InstructionDiscriminator {
