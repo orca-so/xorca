@@ -1,5 +1,5 @@
 use borsh::{BorshDeserialize, BorshSerialize};
-use pinocchio::instruction::Seed;
+use pinocchio::{instruction::Seed, pubkey::Pubkey};
 use shank::ShankAccount;
 
 use super::{AccountDiscriminator, ProgramAccount};
@@ -8,12 +8,12 @@ use super::{AccountDiscriminator, ProgramAccount};
 #[repr(C)]
 pub struct XorcaState {
     discriminator: AccountDiscriminator,
-    value: u64,
+    pub orca_mint: Pubkey,
 }
 
 impl XorcaState {
-    pub fn seeds() -> Vec<Seed<'static>> {
-        vec![Seed::from(b"xorca_state")]
+    pub fn seeds<'a>(orca_mint: &'a Pubkey) -> Vec<Seed<'a>> {
+        vec![Seed::from(b"xorca_state"), Seed::from(orca_mint)]
     }
 }
 

@@ -38,8 +38,8 @@ pub fn process_instruction(
         Instruction::Deposit { amount } => {
             instructions::deposit::process_instruction(accounts, amount)?;
         }
-        Instruction::Withdraw { amount } => {
-            instructions::withdraw::process_instruction(accounts, amount)?;
+        Instruction::Withdraw { withdraw_index } => {
+            instructions::withdraw::process_instruction(accounts, withdraw_index)?;
         }
     }
     Ok(())
