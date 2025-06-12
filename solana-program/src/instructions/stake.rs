@@ -3,14 +3,17 @@ use crate::{
         assert_account_address, assert_account_data_mut, assert_account_owner, assert_account_role,
         assert_account_seeds, make_owner_token_account_assertions, AccountRole,
     },
+    cpi::system::get_current_unix_timestamp,
     error::ErrorCode,
     state::{pending_claim::PendingClaim, staking_pool::StakingPool},
-    util::account::get_account_info,
+    util::account::{create_program_account, get_account_info},
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
-use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
+use pinocchio_token::{instructions::Transfer, ID as SPL_TOKEN_PROGRAM_ID};
+
+const WIND_UP_PERIOD_S: i64 = 48 * 60 * 60; // 2 days
 
 pub fn process_instruction(
     accounts: &[AccountInfo],
@@ -84,6 +87,34 @@ pub fn process_instruction(
 
     // 8. Token Account Assertions
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    // Transfer stake tokens from staker ATA to staking pool ATA
+    let transfer_instruction = Transfer {
+        from: staker_stake_token_account,
+        to: staking_pool_stake_token_account,
+        authority: staker_account,
+        amount: *stake_amount,
+    };
+    transfer_instruction.invoke()?;
+
+    // Increment the staking pool escrowed token amount by the stake amount
+    staking_pool_data.escrowed_stake_token_amount += stake_amount;
+
+    // Create pending claim account
+    let mut pending_claim_data = create_program_account::<PendingClaim>(
+        system_program_account,
+        staker_account,
+        pending_claim_account,
+        &[pending_claim_seeds.as_slice().into()],
+    )?;
+
+    // Populate pending claim account data
+    pending_claim_data.stake_amount = *stake_amount;
+    let current_unix_timestamp = get_current_unix_timestamp()?;
+    let claimable_timestamp = current_unix_timestamp
+        .checked_add(WIND_UP_PERIOD_S)
+        .ok_or(ErrorCode::ArithmeticError)?;
+    pending_claim_data.claimable_timestamp = claimable_timestamp;
 
     Ok(())
 }
