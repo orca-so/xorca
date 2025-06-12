@@ -1,4 +1,4 @@
-pub mod deposit;
+pub mod stake;
 pub mod staking_pool_initialize;
 pub mod withdraw;
 
@@ -15,7 +15,7 @@ use strum::{Display, EnumDiscriminants, FromRepr};
 )]
 pub enum Instruction {
     StakingPoolInitialize,
-    Deposit { amount: u64 },
+    Stake { stake_amount: u64, claim_index: u8 },
     Withdraw { amount: u64 },
 }
 
