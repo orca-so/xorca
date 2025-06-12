@@ -38,6 +38,9 @@ pub fn process_instruction(
         Instruction::Deposit { amount } => {
             instructions::deposit::process_instruction(accounts, amount)?;
         }
+        Instruction::Claim { claim_index } => {
+            instructions::claim::process_instruction(accounts, claim_index)?;
+        }
         Instruction::Withdraw { amount } => {
             instructions::withdraw::process_instruction(accounts, amount)?;
         }
