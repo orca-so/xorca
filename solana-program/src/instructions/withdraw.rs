@@ -1,122 +1,89 @@
 use crate::{
     assertions::account::{
-        assert_account_address, assert_account_owner, assert_account_role, AccountRole,
+        assert_account_address, assert_account_data_mut, assert_account_owner, assert_account_role,
+        assert_account_seeds, make_owner_token_account_assertions, AccountRole,
     },
-    error::ErrorCode,
+    state::{pending_withdraw::PendingWithdraw, staking_pool::StakingPool},
     util::account::get_account_info,
 };
-use pinocchio::{account_info::AccountInfo, pubkey::Pubkey, ProgramResult};
-use pinocchio_log::log;
-use pinocchio_pubkey::pubkey;
-use pinocchio_token::{
-    instructions::{Burn, Transfer},
-    state::Mint as SplTokenMint,
-    state::TokenAccount as SplTokenAccount,
-    ID as SPL_TOKEN_PROGRAM_ID,
-};
+use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
+use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
+use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
+use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
 
-const ORCA_MINT_ID: Pubkey = pubkey!("11111111111111111111111111111111");
-const XORCA_MINT_ID: Pubkey = pubkey!("11111111111111111111111111111111");
+pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> ProgramResult {
+    let unstaker_account = get_account_info(accounts, 0)?;
+    let staking_pool_account = get_account_info(accounts, 1)?;
+    let pending_withdraw_account = get_account_info(accounts, 2)?;
+    let unstaker_stake_token_account = get_account_info(accounts, 3)?;
+    let staking_pool_stake_token_account = get_account_info(accounts, 4)?;
+    let stake_token_mint_account = get_account_info(accounts, 5)?;
+    let system_program_account = get_account_info(accounts, 6)?;
+    let token_program_account = get_account_info(accounts, 7)?;
 
-const EXCHANGE_RATE: u64 = 1; // TODO: update to dynamic exchange rate
+    // 1. Unstaker Account Assertions
+    assert_account_role(
+        unstaker_account,
+        &[AccountRole::Signer, AccountRole::Writable],
+    )?;
 
-pub fn process_instruction(accounts: &[AccountInfo], amount: &u64) -> ProgramResult {
-    let withdrawer_account = get_account_info(accounts, 0)?;
-    let withdrawer_orca_account = get_account_info(accounts, 1)?;
-    let withdrawer_xorca_account = get_account_info(accounts, 2)?;
-    let staking_pool_account = get_account_info(accounts, 3)?;
-    let staking_pool_orca_account = get_account_info(accounts, 4)?;
-    let orca_mint_account = get_account_info(accounts, 5)?;
-    let xorca_mint_account = get_account_info(accounts, 6)?;
-    let xorca_mint_authority = get_account_info(accounts, 7)?;
+    // 2. Staking Pool Account Assertions
+    assert_account_role(staking_pool_account, &[AccountRole::Writable])?;
+    assert_account_owner(staking_pool_account, &crate::ID)?;
+    let mut staking_pool_seeds = StakingPool::seeds(stake_token_mint_account.key());
+    let staking_pool_bump =
+        assert_account_seeds(staking_pool_account, &crate::ID, &staking_pool_seeds)?;
+    staking_pool_seeds.push(Seed::from(&staking_pool_bump));
+    let mut staking_pool_data = assert_account_data_mut::<StakingPool>(staking_pool_account)?;
 
-    assert_account_role(withdrawer_account, &[AccountRole::Signer])?;
-    assert_account_role(withdrawer_orca_account, &[AccountRole::Writable])?;
-    assert_account_role(withdrawer_xorca_account, &[AccountRole::Writable])?;
-    assert_account_role(staking_pool_orca_account, &[AccountRole::Writable])?;
-
-    assert_account_owner(withdrawer_orca_account, &SPL_TOKEN_PROGRAM_ID)?;
-    assert_account_owner(withdrawer_xorca_account, &SPL_TOKEN_PROGRAM_ID)?;
-    assert_account_owner(staking_pool_orca_account, &SPL_TOKEN_PROGRAM_ID)?;
-    assert_account_address(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    assert_account_owner(xorca_mint_authority, &crate::ID)?;
-
-    let withdrawer_orca_account_data =
-        &*SplTokenAccount::from_account_info(&withdrawer_orca_account)?;
-    if withdrawer_orca_account_data.owner() != withdrawer_account.key() {
-        log!("Error: Withdrawer's orca token account owner does not match withdrawer.");
-        return Err(ErrorCode::InvalidAccountData.into());
-    }
-    if withdrawer_orca_account_data.mint() != &ORCA_MINT_ID {
-        log!("Error: Withdrawer orca token account has an unexpected mint.");
-        return Err(ErrorCode::InvalidAccountData.into());
-    }
-
-    let withdrawer_xorca_account_data =
-        &*SplTokenAccount::from_account_info(&withdrawer_xorca_account)?;
-    if withdrawer_xorca_account_data.owner() != withdrawer_account.key() {
-        log!("Error: Withdrawer's xOrca token account owner does not match withdrawer.");
-        return Err(ErrorCode::InvalidAccountData.into());
-    }
-    if withdrawer_xorca_account_data.mint() != &XORCA_MINT_ID {
-        log!("Error: Withdrawer xOrca token account has an unexpected mint.");
-        return Err(ErrorCode::InvalidAccountData.into());
-    }
-
-    let staking_pool_orca_account_data =
-        &*SplTokenAccount::from_account_info(&staking_pool_orca_account)?;
-    if staking_pool_orca_account_data.owner() != staking_pool_account.key() {
-        log!("Error: Staking pool's orca token account owner does not match staking pool.");
-        return Err(ErrorCode::InvalidAccountData.into());
-    }
-    if staking_pool_orca_account_data.mint() != &ORCA_MINT_ID {
-        log!("Error: Staking pool orca token account has an unexpected mint.");
-        return Err(ErrorCode::InvalidAccountData.into());
-    }
-
-    let xorca_mint_account_data = SplTokenMint::from_account_info(&xorca_mint_account)?;
-    if let Some(mint_authority_pubkey_from_data) = xorca_mint_account_data.mint_authority() {
-        if mint_authority_pubkey_from_data != xorca_mint_authority.key() {
-            log!("Error: xORCA mint authority from data does not match provided PDA.");
-            return Err(ErrorCode::InvalidAccountData.into());
-        }
-    } else {
-        log!("Error: xORCA mint has no mint authority, but it should have one.");
-        return Err(ErrorCode::InvalidAccountData.into());
-    }
-    if xorca_mint_account.key() != &XORCA_MINT_ID {
-        log!("Error: xORCA mint account has an unexpected ID.");
-        return Err(ErrorCode::InvalidAccountData.into());
-    }
-
-    let burn_instruction = Burn {
-        account: withdrawer_xorca_account,
-        mint: xorca_mint_account,
-        authority: withdrawer_account, // The owner of the xOrca account
-        amount: *amount,
-    };
-    burn_instruction.invoke()?;
-    log!(
-        "{} xOrca tokens burned from withdrawer account successfully!",
-        *amount
+    // 3. Pending Withdraw Account Assertions
+    assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
+    assert_account_owner(pending_withdraw_account, &crate::ID)?;
+    let withdraw_index_bytes = [*withdraw_index];
+    let pending_withdraw_seeds = PendingWithdraw::seeds(
+        staking_pool_account.key(),
+        unstaker_account.key(),
+        &withdraw_index_bytes,
     );
+    assert_account_seeds(
+        pending_withdraw_account,
+        &crate::ID,
+        &pending_withdraw_seeds,
+    )?;
+    let pending_withdraw_data =
+        assert_account_data_mut::<PendingWithdraw>(pending_withdraw_account)?;
 
-    let orca_to_send = amount
-        .checked_div(EXCHANGE_RATE)
-        .ok_or(ErrorCode::ArithmeticError)?;
+    // 4. Unstaker Stake Token Account Assertions
+    make_owner_token_account_assertions(
+        unstaker_stake_token_account,
+        unstaker_account,
+        stake_token_mint_account,
+    )?;
 
-    let transfer_instruction = Transfer {
-        from: staking_pool_orca_account,
-        to: withdrawer_orca_account,
-        authority: withdrawer_account,
-        amount: *amount,
-    };
-    transfer_instruction.invoke()?;
-    log!(
-        "{} Orca tokens withdrawn into staking pool successfully!",
-        orca_to_send
-    );
+    // 5. Staking Pool Stake Token Account Assertions
+    let staking_pool_stake_token_seeds = vec![
+        Seed::from(staking_pool_account.key()),
+        Seed::from(SPL_TOKEN_PROGRAM_ID.as_ref()),
+        Seed::from(stake_token_mint_account.key()),
+    ];
+    assert_account_seeds(
+        staking_pool_stake_token_account,
+        &ASSOCIATED_TOKEN_PROGRAM_ID,
+        &staking_pool_stake_token_seeds,
+    )?;
+
+    // 6. Stake Token Mint Account Assertions
+    assert_account_owner(stake_token_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
+    assert_account_address(
+        stake_token_mint_account,
+        &staking_pool_data.stake_token_mint,
+    )?;
+
+    // 7. System Program Account Assertions
+    assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;
+
+    // 8. Token Program Account Assertions
+    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     Ok(())
 }

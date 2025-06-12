@@ -15,8 +15,20 @@ use strum::{Display, EnumDiscriminants, FromRepr};
 )]
 pub enum Instruction {
     StakingPoolInitialize,
-    Deposit { amount: u64 },
-    Withdraw { amount: u64 },
+    Deposit {
+        amount: u64,
+    },
+    #[account(0, writable, signer, name = "unstaker_account")]
+    #[account(1, writable, name = "staking_pool_account")]
+    #[account(2, writable, name = "pending_withdraw_account")]
+    #[account(3, writable, name = "unstaker_stake_token_account")]
+    #[account(4, writable, name = "staking_pool_stake_token_account")]
+    #[account(5, name = "stake_token_mint_account")]
+    #[account(6, name = "system_program_account")]
+    #[account(7, name = "token_program_account")]
+    Withdraw {
+        withdraw_index: u8,
+    },
 }
 
 impl InstructionDiscriminator {
