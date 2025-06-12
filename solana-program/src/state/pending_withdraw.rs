@@ -8,7 +8,7 @@ use super::{AccountDiscriminator, ProgramAccount};
 #[repr(C)]
 pub struct PendingWithdraw {
     discriminator: AccountDiscriminator,
-    pub withdrawable_stake_amount: u64,
+    pub withdrawable_orca_amount: u64,
     pub withdrawable_timestamp: i64,
 }
 
