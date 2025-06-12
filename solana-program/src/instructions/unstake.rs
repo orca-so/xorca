@@ -4,15 +4,23 @@ use crate::{
         assert_account_seeds, assert_external_account_data, make_owner_token_account_assertions,
         AccountRole,
     },
-    cpi::token::{TokenAccount, TokenMint},
+    cpi::{
+        system::get_current_unix_timestamp,
+        token::{TokenAccount, TokenMint},
+    },
     error::ErrorCode,
     state::{pending_withdraw::PendingWithdraw, staking_pool::StakingPool},
-    util::account::get_account_info,
+    util::{
+        account::{create_program_account, get_account_info},
+        math::convert_lst_to_stake_token,
+    },
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
-use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
+use pinocchio_token::{instructions::Burn, ID as SPL_TOKEN_PROGRAM_ID};
+
+const COOL_DOWN_PERIOD_S: i64 = 15 * 24 * 60 * 60; // 15 days
 
 pub fn process_instruction(
     accounts: &[AccountInfo],
@@ -102,6 +110,43 @@ pub fn process_instruction(
 
     // 9. Token Account Assertions
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    // Calculate withdrawable stake amount
+    let non_escrowed_stake_token_amount =
+        staking_pool_stake_token_data.amount - staking_pool_data.escrowed_stake_token_amount;
+    let withdrawable_stake_amount = convert_lst_to_stake_token(
+        *unstake_amount,
+        non_escrowed_stake_token_amount,
+        lst_mint_data.supply,
+    )?;
+
+    // Decrement the staking pool escrowed token amount by the withdrawable stake amount
+    staking_pool_data.escrowed_stake_token_amount -= withdrawable_stake_amount;
+
+    // Burn unstaker's LST tokens
+    let burn_instruction = Burn {
+        mint: lst_mint_account,
+        account: unstaker_lst_account,
+        authority: staking_pool_account,
+        amount: *unstake_amount,
+    };
+    burn_instruction.invoke_signed(&[staking_pool_seeds.as_slice().into()])?;
+
+    // Create new pending withdraw account
+    let mut pending_withdraw_data = create_program_account::<PendingWithdraw>(
+        system_program_account,
+        unstaker_account,
+        pending_withdraw_account,
+        &[pending_withdraw_seeds.as_slice().into()],
+    )?;
+
+    // Populate pending withdraw account data
+    pending_withdraw_data.withdrawable_stake_amount = withdrawable_stake_amount;
+    let current_unix_timestamp = get_current_unix_timestamp()?;
+    let withdrawable_timestamp = current_unix_timestamp
+        .checked_add(COOL_DOWN_PERIOD_S)
+        .ok_or(ErrorCode::ArithmeticError)?;
+    pending_withdraw_data.withdrawable_timestamp = withdrawable_timestamp;
 
     Ok(())
 }
