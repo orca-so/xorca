@@ -4,15 +4,23 @@ use crate::{
         assert_account_seeds, assert_external_account_data, make_owner_token_account_assertions,
         AccountRole,
     },
-    cpi::token::{TokenAccount, TokenMint},
+    cpi::{
+        system::get_current_unix_timestamp,
+        token::{TokenAccount, TokenMint},
+    },
     error::ErrorCode,
     state::{pending_withdraw::PendingWithdraw, xorca_state::XorcaState},
-    util::account::get_account_info,
+    util::{
+        account::{create_program_account, get_account_info},
+        math::convert_lst_to_stake_token,
+    },
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
-use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
+use pinocchio_token::{instructions::Burn, ID as SPL_TOKEN_PROGRAM_ID};
+
+const COOL_DOWN_PERIOD_S: i64 = 15 * 24 * 60 * 60; // 15 days
 
 pub fn process_instruction(
     accounts: &[AccountInfo],
@@ -98,6 +106,43 @@ pub fn process_instruction(
 
     // 9. Token Account Assertions
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    // Calculate withdrawable ORCA amount
+    let non_escrowed_orca_amount =
+        xorca_state_orca_ata_data.amount - xorca_state.escrowed_orca_amount;
+    let withdrawable_orca_amount = convert_lst_to_stake_token(
+        *unstake_amount,
+        non_escrowed_orca_amount,
+        xorca_mint_data.supply,
+    )?;
+
+    // Decrement the xOrca State escrowed ORCA amount by the withdrawable ORCA amount
+    xorca_state.escrowed_orca_amount -= withdrawable_orca_amount;
+
+    // Burn unstaker's LST tokens
+    let burn_instruction = Burn {
+        mint: xorca_mint_account,
+        account: unstaker_xorca_ata,
+        authority: xorca_state_account,
+        amount: *unstake_amount,
+    };
+    burn_instruction.invoke_signed(&[xorca_state_seeds.as_slice().into()])?;
+
+    // Create new pending withdraw account
+    let mut pending_withdraw_data = create_program_account::<PendingWithdraw>(
+        system_program_account,
+        unstaker_account,
+        pending_withdraw_account,
+        &[pending_withdraw_seeds.as_slice().into()],
+    )?;
+
+    // Populate pending withdraw account data
+    pending_withdraw_data.withdrawable_orca_amount = withdrawable_orca_amount;
+    let current_unix_timestamp = get_current_unix_timestamp()?;
+    let withdrawable_timestamp = current_unix_timestamp
+        .checked_add(COOL_DOWN_PERIOD_S)
+        .ok_or(ErrorCode::ArithmeticError)?;
+    pending_withdraw_data.withdrawable_timestamp = withdrawable_timestamp;
 
     Ok(())
 }
