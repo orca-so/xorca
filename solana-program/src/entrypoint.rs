@@ -32,8 +32,15 @@ pub fn process_instruction(
         .map_err(|_| ErrorCode::UnknownInstructionDiscriminator)?;
     log!("Instruction: {}", instruction.to_string().as_str());
     match &instruction {
-        Instruction::StakingPoolInitialize => {
-            instructions::staking_pool_initialize::process_instruction(accounts)?;
+        Instruction::Initialize {
+            wind_up_period_s,
+            cool_down_period_s,
+        } => {
+            instructions::initialize::process_instruction(
+                accounts,
+                wind_up_period_s,
+                cool_down_period_s,
+            )?;
         }
         Instruction::Stake {
             stake_amount,

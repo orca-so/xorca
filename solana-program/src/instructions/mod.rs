@@ -1,13 +1,17 @@
+pub mod initialize;
 pub mod set;
 pub mod stake;
-pub mod staking_pool_initialize;
 pub mod unstake;
 pub mod withdraw;
+use pinocchio::pubkey::Pubkey;
+use pinocchio_pubkey::pubkey;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use pinocchio::pubkey::Pubkey;
 use shank::ShankInstruction;
 use strum::{Display, EnumDiscriminants, FromRepr};
+
+pub const INITIAL_UPGRADE_AUTHORITY_ID: Pubkey = pubkey!("11111111111111111111111111111111"); // TODO: replace with actual initial upgrade authority
 
 #[derive(
     Debug, Clone, BorshSerialize, BorshDeserialize, ShankInstruction, Display, EnumDiscriminants,
@@ -16,8 +20,8 @@ use strum::{Display, EnumDiscriminants, FromRepr};
     name(InstructionDiscriminator),
     derive(BorshSerialize, BorshDeserialize, FromRepr)
 )]
+
 pub enum Instruction {
-    StakingPoolInitialize,
     #[account(0, writable, signer, name = "staker_account")]
     #[account(1, writable, name = "staking_pool_account")]
     #[account(2, writable, name = "staking_pool_stake_token_account")]
@@ -26,10 +30,8 @@ pub enum Instruction {
     #[account(5, name = "stake_token_mint_account")]
     #[account(6, name = "system_program_account")]
     #[account(7, name = "token_program_account")]
-    Stake {
-        stake_amount: u64,
-        claim_index: u8,
-    },
+    Stake { stake_amount: u64, claim_index: u8 },
+
     #[account(0, writable, signer, name = "unstaker_account")]
     #[account(1, writable, name = "staking_pool_account")]
     #[account(2, writable, name = "staking_pool_stake_token_account")]
@@ -43,6 +45,7 @@ pub enum Instruction {
         unstake_amount: u64,
         withdraw_index: u8,
     },
+
     #[account(0, writable, signer, name = "unstaker_account")]
     #[account(1, writable, name = "staking_pool_account")]
     #[account(2, writable, name = "pending_withdraw_account")]
@@ -51,9 +54,20 @@ pub enum Instruction {
     #[account(5, name = "stake_token_mint_account")]
     #[account(6, name = "system_program_account")]
     #[account(7, name = "token_program_account")]
-    Withdraw {
-        withdraw_index: u8,
+    Withdraw { withdraw_index: u8 },
+
+    #[account(0, writable, signer, name = "payer_account")]
+    #[account(1, writable, name = "staking_pool_account")]
+    #[account(2, name = "lst_mint_account")]
+    #[account(3, name = "stake_token_mint_account")]
+    #[account(4, name = "update_authority_account")]
+    #[account(5, name = "system_program_account")]
+    #[account(6, name = "token_program_account")]
+    Initialize {
+        wind_up_period_s: u64,
+        cool_down_period_s: u64,
     },
+
     #[account(0, writable, signer, name = "update_authority_account")]
     #[account(1, writable, name = "staking_pool_account")]
     Set {

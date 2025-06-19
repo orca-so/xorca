@@ -17,8 +17,11 @@ pub struct StakingPool {
 }
 
 impl StakingPool {
-    pub fn seeds(stake_token_mint: &Pubkey) -> Vec<Seed<'_>> {
-        vec![Seed::from(b"staking_pool"), Seed::from(stake_token_mint)]
+    pub fn seeds(stake_token_mint_address: &Pubkey) -> Vec<Seed<'_>> {
+        vec![
+            Seed::from(b"staking_pool"),
+            Seed::from(stake_token_mint_address),
+        ]
     }
 }
 
