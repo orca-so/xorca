@@ -10,6 +10,7 @@ pub struct XorcaState {
     discriminator: AccountDiscriminator,
     pub escrowed_orca_amount: u64,
     pub xorca_mint: Pubkey,
+    pub update_authority: Pubkey,
 }
 
 impl XorcaState {

@@ -1,9 +1,11 @@
+pub mod set;
 pub mod stake;
 pub mod staking_pool_initialize;
 pub mod unstake;
 pub mod withdraw;
 
 use borsh::{BorshDeserialize, BorshSerialize};
+use pinocchio::pubkey::Pubkey;
 use shank::ShankInstruction;
 use strum::{Display, EnumDiscriminants, FromRepr};
 
@@ -50,6 +52,12 @@ pub enum Instruction {
     #[account(7, name = "token_program_account")]
     Withdraw {
         withdraw_index: u8,
+    },
+    #[account(0, writable, signer, name = "update_authority_account")]
+    #[account(1, writable, name = "staking_pool_account")]
+    Set {
+        new_cool_down_period: Option<u64>,
+        new_update_authority: Option<Pubkey>,
     },
 }
 
