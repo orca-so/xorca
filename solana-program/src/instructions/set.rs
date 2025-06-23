@@ -24,8 +24,24 @@ pub fn process_instruction(
 
     // 2. Staking Pool Account Assertions
     assert_account_role(staking_pool_account, &[AccountRole::Writable])?;
-    let staking_pool = assert_account_data_mut::<StakingPool>(staking_pool_account)?;
-    assert_account_address(update_authority_account, &staking_pool.update_authority)?;
+    let mut staking_pool_data = assert_account_data_mut::<StakingPool>(staking_pool_account)?;
+    assert_account_address(
+        update_authority_account,
+        &staking_pool_data.update_authority,
+    )?;
+
+    // Apply updates if provided
+    if let Some(period) = new_wind_up_period {
+        staking_pool_data.wind_up_period_s = *period;
+    }
+
+    if let Some(period) = new_cool_down_period {
+        staking_pool_data.cool_down_period_s = *period;
+    }
+
+    if let Some(new_auth) = new_update_authority {
+        staking_pool_data.update_authority = *new_auth;
+    }
 
     Ok(())
 }
