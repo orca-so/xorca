@@ -6,7 +6,7 @@ use crate::{
     cpi::token::TokenMint,
     instructions::INITIAL_UPGRADE_AUTHORITY_ID,
     state::xorca_state::XorcaState,
-    util::account::get_account_info,
+    util::account::{create_program_account, get_account_info},
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
@@ -40,7 +40,7 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &u64) -
 
     // 4. Orca Mint Account Assertions
     assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    let orca_mint_account_data = assert_external_account_data::<TokenMint>(orca_mint_account)?;
+    assert_external_account_data::<TokenMint>(orca_mint_account)?;
 
     // 5. Update Authority Account Assertions
     assert_account_address(update_authority_account, &INITIAL_UPGRADE_AUTHORITY_ID)?;
@@ -50,6 +50,18 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &u64) -
 
     // 7. Token Account Assertions
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    // Initialize xOrca State
+    let mut xorca_state = create_program_account::<XorcaState>(
+        system_program_account,
+        payer_account,
+        xorca_state_account,
+        &[xorca_state_seeds.as_slice().into()],
+    )?;
+    xorca_state.xorca_mint = *xorca_mint_account.key();
+    xorca_state.cool_down_period_s = *cool_down_period_s;
+    xorca_state.update_authority = *update_authority_account.key();
+    xorca_state.escrowed_orca_amount = 0;
 
     Ok(())
 }
