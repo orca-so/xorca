@@ -23,8 +23,17 @@ pub fn process_instruction(
 
     // 2. Staking Pool Account Assertions
     assert_account_role(xorca_state_account, &[AccountRole::Writable])?;
-    let xorca_state = assert_account_data_mut::<XorcaState>(xorca_state_account)?;
+    let mut xorca_state = assert_account_data_mut::<XorcaState>(xorca_state_account)?;
     assert_account_address(update_authority_account, &xorca_state.update_authority)?;
+
+    // Apply updates if provided
+    if let Some(period) = new_cool_down_period {
+        xorca_state.cool_down_period_s = *period;
+    }
+
+    if let Some(new_auth) = new_update_authority {
+        xorca_state.update_authority = *new_auth;
+    }
 
     Ok(())
 }

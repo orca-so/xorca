@@ -11,6 +11,7 @@ pub struct XorcaState {
     pub escrowed_orca_amount: u64,
     pub xorca_mint: Pubkey,
     pub update_authority: Pubkey,
+    pub cool_down_period_s: u64,
 }
 
 impl XorcaState {
