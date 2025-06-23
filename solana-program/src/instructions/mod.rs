@@ -22,6 +22,7 @@ pub enum Instruction {
     Initialize {
         wind_up_period_s: u64,
         cool_down_period_s: u64,
+        lst_mint_decimals: u8,
     },
     Deposit {
         amount: u64,

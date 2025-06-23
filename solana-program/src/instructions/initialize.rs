@@ -6,16 +6,17 @@ use crate::{
     cpi::token::TokenMint,
     instructions::INITIAL_UPGRADE_AUTHORITY_ID,
     state::staking_pool::StakingPool,
-    util::account::get_account_info,
+    util::account::{create_program_account, get_account_info},
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
-use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
+use pinocchio_token::{instructions::InitializeMint2, ID as SPL_TOKEN_PROGRAM_ID};
 
 pub fn process_instruction(
     accounts: &[AccountInfo],
     wind_up_period_s: &u64,
     cool_down_period_s: &u64,
+    lst_mint_decimals: &u8,
 ) -> ProgramResult {
     let payer_account = get_account_info(accounts, 0)?;
     let staking_pool_account = get_account_info(accounts, 1)?;
@@ -52,8 +53,7 @@ pub fn process_instruction(
 
     // 4. Stake Token Mint Account Assertions
     assert_account_owner(stake_token_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    let stake_token_mint_account_data =
-        assert_external_account_data::<TokenMint>(stake_token_mint_account)?;
+    assert_external_account_data::<TokenMint>(stake_token_mint_account)?;
 
     // 5. Update Authority Account Assertions
     assert_account_address(update_authority_account, &INITIAL_UPGRADE_AUTHORITY_ID)?;
@@ -63,6 +63,29 @@ pub fn process_instruction(
 
     // 7. Token Account Assertions
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    // Initialize Staking Pool Account Data
+    let mut staking_pool_account_data = create_program_account::<StakingPool>(
+        system_program_account,
+        payer_account,
+        staking_pool_account,
+        &[staking_pool_seeds.as_slice().into()],
+    )?;
+    staking_pool_account_data.stake_token_mint = *stake_token_mint_account.key();
+    staking_pool_account_data.lst_token_mint = *lst_mint_account.key();
+    staking_pool_account_data.wind_up_period_s = *wind_up_period_s;
+    staking_pool_account_data.cool_down_period_s = *cool_down_period_s;
+    staking_pool_account_data.update_authority = *update_authority_account.key();
+    staking_pool_account_data.escrowed_lst_token_amount = 0;
+
+    // Initialize LST Token Mint Account Data
+    let initialize_mint_instruction = InitializeMint2 {
+        mint: lst_mint_account,
+        decimals: *lst_mint_decimals,
+        mint_authority: staking_pool_account.key(),
+        freeze_authority: None,
+    };
+    initialize_mint_instruction.invoke_signed(&[staking_pool_seeds.as_slice().into()])?;
 
     Ok(())
 }
