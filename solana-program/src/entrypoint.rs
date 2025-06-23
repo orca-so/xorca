@@ -35,11 +35,13 @@ pub fn process_instruction(
         Instruction::Initialize {
             wind_up_period_s,
             cool_down_period_s,
+            lst_mint_decimals,
         } => {
             instructions::initialize::process_instruction(
                 accounts,
                 wind_up_period_s,
                 cool_down_period_s,
+                lst_mint_decimals,
             )?;
         }
         Instruction::Stake {
