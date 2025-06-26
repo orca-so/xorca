@@ -28,6 +28,9 @@ pub enum ErrorCode {
 
     #[error("Arithmetic error")]
     ArithmeticError = 6008, // 0x1778
+
+    #[error("Insufficient funds error")]
+    InsufficientFunds = 6009, // 0x1779
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {

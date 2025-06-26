@@ -9,10 +9,10 @@ macro_rules! zeroed_type {
 }
 
 #[macro_export]
-macro_rules! staking_pool_data {
+macro_rules! xorca_state_data {
     ($($name:ident => $value:expr),* $(,)?) => {{
-        let mut data = crate::zeroed_type!(xorca::StakingPool);
-        data.discriminator = xorca::AccountDiscriminator::StakingPool;
+        let mut data = crate::zeroed_type!(xorca::XorcaState);
+        data.discriminator = xorca::AccountDiscriminator::XorcaState;
         $(
             data.$name = $value;
         )*

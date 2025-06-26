@@ -1,3 +1,3 @@
-mod staking_pool;
+mod xorca_state;
 
-pub use staking_pool::*;
+pub use xorca_state::*;

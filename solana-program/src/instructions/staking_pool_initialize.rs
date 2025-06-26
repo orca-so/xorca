@@ -1,14 +1,13 @@
-use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
-use pinocchio_log::log;
-
 use crate::{
     assertions::account::{
         assert_account_address, assert_account_role, assert_account_seeds, AccountRole,
     },
-    cpi::system::SYSTEM_PROGRAM_ID,
     state::staking_pool::StakingPool,
     util::account::{create_program_account, get_account_info},
 };
+use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
+use pinocchio_log::log;
+use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 
 pub fn process_instruction(accounts: &[AccountInfo]) -> ProgramResult {
     let payer_account = get_account_info(accounts, 0)?;

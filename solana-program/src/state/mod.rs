@@ -3,14 +3,16 @@ use pinocchio::account_info::{Ref, RefMut};
 use shank::ShankType;
 use strum::Display;
 
-pub mod staking_pool;
+pub mod pending_withdraw;
+pub mod xorca_state;
 
 #[derive(
     Debug, Clone, Copy, BorshSerialize, BorshDeserialize, Display, ShankType, PartialEq, Eq,
 )]
 #[repr(u8)]
 pub enum AccountDiscriminator {
-    StakingPool, // 0
+    XorcaState,      // 0
+    PendingWithdraw, // 1
 }
 
 // Program accounts must be bytemuck <> borsh interoperable. If repr(C) is used, the struct
