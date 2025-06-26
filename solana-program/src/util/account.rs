@@ -1,8 +1,4 @@
-use crate::{
-    cpi::system::{CreateAccount, SYSTEM_PROGRAM_ID},
-    error::ErrorCode,
-    state::ProgramAccount,
-};
+use crate::{cpi::system::CreateAccount, error::ErrorCode, state::ProgramAccount};
 use pinocchio::{
     account_info::{AccountInfo, RefMut},
     instruction::Signer,
@@ -11,6 +7,7 @@ use pinocchio::{
     sysvars::{rent::Rent, Sysvar},
     ProgramResult,
 };
+use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 
 pub fn get_account_info(
     accounts: &[AccountInfo],

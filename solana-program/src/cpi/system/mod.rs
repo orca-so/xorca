@@ -1,8 +1,10 @@
 use pinocchio::pubkey::Pubkey;
 use pinocchio_pubkey::pubkey;
 
-pub const SYSTEM_PROGRAM_ID: Pubkey = pubkey!("11111111111111111111111111111111");
+pub const CLOCK_SYSVAR_ID: Pubkey = pubkey!("SysvarC1ock11111111111111111111111111111111");
 
+mod clock;
 mod create_account;
 
+pub use clock::*;
 pub use create_account::*;

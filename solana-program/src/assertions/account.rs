@@ -1,14 +1,19 @@
+use crate::{
+    cpi::token::{TokenAccount, ORCA_MINT_ID, XORCA_MINT_ID},
+    error::ErrorCode,
+    state::{AccountDiscriminator, ProgramAccount},
+};
 use base58::ToBase58;
+use borsh::BorshDeserialize;
 use pinocchio::{
-    account_info::AccountInfo,
+    account_info::{AccountInfo, RefMut},
     instruction::Seed,
     program_error::ProgramError,
     pubkey::{find_program_address, Pubkey},
     ProgramResult,
 };
 use pinocchio_log::log;
-
-use crate::error::ErrorCode;
+use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
 
 pub trait Key {
     fn key(&self) -> &Pubkey;
@@ -94,5 +99,129 @@ pub fn assert_account_address(account: &impl Key, address: &Pubkey) -> ProgramRe
         );
         return Err(ErrorCode::IncorrectAccountAddress.into());
     }
+    Ok(())
+}
+
+pub fn assert_account_data_mut<T: ProgramAccount>(
+    account: &AccountInfo,
+) -> Result<RefMut<'_, T>, ProgramError> {
+    assert_account_len(account, T::LEN)?;
+    assert_account_discriminator(account, &[T::DISCRIMINATOR])?;
+
+    let data = account.try_borrow_mut_data()?;
+    Ok(T::from_bytes_mut(data))
+}
+
+pub fn assert_account_len(account: &AccountInfo, length: usize) -> ProgramResult {
+    if account.data_len() < length {
+        log!(
+            "Account {} is incorrect size. Expected at least {} but got {}",
+            account.key().to_base58().as_str(),
+            length as u64,
+            account.data_len() as u64,
+        );
+        return Err(ErrorCode::InvalidAccountData.into());
+    }
+    Ok(())
+}
+
+pub fn assert_account_discriminator(
+    account: &AccountInfo,
+    discriminators: &[AccountDiscriminator],
+) -> ProgramResult {
+    let data = account.try_borrow_data()?;
+    if data.len() < 1 {
+        log!(
+            "Invalid discriminator for account: {}",
+            account.key().to_base58().as_str()
+        );
+        return Err(ErrorCode::InvalidAccountData.into());
+    }
+
+    for discriminator in discriminators {
+        if *discriminator as u8 == data[0] {
+            return Ok(());
+        }
+    }
+
+    log!(
+        "Invalid discriminator for account: {}",
+        account.key().to_base58().as_str()
+    );
+    Err(ErrorCode::InvalidAccountData.into())
+}
+
+pub fn assert_external_account_data<T: BorshDeserialize>(
+    account: &AccountInfo,
+) -> Result<T, ProgramError> {
+    let data = account.try_borrow_data()?;
+    let account = T::deserialize(&mut &*data).map_err(|_| ErrorCode::InvalidAccountData)?;
+    Ok(account)
+}
+
+pub fn assert_account_does_not_exist(account: &AccountInfo) -> ProgramResult {
+    if account.lamports() != 0 {
+        log!(
+            "Account {} already exists. Lamports: {}",
+            account.key().to_base58().as_str(),
+            account.lamports()
+        );
+        return Err(ErrorCode::AccountAlreadyExists.into()); // You need to define this error
+    }
+    Ok(())
+}
+
+pub fn make_program_authority_account_assertions(
+    program_authority_account: &AccountInfo,
+) -> Result<[u8; 1], ProgramError> {
+    assert_account_role(program_authority_account, &[AccountRole::Writable])?;
+    let program_authority_seeds = [Seed::from(b"program_authority")];
+    assert_account_seeds(
+        program_authority_account,
+        &crate::ID,
+        &program_authority_seeds,
+    )
+}
+
+pub fn make_owner_token_account_assertions<'a>(
+    owner_token_account: &'a AccountInfo,
+    owner_account: &AccountInfo,
+    token_mint_account: &AccountInfo,
+) -> Result<TokenAccount, ProgramError> {
+    assert_account_role(owner_token_account, &[AccountRole::Writable])?;
+    assert_account_owner(owner_token_account, &SPL_TOKEN_PROGRAM_ID)?;
+    let owner_token_account_data =
+        assert_external_account_data::<TokenAccount>(owner_token_account)?;
+    if owner_token_account_data.owner != *owner_account.key() {
+        log!(
+            "Token account data owner {} does not match owner account {} for token mint account {}.",
+            owner_token_account_data.owner.to_base58().as_str(),
+            owner_account.key().to_base58().as_str(),
+            token_mint_account.key().to_base58().as_str()
+        );
+        return Err(ErrorCode::InvalidAccountData.into());
+    }
+    if owner_token_account_data.mint != *token_mint_account.key() {
+        log!(
+            "Token account data mint {} does not match token mint account {}.",
+            owner_token_account_data.mint.to_base58().as_str(),
+            token_mint_account.key().to_base58().as_str()
+        );
+        return Err(ErrorCode::InvalidAccountData.into());
+    }
+    Ok(owner_token_account_data)
+}
+
+pub fn make_lst_mint_account_assertions(lst_mint_account: &AccountInfo) -> ProgramResult {
+    assert_account_address(lst_mint_account, &XORCA_MINT_ID)?;
+    assert_account_owner(lst_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
+    Ok(())
+}
+
+pub fn make_stake_token_mint_account_assertions(
+    stake_token_mint_account: &AccountInfo,
+) -> ProgramResult {
+    assert_account_address(stake_token_mint_account, &ORCA_MINT_ID)?;
+    assert_account_owner(stake_token_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
     Ok(())
 }
