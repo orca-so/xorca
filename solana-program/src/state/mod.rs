@@ -3,6 +3,8 @@ use pinocchio::account_info::{Ref, RefMut};
 use shank::ShankType;
 use strum::Display;
 
+pub mod pending_claim;
+pub mod pending_withdraw;
 pub mod staking_pool;
 
 #[derive(
@@ -10,7 +12,9 @@ pub mod staking_pool;
 )]
 #[repr(u8)]
 pub enum AccountDiscriminator {
-    StakingPool, // 0
+    StakingPool,     // 0
+    PendingClaim,    // 1
+    PendingWithdraw, // 2
 }
 
 // Program accounts must be bytemuck <> borsh interoperable. If repr(C) is used, the struct
