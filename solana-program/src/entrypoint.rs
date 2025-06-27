@@ -71,6 +71,9 @@ pub fn process_instruction(
                 new_update_authority,
             )?;
         }
+        Instruction::CancelStake { claim_index } => {
+            instructions::cancel_stake::process_instruction(accounts, claim_index)?;
+        }
     }
     Ok(())
 }
