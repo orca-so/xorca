@@ -9,7 +9,7 @@ use crate::{
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
-use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
+use pinocchio_token::{instructions::Transfer, ID as SPL_TOKEN_PROGRAM_ID};
 
 pub fn process_instruction(accounts: &[AccountInfo], claim_index: &u8) -> ProgramResult {
     let staker_account = get_account_info(accounts, 0)?;
@@ -79,6 +79,20 @@ pub fn process_instruction(accounts: &[AccountInfo], claim_index: &u8) -> Progra
 
     // 8. Token Account Assertions
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    // Transfer stake token from staking pool back to staker
+    let transfer_instruction = Transfer {
+        from: staking_pool_stake_token_account,
+        to: staker_stake_token_account,
+        authority: staking_pool_account,
+        amount: pending_claim_data.stake_amount,
+    };
+    transfer_instruction.invoke_signed(&[staking_pool_seeds.as_slice().into()])?;
+
+    // Remove tokens from escrow
+    staking_pool_data.escrowed_stake_token_amount -= pending_claim_data.stake_amount;
+
+    // TODO: Close Pending Claim Account
 
     Ok(())
 }
