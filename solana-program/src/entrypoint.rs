@@ -41,6 +41,9 @@ pub fn process_instruction(
         Instruction::Withdraw { amount } => {
             instructions::withdraw::process_instruction(accounts, amount)?;
         }
+        Instruction::CancelStake { claim_index } => {
+            instructions::cancel_stake::process_instruction(accounts, claim_index)?;
+        }
     }
     Ok(())
 }

@@ -1,3 +1,4 @@
+pub mod cancel_stake;
 pub mod deposit;
 pub mod staking_pool_initialize;
 pub mod withdraw;
@@ -17,6 +18,7 @@ pub enum Instruction {
     StakingPoolInitialize,
     Deposit { amount: u64 },
     Withdraw { amount: u64 },
+    CancelStake { claim_index: u8 },
 }
 
 impl InstructionDiscriminator {
