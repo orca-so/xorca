@@ -9,7 +9,7 @@ use num_derive::FromPrimitive;
 use thiserror::Error;
 
 #[derive(Clone, Debug, Eq, Error, FromPrimitive, PartialEq)]
-pub enum XorcaError {
+pub enum XorcaStakingProgramError {
     /// 6000 - Unknown instruction discriminator
     #[error("Unknown instruction discriminator")]
     UnknownInstructionDiscriminator = 0x1770,
@@ -19,34 +19,40 @@ pub enum XorcaError {
     /// 6002 - Invalid account role
     #[error("Invalid account role")]
     InvalidAccountRole = 0x1772,
-    /// 6003 - Not enough account keys
+    /// 6003 - Account Already Exists
+    #[error("Account Already Exists ")]
+    AccountAlreadyExists = 0x1773,
+    /// 6004 - Not enough account keys
     #[error("Not enough account keys")]
-    NotEnoughAccountKeys = 0x1773,
-    /// 6004 - Incorrect owner
+    NotEnoughAccountKeys = 0x1774,
+    /// 6005 - Incorrect owner
     #[error("Incorrect owner")]
-    IncorrectOwner = 0x1774,
-    /// 6005 - Invalid seeds
+    IncorrectOwner = 0x1775,
+    /// 6006 - Invalid seeds
     #[error("Invalid seeds")]
-    InvalidSeeds = 0x1775,
-    /// 6006 - Invalid account address
+    InvalidSeeds = 0x1776,
+    /// 6007 - Invalid account address
     #[error("Invalid account address")]
-    IncorrectAccountAddress = 0x1776,
-    /// 6007 - Invalid account data
+    IncorrectAccountAddress = 0x1777,
+    /// 6008 - Invalid account data
     #[error("Invalid account data")]
-    InvalidAccountData = 0x1777,
-    /// 6008 - Arithmetic error
+    InvalidAccountData = 0x1778,
+    /// 6009 - Arithmetic error
     #[error("Arithmetic error")]
-    ArithmeticError = 0x1778,
+    ArithmeticError = 0x1779,
+    /// 6010 - Insufficient funds error
+    #[error("Insufficient funds error")]
+    InsufficientFunds = 0x177A,
 }
 
-impl solana_program::program_error::PrintProgramError for XorcaError {
+impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {
     fn print<E>(&self) {
         solana_program::msg!(&self.to_string());
     }
 }
 
-impl<T> solana_program::decode_error::DecodeError<T> for XorcaError {
+impl<T> solana_program::decode_error::DecodeError<T> for XorcaStakingProgramError {
     fn type_of() -> &'static str {
-        "XorcaError"
+        "XorcaStakingProgramError"
     }
 }

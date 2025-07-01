@@ -13,6 +13,8 @@ import {
   decodeAccount,
   fetchEncodedAccount,
   fetchEncodedAccounts,
+  getAddressDecoder,
+  getAddressEncoder,
   getStructDecoder,
   getStructEncoder,
   getU64Decoder,
@@ -28,12 +30,12 @@ import {
   type FetchAccountsConfig,
   type MaybeAccount,
   type MaybeEncodedAccount,
-} from "@solana/kit";
+} from '@solana/kit';
 import {
   AccountDiscriminator,
   getAccountDiscriminatorDecoder,
   getAccountDiscriminatorEncoder,
-} from "../types";
+} from '../types';
 
 export const STAKING_POOL_DISCRIMINATOR = AccountDiscriminator.StakingPool;
 
@@ -43,25 +45,47 @@ export function getStakingPoolDiscriminatorBytes() {
 
 export type StakingPool = {
   discriminator: AccountDiscriminator;
-  value: bigint;
+  stakeTokenMint: Address;
+  lstTokenMint: Address;
+  windUpPeriodS: bigint;
+  coolDownPeriodS: bigint;
+  updateAuthority: Address;
+  escrowedStakeTokenAmount: bigint;
 };
 
-export type StakingPoolArgs = { value: number | bigint };
+export type StakingPoolArgs = {
+  stakeTokenMint: Address;
+  lstTokenMint: Address;
+  windUpPeriodS: number | bigint;
+  coolDownPeriodS: number | bigint;
+  updateAuthority: Address;
+  escrowedStakeTokenAmount: number | bigint;
+};
 
 export function getStakingPoolEncoder(): Encoder<StakingPoolArgs> {
   return transformEncoder(
     getStructEncoder([
-      ["discriminator", getAccountDiscriminatorEncoder()],
-      ["value", getU64Encoder()],
+      ['discriminator', getAccountDiscriminatorEncoder()],
+      ['stakeTokenMint', getAddressEncoder()],
+      ['lstTokenMint', getAddressEncoder()],
+      ['windUpPeriodS', getU64Encoder()],
+      ['coolDownPeriodS', getU64Encoder()],
+      ['updateAuthority', getAddressEncoder()],
+      ['escrowedStakeTokenAmount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: STAKING_POOL_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: STAKING_POOL_DISCRIMINATOR })
   );
 }
 
 export function getStakingPoolDecoder(): Decoder<StakingPool> {
   return getStructDecoder([
-    ["discriminator", getAccountDiscriminatorDecoder()],
-    ["value", getU64Decoder()],
+    ['discriminator', getAccountDiscriminatorDecoder()],
+    ['stakeTokenMint', getAddressDecoder()],
+    ['lstTokenMint', getAddressDecoder()],
+    ['windUpPeriodS', getU64Decoder()],
+    ['coolDownPeriodS', getU64Decoder()],
+    ['updateAuthority', getAddressDecoder()],
+    ['escrowedStakeTokenAmount', getU64Decoder()],
   ]);
 }
 
@@ -70,24 +94,24 @@ export function getStakingPoolCodec(): Codec<StakingPoolArgs, StakingPool> {
 }
 
 export function decodeStakingPool<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress>
 ): Account<StakingPool, TAddress>;
 export function decodeStakingPool<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>,
+  encodedAccount: MaybeEncodedAccount<TAddress>
 ): MaybeAccount<StakingPool, TAddress>;
 export function decodeStakingPool<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>,
+  encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
 ): Account<StakingPool, TAddress> | MaybeAccount<StakingPool, TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getStakingPoolDecoder(),
+    getStakingPoolDecoder()
   );
 }
 
 export async function fetchStakingPool<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<Account<StakingPool, TAddress>> {
   const maybeAccount = await fetchMaybeStakingPool(rpc, address, config);
   assertAccountExists(maybeAccount);
@@ -97,7 +121,7 @@ export async function fetchStakingPool<TAddress extends string = string>(
 export async function fetchMaybeStakingPool<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig,
+  config?: FetchAccountConfig
 ): Promise<MaybeAccount<StakingPool, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
   return decodeStakingPool(maybeAccount);
@@ -106,7 +130,7 @@ export async function fetchMaybeStakingPool<TAddress extends string = string>(
 export async function fetchAllStakingPool(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<Account<StakingPool>[]> {
   const maybeAccounts = await fetchAllMaybeStakingPool(rpc, addresses, config);
   assertAccountsExist(maybeAccounts);
@@ -116,12 +140,12 @@ export async function fetchAllStakingPool(
 export async function fetchAllMaybeStakingPool(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig,
+  config?: FetchAccountsConfig
 ): Promise<MaybeAccount<StakingPool>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) => decodeStakingPool(maybeAccount));
 }
 
 export function getStakingPoolSize(): number {
-  return 9;
+  return 121;
 }

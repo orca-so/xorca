@@ -25,7 +25,7 @@ const node = rootNodeFromAnchor(idl);
 // Visitors
 const updateProgramNameVisitor = updateProgramsVisitor({
   xorca_staking_program: {
-    name: "xorca",
+    name: "xorca_staking_program",
   },
 });
 

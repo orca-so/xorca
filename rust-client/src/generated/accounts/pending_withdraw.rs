@@ -8,34 +8,17 @@
 use crate::generated::types::AccountDiscriminator;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
-use solana_program::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct StakingPool {
+pub struct PendingWithdraw {
     pub discriminator: AccountDiscriminator,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub stake_token_mint: Pubkey,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub lst_token_mint: Pubkey,
-    pub wind_up_period_s: u64,
-    pub cool_down_period_s: u64,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
-    pub update_authority: Pubkey,
-    pub escrowed_stake_token_amount: u64,
+    pub withdrawable_stake_amount: u64,
+    pub withdrawable_timestamp: i64,
 }
 
-impl StakingPool {
-    pub const LEN: usize = 121;
+impl PendingWithdraw {
+    pub const LEN: usize = 17;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
@@ -44,7 +27,7 @@ impl StakingPool {
     }
 }
 
-impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for StakingPool {
+impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for PendingWithdraw {
     type Error = std::io::Error;
 
     fn try_from(
@@ -56,30 +39,30 @@ impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for StakingPool
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_staking_pool(
+pub fn fetch_pending_withdraw(
     rpc: &solana_client::rpc_client::RpcClient,
     address: &solana_program::pubkey::Pubkey,
-) -> Result<crate::shared::DecodedAccount<StakingPool>, std::io::Error> {
-    let accounts = fetch_all_staking_pool(rpc, &[*address])?;
+) -> Result<crate::shared::DecodedAccount<PendingWithdraw>, std::io::Error> {
+    let accounts = fetch_all_pending_withdraw(rpc, &[*address])?;
     Ok(accounts[0].clone())
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_all_staking_pool(
+pub fn fetch_all_pending_withdraw(
     rpc: &solana_client::rpc_client::RpcClient,
     addresses: &[solana_program::pubkey::Pubkey],
-) -> Result<Vec<crate::shared::DecodedAccount<StakingPool>>, std::io::Error> {
+) -> Result<Vec<crate::shared::DecodedAccount<PendingWithdraw>>, std::io::Error> {
     let accounts = rpc
         .get_multiple_accounts(addresses)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-    let mut decoded_accounts: Vec<crate::shared::DecodedAccount<StakingPool>> = Vec::new();
+    let mut decoded_accounts: Vec<crate::shared::DecodedAccount<PendingWithdraw>> = Vec::new();
     for i in 0..addresses.len() {
         let address = addresses[i];
         let account = accounts[i].as_ref().ok_or(std::io::Error::new(
             std::io::ErrorKind::Other,
             format!("Account not found: {}", address),
         ))?;
-        let data = StakingPool::from_bytes(&account.data)?;
+        let data = PendingWithdraw::from_bytes(&account.data)?;
         decoded_accounts.push(crate::shared::DecodedAccount {
             address,
             account: account.clone(),
@@ -90,27 +73,27 @@ pub fn fetch_all_staking_pool(
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_maybe_staking_pool(
+pub fn fetch_maybe_pending_withdraw(
     rpc: &solana_client::rpc_client::RpcClient,
     address: &solana_program::pubkey::Pubkey,
-) -> Result<crate::shared::MaybeAccount<StakingPool>, std::io::Error> {
-    let accounts = fetch_all_maybe_staking_pool(rpc, &[*address])?;
+) -> Result<crate::shared::MaybeAccount<PendingWithdraw>, std::io::Error> {
+    let accounts = fetch_all_maybe_pending_withdraw(rpc, &[*address])?;
     Ok(accounts[0].clone())
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_all_maybe_staking_pool(
+pub fn fetch_all_maybe_pending_withdraw(
     rpc: &solana_client::rpc_client::RpcClient,
     addresses: &[solana_program::pubkey::Pubkey],
-) -> Result<Vec<crate::shared::MaybeAccount<StakingPool>>, std::io::Error> {
+) -> Result<Vec<crate::shared::MaybeAccount<PendingWithdraw>>, std::io::Error> {
     let accounts = rpc
         .get_multiple_accounts(addresses)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-    let mut decoded_accounts: Vec<crate::shared::MaybeAccount<StakingPool>> = Vec::new();
+    let mut decoded_accounts: Vec<crate::shared::MaybeAccount<PendingWithdraw>> = Vec::new();
     for i in 0..addresses.len() {
         let address = addresses[i];
         if let Some(account) = accounts[i].as_ref() {
-            let data = StakingPool::from_bytes(&account.data)?;
+            let data = PendingWithdraw::from_bytes(&account.data)?;
             decoded_accounts.push(crate::shared::MaybeAccount::Exists(
                 crate::shared::DecodedAccount {
                     address,
@@ -126,26 +109,26 @@ pub fn fetch_all_maybe_staking_pool(
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountDeserialize for StakingPool {
+impl anchor_lang::AccountDeserialize for PendingWithdraw {
     fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
         Ok(Self::deserialize(buf)?)
     }
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountSerialize for StakingPool {}
+impl anchor_lang::AccountSerialize for PendingWithdraw {}
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::Owner for StakingPool {
+impl anchor_lang::Owner for PendingWithdraw {
     fn owner() -> Pubkey {
         crate::XORCA_STAKING_PROGRAM_ID
     }
 }
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::IdlBuild for StakingPool {}
+impl anchor_lang::IdlBuild for PendingWithdraw {}
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::Discriminator for StakingPool {
+impl anchor_lang::Discriminator for PendingWithdraw {
     const DISCRIMINATOR: [u8; 8] = [0; 8];
 }

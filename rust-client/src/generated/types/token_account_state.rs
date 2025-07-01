@@ -22,8 +22,8 @@ use num_derive::FromPrimitive;
     FromPrimitive,
 )]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum AccountDiscriminator {
-    StakingPool,
-    PendingClaim,
-    PendingWithdraw,
+pub enum TokenAccountState {
+    Uninitialized,
+    Initialized,
+    Frozen,
 }

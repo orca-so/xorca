@@ -10,6 +10,8 @@ import {
   combineCodec,
   getStructDecoder,
   getStructEncoder,
+  getU64Decoder,
+  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -30,21 +32,21 @@ import {
 import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
-export const WITHDRAW_DISCRIMINATOR = 4;
+export const STAKE_DISCRIMINATOR = 0;
 
-export function getWithdrawDiscriminatorBytes() {
-  return getU8Encoder().encode(WITHDRAW_DISCRIMINATOR);
+export function getStakeDiscriminatorBytes() {
+  return getU8Encoder().encode(STAKE_DISCRIMINATOR);
 }
 
-export type WithdrawInstruction<
+export type StakeInstruction<
   TProgram extends string = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
-  TAccountUnstakerAccount extends string | IAccountMeta<string> = string,
+  TAccountStakerAccount extends string | IAccountMeta<string> = string,
   TAccountStakingPoolAccount extends string | IAccountMeta<string> = string,
-  TAccountPendingWithdrawAccount extends string | IAccountMeta<string> = string,
-  TAccountUnstakerStakeTokenAccount extends
+  TAccountStakingPoolStakeTokenAccount extends
     | string
     | IAccountMeta<string> = string,
-  TAccountStakingPoolStakeTokenAccount extends
+  TAccountPendingClaimAccount extends string | IAccountMeta<string> = string,
+  TAccountStakerStakeTokenAccount extends
     | string
     | IAccountMeta<string> = string,
   TAccountStakeTokenMintAccount extends string | IAccountMeta<string> = string,
@@ -55,22 +57,22 @@ export type WithdrawInstruction<
   IInstructionWithData<Uint8Array> &
   IInstructionWithAccounts<
     [
-      TAccountUnstakerAccount extends string
-        ? WritableSignerAccount<TAccountUnstakerAccount> &
-            IAccountSignerMeta<TAccountUnstakerAccount>
-        : TAccountUnstakerAccount,
+      TAccountStakerAccount extends string
+        ? WritableSignerAccount<TAccountStakerAccount> &
+            IAccountSignerMeta<TAccountStakerAccount>
+        : TAccountStakerAccount,
       TAccountStakingPoolAccount extends string
         ? WritableAccount<TAccountStakingPoolAccount>
         : TAccountStakingPoolAccount,
-      TAccountPendingWithdrawAccount extends string
-        ? WritableAccount<TAccountPendingWithdrawAccount>
-        : TAccountPendingWithdrawAccount,
-      TAccountUnstakerStakeTokenAccount extends string
-        ? WritableAccount<TAccountUnstakerStakeTokenAccount>
-        : TAccountUnstakerStakeTokenAccount,
       TAccountStakingPoolStakeTokenAccount extends string
         ? WritableAccount<TAccountStakingPoolStakeTokenAccount>
         : TAccountStakingPoolStakeTokenAccount,
+      TAccountPendingClaimAccount extends string
+        ? WritableAccount<TAccountPendingClaimAccount>
+        : TAccountPendingClaimAccount,
+      TAccountStakerStakeTokenAccount extends string
+        ? WritableAccount<TAccountStakerStakeTokenAccount>
+        : TAccountStakerStakeTokenAccount,
       TAccountStakeTokenMintAccount extends string
         ? ReadonlyAccount<TAccountStakeTokenMintAccount>
         : TAccountStakeTokenMintAccount,
@@ -84,91 +86,98 @@ export type WithdrawInstruction<
     ]
   >;
 
-export type WithdrawInstructionData = {
+export type StakeInstructionData = {
   discriminator: number;
-  withdrawIndex: number;
+  stakeAmount: bigint;
+  claimIndex: number;
 };
 
-export type WithdrawInstructionDataArgs = { withdrawIndex: number };
+export type StakeInstructionDataArgs = {
+  stakeAmount: number | bigint;
+  claimIndex: number;
+};
 
-export function getWithdrawInstructionDataEncoder(): Encoder<WithdrawInstructionDataArgs> {
+export function getStakeInstructionDataEncoder(): Encoder<StakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['withdrawIndex', getU8Encoder()],
+      ['stakeAmount', getU64Encoder()],
+      ['claimIndex', getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: WITHDRAW_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: STAKE_DISCRIMINATOR })
   );
 }
 
-export function getWithdrawInstructionDataDecoder(): Decoder<WithdrawInstructionData> {
+export function getStakeInstructionDataDecoder(): Decoder<StakeInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['withdrawIndex', getU8Decoder()],
+    ['stakeAmount', getU64Decoder()],
+    ['claimIndex', getU8Decoder()],
   ]);
 }
 
-export function getWithdrawInstructionDataCodec(): Codec<
-  WithdrawInstructionDataArgs,
-  WithdrawInstructionData
+export function getStakeInstructionDataCodec(): Codec<
+  StakeInstructionDataArgs,
+  StakeInstructionData
 > {
   return combineCodec(
-    getWithdrawInstructionDataEncoder(),
-    getWithdrawInstructionDataDecoder()
+    getStakeInstructionDataEncoder(),
+    getStakeInstructionDataDecoder()
   );
 }
 
-export type WithdrawInput<
-  TAccountUnstakerAccount extends string = string,
+export type StakeInput<
+  TAccountStakerAccount extends string = string,
   TAccountStakingPoolAccount extends string = string,
-  TAccountPendingWithdrawAccount extends string = string,
-  TAccountUnstakerStakeTokenAccount extends string = string,
   TAccountStakingPoolStakeTokenAccount extends string = string,
+  TAccountPendingClaimAccount extends string = string,
+  TAccountStakerStakeTokenAccount extends string = string,
   TAccountStakeTokenMintAccount extends string = string,
   TAccountSystemProgramAccount extends string = string,
   TAccountTokenProgramAccount extends string = string,
 > = {
-  unstakerAccount: TransactionSigner<TAccountUnstakerAccount>;
+  stakerAccount: TransactionSigner<TAccountStakerAccount>;
   stakingPoolAccount: Address<TAccountStakingPoolAccount>;
-  pendingWithdrawAccount: Address<TAccountPendingWithdrawAccount>;
-  unstakerStakeTokenAccount: Address<TAccountUnstakerStakeTokenAccount>;
   stakingPoolStakeTokenAccount: Address<TAccountStakingPoolStakeTokenAccount>;
+  pendingClaimAccount: Address<TAccountPendingClaimAccount>;
+  stakerStakeTokenAccount: Address<TAccountStakerStakeTokenAccount>;
   stakeTokenMintAccount: Address<TAccountStakeTokenMintAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
   tokenProgramAccount: Address<TAccountTokenProgramAccount>;
-  withdrawIndex: WithdrawInstructionDataArgs['withdrawIndex'];
+  stakeAmount: StakeInstructionDataArgs['stakeAmount'];
+  claimIndex: StakeInstructionDataArgs['claimIndex'];
 };
 
-export function getWithdrawInstruction<
-  TAccountUnstakerAccount extends string,
+export function getStakeInstruction<
+  TAccountStakerAccount extends string,
   TAccountStakingPoolAccount extends string,
-  TAccountPendingWithdrawAccount extends string,
-  TAccountUnstakerStakeTokenAccount extends string,
   TAccountStakingPoolStakeTokenAccount extends string,
+  TAccountPendingClaimAccount extends string,
+  TAccountStakerStakeTokenAccount extends string,
   TAccountStakeTokenMintAccount extends string,
   TAccountSystemProgramAccount extends string,
   TAccountTokenProgramAccount extends string,
   TProgramAddress extends
     Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
-  input: WithdrawInput<
-    TAccountUnstakerAccount,
+  input: StakeInput<
+    TAccountStakerAccount,
     TAccountStakingPoolAccount,
-    TAccountPendingWithdrawAccount,
-    TAccountUnstakerStakeTokenAccount,
     TAccountStakingPoolStakeTokenAccount,
+    TAccountPendingClaimAccount,
+    TAccountStakerStakeTokenAccount,
     TAccountStakeTokenMintAccount,
     TAccountSystemProgramAccount,
     TAccountTokenProgramAccount
   >,
   config?: { programAddress?: TProgramAddress }
-): WithdrawInstruction<
+): StakeInstruction<
   TProgramAddress,
-  TAccountUnstakerAccount,
+  TAccountStakerAccount,
   TAccountStakingPoolAccount,
-  TAccountPendingWithdrawAccount,
-  TAccountUnstakerStakeTokenAccount,
   TAccountStakingPoolStakeTokenAccount,
+  TAccountPendingClaimAccount,
+  TAccountStakerStakeTokenAccount,
   TAccountStakeTokenMintAccount,
   TAccountSystemProgramAccount,
   TAccountTokenProgramAccount
@@ -179,21 +188,21 @@ export function getWithdrawInstruction<
 
   // Original accounts.
   const originalAccounts = {
-    unstakerAccount: { value: input.unstakerAccount ?? null, isWritable: true },
+    stakerAccount: { value: input.stakerAccount ?? null, isWritable: true },
     stakingPoolAccount: {
       value: input.stakingPoolAccount ?? null,
       isWritable: true,
     },
-    pendingWithdrawAccount: {
-      value: input.pendingWithdrawAccount ?? null,
-      isWritable: true,
-    },
-    unstakerStakeTokenAccount: {
-      value: input.unstakerStakeTokenAccount ?? null,
-      isWritable: true,
-    },
     stakingPoolStakeTokenAccount: {
       value: input.stakingPoolStakeTokenAccount ?? null,
+      isWritable: true,
+    },
+    pendingClaimAccount: {
+      value: input.pendingClaimAccount ?? null,
+      isWritable: true,
+    },
+    stakerStakeTokenAccount: {
+      value: input.stakerStakeTokenAccount ?? null,
       isWritable: true,
     },
     stakeTokenMintAccount: {
@@ -220,26 +229,26 @@ export function getWithdrawInstruction<
   const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
-      getAccountMeta(accounts.unstakerAccount),
+      getAccountMeta(accounts.stakerAccount),
       getAccountMeta(accounts.stakingPoolAccount),
-      getAccountMeta(accounts.pendingWithdrawAccount),
-      getAccountMeta(accounts.unstakerStakeTokenAccount),
       getAccountMeta(accounts.stakingPoolStakeTokenAccount),
+      getAccountMeta(accounts.pendingClaimAccount),
+      getAccountMeta(accounts.stakerStakeTokenAccount),
       getAccountMeta(accounts.stakeTokenMintAccount),
       getAccountMeta(accounts.systemProgramAccount),
       getAccountMeta(accounts.tokenProgramAccount),
     ],
     programAddress,
-    data: getWithdrawInstructionDataEncoder().encode(
-      args as WithdrawInstructionDataArgs
+    data: getStakeInstructionDataEncoder().encode(
+      args as StakeInstructionDataArgs
     ),
-  } as WithdrawInstruction<
+  } as StakeInstruction<
     TProgramAddress,
-    TAccountUnstakerAccount,
+    TAccountStakerAccount,
     TAccountStakingPoolAccount,
-    TAccountPendingWithdrawAccount,
-    TAccountUnstakerStakeTokenAccount,
     TAccountStakingPoolStakeTokenAccount,
+    TAccountPendingClaimAccount,
+    TAccountStakerStakeTokenAccount,
     TAccountStakeTokenMintAccount,
     TAccountSystemProgramAccount,
     TAccountTokenProgramAccount
@@ -248,32 +257,32 @@ export function getWithdrawInstruction<
   return instruction;
 }
 
-export type ParsedWithdrawInstruction<
+export type ParsedStakeInstruction<
   TProgram extends string = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
   TAccountMetas extends readonly IAccountMeta[] = readonly IAccountMeta[],
 > = {
   programAddress: Address<TProgram>;
   accounts: {
-    unstakerAccount: TAccountMetas[0];
+    stakerAccount: TAccountMetas[0];
     stakingPoolAccount: TAccountMetas[1];
-    pendingWithdrawAccount: TAccountMetas[2];
-    unstakerStakeTokenAccount: TAccountMetas[3];
-    stakingPoolStakeTokenAccount: TAccountMetas[4];
+    stakingPoolStakeTokenAccount: TAccountMetas[2];
+    pendingClaimAccount: TAccountMetas[3];
+    stakerStakeTokenAccount: TAccountMetas[4];
     stakeTokenMintAccount: TAccountMetas[5];
     systemProgramAccount: TAccountMetas[6];
     tokenProgramAccount: TAccountMetas[7];
   };
-  data: WithdrawInstructionData;
+  data: StakeInstructionData;
 };
 
-export function parseWithdrawInstruction<
+export function parseStakeInstruction<
   TProgram extends string,
   TAccountMetas extends readonly IAccountMeta[],
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
-): ParsedWithdrawInstruction<TProgram, TAccountMetas> {
+): ParsedStakeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 8) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
@@ -287,15 +296,15 @@ export function parseWithdrawInstruction<
   return {
     programAddress: instruction.programAddress,
     accounts: {
-      unstakerAccount: getNextAccount(),
+      stakerAccount: getNextAccount(),
       stakingPoolAccount: getNextAccount(),
-      pendingWithdrawAccount: getNextAccount(),
-      unstakerStakeTokenAccount: getNextAccount(),
       stakingPoolStakeTokenAccount: getNextAccount(),
+      pendingClaimAccount: getNextAccount(),
+      stakerStakeTokenAccount: getNextAccount(),
       stakeTokenMintAccount: getNextAccount(),
       systemProgramAccount: getNextAccount(),
       tokenProgramAccount: getNextAccount(),
     },
-    data: getWithdrawInstructionDataDecoder().decode(instruction.data),
+    data: getStakeInstructionDataDecoder().decode(instruction.data),
   };
 }

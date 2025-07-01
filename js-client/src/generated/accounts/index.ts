@@ -6,4 +6,6 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from "./stakingPool";
+export * from './pendingClaim';
+export * from './pendingWithdraw';
+export * from './stakingPool';
