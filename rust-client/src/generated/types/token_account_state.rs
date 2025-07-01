@@ -11,10 +11,10 @@ use num_derive::FromPrimitive;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq, Copy, PartialOrd, Hash, FromPrimitive)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub enum AccountDiscriminator {
-StakingPool,
-PendingClaim,
-PendingWithdraw,
+pub enum TokenAccountState {
+Uninitialized,
+Initialized,
+Frozen,
 }
 
 

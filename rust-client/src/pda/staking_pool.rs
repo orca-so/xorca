@@ -1,11 +1,12 @@
-use crate::generated::programs::XORCA_ID;
+use crate::generated::programs::XORCA_STAKING_PROGRAM_ID;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 pub fn get_xorca_staking_pool_address() -> Result<(Pubkey, u8), ProgramError> {
     let seeds: &[&[u8]] = &[b"staking_pool"];
 
-    Pubkey::try_find_program_address(seeds, &XORCA_ID).ok_or(ProgramError::InvalidSeeds)
+    Pubkey::try_find_program_address(seeds, &XORCA_STAKING_PROGRAM_ID)
+        .ok_or(ProgramError::InvalidSeeds)
 }
 
 #[cfg(test)]

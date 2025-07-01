@@ -5,10 +5,17 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-pub(crate) mod r#deposit;
-pub(crate) mod r#staking_pool_initialize;
-pub(crate) mod r#withdraw;
+  pub(crate) mod r#cancel_stake;
+  pub(crate) mod r#initialize;
+  pub(crate) mod r#set;
+  pub(crate) mod r#stake;
+  pub(crate) mod r#unstake;
+  pub(crate) mod r#withdraw;
 
-pub use self::r#deposit::*;
-pub use self::r#staking_pool_initialize::*;
-pub use self::r#withdraw::*;
+  pub use self::r#cancel_stake::*;
+  pub use self::r#initialize::*;
+  pub use self::r#set::*;
+  pub use self::r#stake::*;
+  pub use self::r#unstake::*;
+  pub use self::r#withdraw::*;
+

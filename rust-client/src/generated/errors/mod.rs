@@ -5,6 +5,7 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-pub(crate) mod xorca;
-
-pub use self::xorca::XorcaError;
+      pub(crate) mod xorca_staking_program;
+  
+      pub use self::xorca_staking_program::XorcaStakingProgramError;
+  

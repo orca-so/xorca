@@ -5,6 +5,13 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-pub(crate) mod r#account_discriminator;
+  pub(crate) mod r#account_discriminator;
+  pub(crate) mod r#token_account;
+  pub(crate) mod r#token_account_state;
+  pub(crate) mod r#token_mint;
 
-pub use self::r#account_discriminator::*;
+  pub use self::r#account_discriminator::*;
+  pub use self::r#token_account::*;
+  pub use self::r#token_account_state::*;
+  pub use self::r#token_mint::*;
+

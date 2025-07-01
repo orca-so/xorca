@@ -25,7 +25,7 @@ const node = rootNodeFromAnchor(idl);
 // Visitors
 const updateProgramNameVisitor = updateProgramsVisitor({
   xorca_staking_program: {
-    name: "xorca",
+    name: "xorca_staking_program",
   },
 });
 
@@ -86,4 +86,4 @@ codama.accept(rustRenderer);
 
 // Formatting
 execSync("yarn prettier './js-client/**/*.{js,jsx,ts,tsx,json}' --write");
-execSync("cargo fmt -p xorca");
+execSync("cargo fmt -p xorca_staking_program");
