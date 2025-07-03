@@ -1,0 +1,204 @@
+name: xorca
+
+services:
+  build-solana-program:
+    image: solanafoundation/solana-verifiable-build:2.1.13
+    working_dir: /usr/src/xorca
+    command: >
+      cargo build-sbf --force-tools-install
+    profiles: [dev, test, build, publish]
+    volumes:
+      - .:/usr/src/xorca:delegated
+      - xorca_cargo_home:/usr/local/cargo:delegated
+    platform: linux/amd64
+
+  solana-program-validator:
+    image: ghcr.io/beeman/solana-test-validator:2.1.15
+    command: >
+      solana-test-validator --quiet --reset --url mainnet-beta
+      --bpf-program xorcaStakingProgram111111111111111111111111111111111 /usr/src/xorca/target/deploy/xorca_staking_program.so
+      --rpc-port 8899
+    profiles: [dev]
+    depends_on:
+      build-solana-program:
+        condition: service_completed_successfully
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "solana",
+          "account",
+          "xorcaStakingProgram111111111111111111111111111111111",
+          "--url",
+          "http://localhost:8899",
+        ]
+      interval: 10s
+      timeout: 10s
+      retries: 20
+      start_period: 30s
+    ports:
+      - "127.0.0.1:1024:1024" # gossip
+      - "127.0.0.1:1027:1027" # tpu
+      - "127.0.0.1:8899:8899" # rpc
+      - "127.0.0.1:8900:8900" # ws
+    volumes:
+      - .:/usr/src/xorca:delegated
+    platform: linux/amd64
+    deploy:
+      resources:
+        limits:
+          memory: 6G
+          cpus: "2.0"
+        reservations:
+          memory: 3G
+          cpus: "1.0"
+    restart: unless-stopped
+
+  solana-program-logs:
+    image: ghcr.io/beeman/solana-test-validator:2.1.15
+    command: >
+      sh -c "sleep 10 && solana logs --url http://solana-program-validator:8899"
+    profiles: [dev]
+    depends_on:
+      solana-program-validator:
+        condition: service_healthy
+    platform: linux/amd64
+
+  build-js:
+    image: rust:1.85
+    working_dir: /usr/src/xorca
+    command: >
+      sh -c "curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+      && apt-get update && apt-get install -y nodejs
+      && corepack enable
+      && corepack prepare yarn@latest --activate
+      && yarn cache clean
+      && yarn install && yarn workspace @orca-so/xorca build"
+    profiles: [dev, build, publish]
+    volumes:
+      - .:/usr/src/xorca:delegated
+    platform: linux/amd64
+
+  build-rust:
+    image: rust:1.85
+    working_dir: /usr/src/xorca
+    command: >
+      cargo build -p xorca
+    profiles: [build]
+    volumes:
+      - .:/usr/src/xorca:delegated
+    platform: linux/amd64
+
+  build-idl:
+    image: rust:1.85
+    working_dir: /usr/src/xorca
+    command: >
+      sh -c "cargo install shank-cli
+      && shank idl -o target/idl -r solana-program"
+    profiles: [build, publish]
+    volumes:
+      - .:/usr/src/xorca:delegated
+      - xorca_cargo_home:/usr/local/cargo:delegated
+    platform: linux/amd64
+
+  build:
+    image: alpine:3
+    working_dir: /usr/src/xorca
+    command: >
+      echo "Build Completed"
+    depends_on:
+      build-solana-program:
+        condition: service_completed_successfully
+      build-js:
+        condition: service_completed_successfully
+      build-rust:
+        condition: service_completed_successfully
+      build-idl:
+        condition: service_completed_successfully
+    profiles: [build]
+    volumes:
+      - .:/usr/src/xorca:delegated
+
+  test-rust:
+    image: rust:1.85
+    working_dir: /usr/src/xorca
+    command: >
+      cargo test
+    depends_on:
+      build-solana-program:
+        condition: service_completed_successfully
+    profiles: [test]
+    volumes:
+      - .:/usr/src/xorca:delegated
+      - xorca_cargo_home:/usr/local/cargo:delegated
+    platform: linux/amd64
+
+  test-js:
+    image: rust:1.85
+    working_dir: /usr/src/xorca
+    command: >
+      sh -c "curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+      && apt-get update && apt-get install -y nodejs
+      && corepack enable
+      && corepack prepare yarn@latest --activate
+      && yarn cache clean
+      && yarn install && yarn workspace @orca-so/xorca test"
+    profiles: [test]
+    volumes:
+      - .:/usr/src/xorca:delegated
+    platform: linux/amd64
+
+  test:
+    image: alpine:3
+    working_dir: /usr/src/xorca
+    command: >
+      echo "Tests Completed"
+    depends_on:
+      test-rust:
+        condition: service_completed_successfully
+      test-js:
+        condition: service_completed_successfully
+    profiles: [test]
+    volumes:
+      - .:/usr/src/xorca:delegated
+
+  publish-js:
+    image: node:jod
+    working_dir: /usr/src/xorca
+    command: >
+      sh -c "npm config set //registry.npmjs.org/:_authToken ${NPM_TOKEN:-false}
+      && cd js-client
+      && npm publish --access public"
+    profiles: [publish]
+    depends_on:
+      build-js:
+        condition: service_completed_successfully
+    volumes:
+      - .:/usr/src/xorca:delegated
+
+  publish-rust:
+    image: rust:1.85
+    working_dir: /usr/src/xorca
+    command: >
+      cargo publish -p xorca --token ${CARGO_TOKEN:-false} --allow-dirty
+    profiles: [publish]
+    volumes:
+      - .:/usr/src/xorca:delegated
+    platform: linux/amd64
+
+  publish:
+    image: alpine:3
+    working_dir: /usr/src/xorca
+    command: >
+      echo "Publish Completed"
+    profiles: [publish]
+    depends_on:
+      publish-js:
+        condition: service_completed_successfully
+      publish-rust:
+        condition: service_completed_successfully
+    volumes:
+      - .:/usr/src/xorca:delegated
+
+volumes:
+  xorca_cargo_home:

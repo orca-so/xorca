@@ -2542,18 +2542,18 @@ dependencies = [
 
 [[package]]
 name = "pinocchio-log"
-version = "0.3.0"
+version = "0.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "95bd1d0d8a24f2637cb6748232912b6bae67b643b7ca903c68e670e704cd0652"
+checksum = "f89f8ffd986174cefe59448295a004aaf70c3605f30de066f42d27b06188f267"
 dependencies = [
  "pinocchio-log-macro",
 ]
 
 [[package]]
 name = "pinocchio-log-macro"
-version = "0.3.0"
+version = "0.4.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "657779675430389ebbf00b8a5b6325e64157795ac61702fadf8756ac8806a50e"
+checksum = "6edac6ac2c9c456b850d3e908b7f224a54623f6c5b75906b9e48a4e248fb332b"
 dependencies = [
  "quote",
  "regex",

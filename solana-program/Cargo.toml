@@ -17,7 +17,7 @@ base58 = { version = "^0.2" }
 borsh = { version = "^0.10" }
 pinocchio = "0.8.4"
 pinocchio-associated-token-account = "0.1.1"
-pinocchio-log = { version = "^0.3" }
+pinocchio-log = { version = "^0.4.0" }
 pinocchio-pubkey = { version = "^0.2" }
 pinocchio-system = "0.2.3"
 pinocchio-token = { version = "^0.3.0" }
