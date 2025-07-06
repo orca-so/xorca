@@ -15,6 +15,12 @@
   },
   "scripts": {
     "generate": "node codama.js",
+    "build": "yarn build:contract && yarn generate && yarn build:ts && yarn build:rs",
+    "build:docker": "docker compose --profile build up --build",
+    "build:contract": "cargo build-sbf --manifest-path solana-program/Cargo.toml && shank idl -o target/idl -r solana-program",
+    "build:ts": "yarn workspace @orca-so/xorca build",
+    "build:rs": "cargo build -p xorca",
+    "clean": "rm -rf js-client/src/generated rust-client/src/generated target/idl",
     "fmt": "prettier './**/*.{js,jsx,ts,tsx,json}' --write"
   }
 }

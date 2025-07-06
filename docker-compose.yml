@@ -1,6 +1,24 @@
 name: xorca
 
 services:
+  generate-code:
+    image: rust:1.85
+    working_dir: /usr/src/xorca
+    command: >
+      sh -c "cargo install shank-cli
+      && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+      && apt-get update && apt-get install -y nodejs
+      && corepack enable
+      && corepack prepare yarn@latest --activate
+      && yarn cache clean
+      && yarn install
+      && yarn generate"
+    profiles: [dev, build, publish]
+    volumes:
+      - .:/usr/src/xorca:delegated
+      - xorca_cargo_home:/usr/local/cargo:delegated
+    platform: linux/amd64
+
   build-solana-program:
     image: solanafoundation/solana-verifiable-build:2.1.13
     working_dir: /usr/src/xorca
@@ -75,6 +93,9 @@ services:
       && yarn cache clean
       && yarn install && yarn workspace @orca-so/xorca build"
     profiles: [dev, build, publish]
+    depends_on:
+      generate-code:
+        condition: service_completed_successfully
     volumes:
       - .:/usr/src/xorca:delegated
     platform: linux/amd64
@@ -85,6 +106,9 @@ services:
     command: >
       cargo build -p xorca
     profiles: [build]
+    depends_on:
+      generate-code:
+        condition: service_completed_successfully
     volumes:
       - .:/usr/src/xorca:delegated
     platform: linux/amd64
@@ -144,6 +168,9 @@ services:
       && yarn cache clean
       && yarn install && yarn workspace @orca-so/xorca test"
     profiles: [test]
+    depends_on:
+      generate-code:
+        condition: service_completed_successfully
     volumes:
       - .:/usr/src/xorca:delegated
     platform: linux/amd64

@@ -13,8 +13,8 @@ docker compose --profile dev up
 # Run tests
 docker compose --profile test up
 
-# Build all components
-docker compose --profile build up
+# Build all components (generates code, builds SDK, etc.)
+yarn build:docker
 ```
 
 For more detailed Docker instructions, see [DOCKER.md](./DOCKER.md).
@@ -30,10 +30,17 @@ For more detailed Docker instructions, see [DOCKER.md](./DOCKER.md).
 
 ### Prerequisites
 
-- Rust (latest stable)
-- Node.js (LTS)
-- Yarn
-- Solana CLI tools
+For local development, you'll need to install the following tools:
+
+- **Rust** (latest stable) - [Install Rust](https://rustup.rs/)
+- **Node.js** (LTS) - [Install Node.js](https://nodejs.org/)
+- **Yarn** - [Install Yarn](https://yarnpkg.com/getting-started/install)
+- **Solana CLI tools** - [Install Solana CLI](https://docs.solana.com/cli/install-solana-cli-tools)
+- **shank-cli** - Install with `cargo install shank-cli`
+
+For Docker-based builds, you only need:
+
+- **Docker** - [Install Docker](https://docs.docker.com/get-docker/)
 
 ### Local Development
 
@@ -44,17 +51,51 @@ For more detailed Docker instructions, see [DOCKER.md](./DOCKER.md).
    cargo build
    ```
 
-2. Build the Solana program:
+2. Build everything (contract, generate code, build SDKs):
 
    ```bash
-   cargo build-sbf
+   yarn build
    ```
 
-3. Run tests:
+   This will:
+
+   - Build the Solana program and generate IDL using shank
+   - Generate TypeScript and Rust client code using codama
+   - Build the TypeScript SDK
+   - Build the Rust SDK
+
+3. Or build individual components:
+
+   ```bash
+   # Build contract and generate code
+   yarn build:contract
+
+   # Generate client code from IDL
+   yarn generate
+
+   # Build TypeScript SDK only
+   yarn build:ts
+
+   # Build Rust SDK only
+   yarn build:rs
+   ```
+
+4. Run tests:
    ```bash
    cargo test
    yarn workspace @orca-so/xorca test
    ```
+
+### Available Scripts
+
+- `yarn build` - Build everything locally (contract, generate code, build SDKs)
+- `yarn build:docker` - Build everything using Docker (no local dependencies needed)
+- `yarn build:contract` - Build the Solana program and generate IDL
+- `yarn build:ts` - Build the TypeScript SDK only
+- `yarn build:rs` - Build the Rust SDK only
+- `yarn generate` - Generate client code from the Solana program IDL
+- `yarn clean` - Clean generated artifacts
+- `yarn fmt` - Format code with Prettier
 
 ## Documentation
 

@@ -12,9 +12,7 @@ export default defineConfig(({ mode }) => {
 
   const target = mode === "node" ? "esnext" : undefined;
 
-  const plugins: PluginOption[] = [
-    dts(),
-  ];
+  const plugins: PluginOption[] = [dts()];
 
   return {
     build: {
