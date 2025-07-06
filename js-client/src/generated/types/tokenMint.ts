@@ -24,7 +24,7 @@ import {
   type Codec,
   type Decoder,
   type Encoder,
-} from '@solana/kit';
+} from "@solana/kit";
 
 export type TokenMint = {
   mintAuthorityFlag: number;
@@ -48,25 +48,25 @@ export type TokenMintArgs = {
 
 export function getTokenMintEncoder(): Encoder<TokenMintArgs> {
   return getStructEncoder([
-    ['mintAuthorityFlag', getU32Encoder()],
-    ['mintAuthority', getAddressEncoder()],
-    ['supply', getU64Encoder()],
-    ['decimals', getU8Encoder()],
-    ['isInitialized', getBooleanEncoder()],
-    ['freezeAuthorityFlag', getU32Encoder()],
-    ['freezeAuthority', getAddressEncoder()],
+    ["mintAuthorityFlag", getU32Encoder()],
+    ["mintAuthority", getAddressEncoder()],
+    ["supply", getU64Encoder()],
+    ["decimals", getU8Encoder()],
+    ["isInitialized", getBooleanEncoder()],
+    ["freezeAuthorityFlag", getU32Encoder()],
+    ["freezeAuthority", getAddressEncoder()],
   ]);
 }
 
 export function getTokenMintDecoder(): Decoder<TokenMint> {
   return getStructDecoder([
-    ['mintAuthorityFlag', getU32Decoder()],
-    ['mintAuthority', getAddressDecoder()],
-    ['supply', getU64Decoder()],
-    ['decimals', getU8Decoder()],
-    ['isInitialized', getBooleanDecoder()],
-    ['freezeAuthorityFlag', getU32Decoder()],
-    ['freezeAuthority', getAddressDecoder()],
+    ["mintAuthorityFlag", getU32Decoder()],
+    ["mintAuthority", getAddressDecoder()],
+    ["supply", getU64Decoder()],
+    ["decimals", getU8Decoder()],
+    ["isInitialized", getBooleanDecoder()],
+    ["freezeAuthorityFlag", getU32Decoder()],
+    ["freezeAuthority", getAddressDecoder()],
   ]);
 }
 

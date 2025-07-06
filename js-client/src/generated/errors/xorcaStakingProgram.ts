@@ -11,8 +11,8 @@ import {
   type Address,
   type SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
   type SolanaError,
-} from '@solana/kit';
-import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+} from "@solana/kit";
+import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from "../programs";
 
 /** UnknownInstructionDiscriminator: Unknown instruction discriminator */
 export const XORCA_STAKING_PROGRAM_ERROR__UNKNOWN_INSTRUCTION_DISCRIMINATOR = 0x1770; // 6000
@@ -20,25 +20,22 @@ export const XORCA_STAKING_PROGRAM_ERROR__UNKNOWN_INSTRUCTION_DISCRIMINATOR = 0x
 export const XORCA_STAKING_PROGRAM_ERROR__INCORRECT_PROGRAM_ID = 0x1771; // 6001
 /** InvalidAccountRole: Invalid account role */
 export const XORCA_STAKING_PROGRAM_ERROR__INVALID_ACCOUNT_ROLE = 0x1772; // 6002
-/** AccountAlreadyExists: Account Already Exists  */
-export const XORCA_STAKING_PROGRAM_ERROR__ACCOUNT_ALREADY_EXISTS = 0x1773; // 6003
 /** NotEnoughAccountKeys: Not enough account keys */
-export const XORCA_STAKING_PROGRAM_ERROR__NOT_ENOUGH_ACCOUNT_KEYS = 0x1774; // 6004
+export const XORCA_STAKING_PROGRAM_ERROR__NOT_ENOUGH_ACCOUNT_KEYS = 0x1773; // 6003
 /** IncorrectOwner: Incorrect owner */
-export const XORCA_STAKING_PROGRAM_ERROR__INCORRECT_OWNER = 0x1775; // 6005
+export const XORCA_STAKING_PROGRAM_ERROR__INCORRECT_OWNER = 0x1774; // 6004
 /** InvalidSeeds: Invalid seeds */
-export const XORCA_STAKING_PROGRAM_ERROR__INVALID_SEEDS = 0x1776; // 6006
+export const XORCA_STAKING_PROGRAM_ERROR__INVALID_SEEDS = 0x1775; // 6005
 /** IncorrectAccountAddress: Invalid account address */
-export const XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS = 0x1777; // 6007
+export const XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS = 0x1776; // 6006
 /** InvalidAccountData: Invalid account data */
-export const XORCA_STAKING_PROGRAM_ERROR__INVALID_ACCOUNT_DATA = 0x1778; // 6008
+export const XORCA_STAKING_PROGRAM_ERROR__INVALID_ACCOUNT_DATA = 0x1777; // 6007
 /** ArithmeticError: Arithmetic error */
-export const XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR = 0x1779; // 6009
+export const XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR = 0x1778; // 6008
 /** InsufficientFunds: Insufficient funds error */
-export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_FUNDS = 0x177a; // 6010
+export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_FUNDS = 0x1779; // 6009
 
 export type XorcaStakingProgramError =
-  | typeof XORCA_STAKING_PROGRAM_ERROR__ACCOUNT_ALREADY_EXISTS
   | typeof XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR
   | typeof XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS
   | typeof XORCA_STAKING_PROGRAM_ERROR__INCORRECT_OWNER
@@ -53,9 +50,8 @@ export type XorcaStakingProgramError =
 let xorcaStakingProgramErrorMessages:
   | Record<XorcaStakingProgramError, string>
   | undefined;
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== "production") {
   xorcaStakingProgramErrorMessages = {
-    [XORCA_STAKING_PROGRAM_ERROR__ACCOUNT_ALREADY_EXISTS]: `Account Already Exists `,
     [XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR]: `Arithmetic error`,
     [XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS]: `Invalid account address`,
     [XORCA_STAKING_PROGRAM_ERROR__INCORRECT_OWNER]: `Incorrect owner`,
@@ -70,9 +66,9 @@ if (process.env.NODE_ENV !== 'production') {
 }
 
 export function getXorcaStakingProgramErrorMessage(
-  code: XorcaStakingProgramError
+  code: XorcaStakingProgramError,
 ): string {
-  if (process.env.NODE_ENV !== 'production') {
+  if (process.env.NODE_ENV !== "production") {
     return (
       xorcaStakingProgramErrorMessages as Record<
         XorcaStakingProgramError,
@@ -81,7 +77,7 @@ export function getXorcaStakingProgramErrorMessage(
     )[code];
   }
 
-  return 'Error message not available in production bundles.';
+  return "Error message not available in production bundles.";
 }
 
 export function isXorcaStakingProgramError<
@@ -91,13 +87,13 @@ export function isXorcaStakingProgramError<
   transactionMessage: {
     instructions: Record<number, { programAddress: Address }>;
   },
-  code?: TProgramErrorCode
+  code?: TProgramErrorCode,
 ): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
   Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
   return isProgramError<TProgramErrorCode>(
     error,
     transactionMessage,
     XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
-    code
+    code,
   );
 }

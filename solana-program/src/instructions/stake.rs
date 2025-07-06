@@ -93,7 +93,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
         xorca_mint_data.supply,
     )?;
 
-    // Transfer stake tokens from staker ATA to staking pool ATA
+    // Transfer stake tokens from staker ATA to xOrca state ATA
     let transfer_instruction = Transfer {
         from: staker_orca_ata,
         to: xorca_state_orca_ata,

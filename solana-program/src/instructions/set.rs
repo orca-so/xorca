@@ -21,7 +21,7 @@ pub fn process_instruction(
         &[AccountRole::Signer, AccountRole::Writable],
     )?;
 
-    // 2. Staking Pool Account Assertions
+    // 2. xOrca State Account Assertions
     assert_account_role(xorca_state_account, &[AccountRole::Writable])?;
     let mut xorca_state = assert_account_data_mut::<XorcaState>(xorca_state_account)?;
     assert_account_address(update_authority_account, &xorca_state.update_authority)?;

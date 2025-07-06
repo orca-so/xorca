@@ -449,6 +449,7 @@ __metadata:
   dependencies:
     "@solana/kit": "npm:^2.1.0"
     "@types/node": "npm:^20.0.0"
+    prettier: "npm:^3.5.3"
     rollup: "npm:^4.0.0"
     typescript: "npm:^5.8.2"
     vite: "npm:^6.2.2"

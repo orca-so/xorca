@@ -3,13 +3,13 @@ use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
 pub fn find_pending_withdraw_pda(
-    staking_pool: &Pubkey,
+    xorca_state: &Pubkey,
     unstaker: &Pubkey,
     withdraw_index: &u8,
 ) -> Result<(Pubkey, u8), ProgramError> {
     let seeds: &[&[u8]] = &[
         b"pending_withdraw",
-        staking_pool.as_ref(),
+        xorca_state.as_ref(),
         unstaker.as_ref(),
         &[*withdraw_index],
     ];
@@ -24,17 +24,17 @@ mod tests {
 
     #[test]
     fn test_find_pending_withdraw_pda() {
-        let staking_pool = pubkey!("kNPV3hhKtqL6NQXGZTj4GpnXzVaoHxHgzkxNTUCQSAo");
+        let xorca_state = pubkey!("kNPV3hhKtqL6NQXGZTj4GpnXzVaoHxHgzkxNTUCQSAo");
         let unstaker = pubkey!("A1tYHa3233WKDX5fZuZNmHMUVTSB12sR1RoVeGT8XV85");
         let withdraw_index = 0;
         let (address, _) =
-            find_pending_withdraw_pda(&staking_pool, &unstaker, &withdraw_index).unwrap();
+            find_pending_withdraw_pda(&xorca_state, &unstaker, &withdraw_index).unwrap();
         let expected_pending_withdraw_address =
             pubkey!("65hQf2HvGdX8aa92McbXjDcdCYt7GHzPxgiJYyx6sUvK");
         assert_eq!(address, expected_pending_withdraw_address);
         let withdraw_index = 1;
         let (address, _) =
-            find_pending_withdraw_pda(&staking_pool, &unstaker, &withdraw_index).unwrap();
+            find_pending_withdraw_pda(&xorca_state, &unstaker, &withdraw_index).unwrap();
         let expected_pending_withdraw_address =
             pubkey!("4NPowK3hFWsWP42XE1ULb52UBbPm5BvbghtSsGASRC9Q");
         assert_eq!(address, expected_pending_withdraw_address);

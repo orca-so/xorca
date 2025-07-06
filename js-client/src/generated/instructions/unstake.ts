@@ -28,11 +28,11 @@ import {
   type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
-} from '@solana/kit';
-import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+} from "@solana/kit";
+import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from "../programs";
+import { getAccountMetaFactory, type ResolvedAccount } from "../shared";
 
-export const UNSTAKE_DISCRIMINATOR = 2;
+export const UNSTAKE_DISCRIMINATOR = 1;
 
 export function getUnstakeDiscriminatorBytes() {
   return getU8Encoder().encode(UNSTAKE_DISCRIMINATOR);
@@ -41,14 +41,12 @@ export function getUnstakeDiscriminatorBytes() {
 export type UnstakeInstruction<
   TProgram extends string = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
   TAccountUnstakerAccount extends string | IAccountMeta<string> = string,
-  TAccountStakingPoolAccount extends string | IAccountMeta<string> = string,
-  TAccountStakingPoolStakeTokenAccount extends
-    | string
-    | IAccountMeta<string> = string,
+  TAccountXorcaStateAccount extends string | IAccountMeta<string> = string,
+  TAccountXorcaStateOrcaAta extends string | IAccountMeta<string> = string,
   TAccountPendingWithdrawAccount extends string | IAccountMeta<string> = string,
   TAccountUnstakerLstAccount extends string | IAccountMeta<string> = string,
-  TAccountLstMintAccount extends string | IAccountMeta<string> = string,
-  TAccountStakeTokenMintAccount extends string | IAccountMeta<string> = string,
+  TAccountXorcaMintAccount extends string | IAccountMeta<string> = string,
+  TAccountOrcaMintAccount extends string | IAccountMeta<string> = string,
   TAccountSystemProgramAccount extends string | IAccountMeta<string> = string,
   TAccountTokenProgramAccount extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
@@ -60,24 +58,24 @@ export type UnstakeInstruction<
         ? WritableSignerAccount<TAccountUnstakerAccount> &
             IAccountSignerMeta<TAccountUnstakerAccount>
         : TAccountUnstakerAccount,
-      TAccountStakingPoolAccount extends string
-        ? WritableAccount<TAccountStakingPoolAccount>
-        : TAccountStakingPoolAccount,
-      TAccountStakingPoolStakeTokenAccount extends string
-        ? WritableAccount<TAccountStakingPoolStakeTokenAccount>
-        : TAccountStakingPoolStakeTokenAccount,
+      TAccountXorcaStateAccount extends string
+        ? WritableAccount<TAccountXorcaStateAccount>
+        : TAccountXorcaStateAccount,
+      TAccountXorcaStateOrcaAta extends string
+        ? WritableAccount<TAccountXorcaStateOrcaAta>
+        : TAccountXorcaStateOrcaAta,
       TAccountPendingWithdrawAccount extends string
         ? WritableAccount<TAccountPendingWithdrawAccount>
         : TAccountPendingWithdrawAccount,
       TAccountUnstakerLstAccount extends string
         ? WritableAccount<TAccountUnstakerLstAccount>
         : TAccountUnstakerLstAccount,
-      TAccountLstMintAccount extends string
-        ? ReadonlyAccount<TAccountLstMintAccount>
-        : TAccountLstMintAccount,
-      TAccountStakeTokenMintAccount extends string
-        ? ReadonlyAccount<TAccountStakeTokenMintAccount>
-        : TAccountStakeTokenMintAccount,
+      TAccountXorcaMintAccount extends string
+        ? ReadonlyAccount<TAccountXorcaMintAccount>
+        : TAccountXorcaMintAccount,
+      TAccountOrcaMintAccount extends string
+        ? ReadonlyAccount<TAccountOrcaMintAccount>
+        : TAccountOrcaMintAccount,
       TAccountSystemProgramAccount extends string
         ? ReadonlyAccount<TAccountSystemProgramAccount>
         : TAccountSystemProgramAccount,
@@ -102,19 +100,19 @@ export type UnstakeInstructionDataArgs = {
 export function getUnstakeInstructionDataEncoder(): Encoder<UnstakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
-      ['discriminator', getU8Encoder()],
-      ['unstakeAmount', getU64Encoder()],
-      ['withdrawIndex', getU8Encoder()],
+      ["discriminator", getU8Encoder()],
+      ["unstakeAmount", getU64Encoder()],
+      ["withdrawIndex", getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: UNSTAKE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: UNSTAKE_DISCRIMINATOR }),
   );
 }
 
 export function getUnstakeInstructionDataDecoder(): Decoder<UnstakeInstructionData> {
   return getStructDecoder([
-    ['discriminator', getU8Decoder()],
-    ['unstakeAmount', getU64Decoder()],
-    ['withdrawIndex', getU8Decoder()],
+    ["discriminator", getU8Decoder()],
+    ["unstakeAmount", getU64Decoder()],
+    ["withdrawIndex", getU8Decoder()],
   ]);
 }
 
@@ -124,42 +122,42 @@ export function getUnstakeInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getUnstakeInstructionDataEncoder(),
-    getUnstakeInstructionDataDecoder()
+    getUnstakeInstructionDataDecoder(),
   );
 }
 
 export type UnstakeInput<
   TAccountUnstakerAccount extends string = string,
-  TAccountStakingPoolAccount extends string = string,
-  TAccountStakingPoolStakeTokenAccount extends string = string,
+  TAccountXorcaStateAccount extends string = string,
+  TAccountXorcaStateOrcaAta extends string = string,
   TAccountPendingWithdrawAccount extends string = string,
   TAccountUnstakerLstAccount extends string = string,
-  TAccountLstMintAccount extends string = string,
-  TAccountStakeTokenMintAccount extends string = string,
+  TAccountXorcaMintAccount extends string = string,
+  TAccountOrcaMintAccount extends string = string,
   TAccountSystemProgramAccount extends string = string,
   TAccountTokenProgramAccount extends string = string,
 > = {
   unstakerAccount: TransactionSigner<TAccountUnstakerAccount>;
-  stakingPoolAccount: Address<TAccountStakingPoolAccount>;
-  stakingPoolStakeTokenAccount: Address<TAccountStakingPoolStakeTokenAccount>;
+  xorcaStateAccount: Address<TAccountXorcaStateAccount>;
+  xorcaStateOrcaAta: Address<TAccountXorcaStateOrcaAta>;
   pendingWithdrawAccount: Address<TAccountPendingWithdrawAccount>;
   unstakerLstAccount: Address<TAccountUnstakerLstAccount>;
-  lstMintAccount: Address<TAccountLstMintAccount>;
-  stakeTokenMintAccount: Address<TAccountStakeTokenMintAccount>;
+  xorcaMintAccount: Address<TAccountXorcaMintAccount>;
+  orcaMintAccount: Address<TAccountOrcaMintAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
   tokenProgramAccount: Address<TAccountTokenProgramAccount>;
-  unstakeAmount: UnstakeInstructionDataArgs['unstakeAmount'];
-  withdrawIndex: UnstakeInstructionDataArgs['withdrawIndex'];
+  unstakeAmount: UnstakeInstructionDataArgs["unstakeAmount"];
+  withdrawIndex: UnstakeInstructionDataArgs["withdrawIndex"];
 };
 
 export function getUnstakeInstruction<
   TAccountUnstakerAccount extends string,
-  TAccountStakingPoolAccount extends string,
-  TAccountStakingPoolStakeTokenAccount extends string,
+  TAccountXorcaStateAccount extends string,
+  TAccountXorcaStateOrcaAta extends string,
   TAccountPendingWithdrawAccount extends string,
   TAccountUnstakerLstAccount extends string,
-  TAccountLstMintAccount extends string,
-  TAccountStakeTokenMintAccount extends string,
+  TAccountXorcaMintAccount extends string,
+  TAccountOrcaMintAccount extends string,
   TAccountSystemProgramAccount extends string,
   TAccountTokenProgramAccount extends string,
   TProgramAddress extends
@@ -167,25 +165,25 @@ export function getUnstakeInstruction<
 >(
   input: UnstakeInput<
     TAccountUnstakerAccount,
-    TAccountStakingPoolAccount,
-    TAccountStakingPoolStakeTokenAccount,
+    TAccountXorcaStateAccount,
+    TAccountXorcaStateOrcaAta,
     TAccountPendingWithdrawAccount,
     TAccountUnstakerLstAccount,
-    TAccountLstMintAccount,
-    TAccountStakeTokenMintAccount,
+    TAccountXorcaMintAccount,
+    TAccountOrcaMintAccount,
     TAccountSystemProgramAccount,
     TAccountTokenProgramAccount
   >,
-  config?: { programAddress?: TProgramAddress }
+  config?: { programAddress?: TProgramAddress },
 ): UnstakeInstruction<
   TProgramAddress,
   TAccountUnstakerAccount,
-  TAccountStakingPoolAccount,
-  TAccountStakingPoolStakeTokenAccount,
+  TAccountXorcaStateAccount,
+  TAccountXorcaStateOrcaAta,
   TAccountPendingWithdrawAccount,
   TAccountUnstakerLstAccount,
-  TAccountLstMintAccount,
-  TAccountStakeTokenMintAccount,
+  TAccountXorcaMintAccount,
+  TAccountOrcaMintAccount,
   TAccountSystemProgramAccount,
   TAccountTokenProgramAccount
 > {
@@ -196,12 +194,12 @@ export function getUnstakeInstruction<
   // Original accounts.
   const originalAccounts = {
     unstakerAccount: { value: input.unstakerAccount ?? null, isWritable: true },
-    stakingPoolAccount: {
-      value: input.stakingPoolAccount ?? null,
+    xorcaStateAccount: {
+      value: input.xorcaStateAccount ?? null,
       isWritable: true,
     },
-    stakingPoolStakeTokenAccount: {
-      value: input.stakingPoolStakeTokenAccount ?? null,
+    xorcaStateOrcaAta: {
+      value: input.xorcaStateOrcaAta ?? null,
       isWritable: true,
     },
     pendingWithdrawAccount: {
@@ -212,9 +210,12 @@ export function getUnstakeInstruction<
       value: input.unstakerLstAccount ?? null,
       isWritable: true,
     },
-    lstMintAccount: { value: input.lstMintAccount ?? null, isWritable: false },
-    stakeTokenMintAccount: {
-      value: input.stakeTokenMintAccount ?? null,
+    xorcaMintAccount: {
+      value: input.xorcaMintAccount ?? null,
+      isWritable: false,
+    },
+    orcaMintAccount: {
+      value: input.orcaMintAccount ?? null,
       isWritable: false,
     },
     systemProgramAccount: {
@@ -234,32 +235,32 @@ export function getUnstakeInstruction<
   // Original args.
   const args = { ...input };
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   const instruction = {
     accounts: [
       getAccountMeta(accounts.unstakerAccount),
-      getAccountMeta(accounts.stakingPoolAccount),
-      getAccountMeta(accounts.stakingPoolStakeTokenAccount),
+      getAccountMeta(accounts.xorcaStateAccount),
+      getAccountMeta(accounts.xorcaStateOrcaAta),
       getAccountMeta(accounts.pendingWithdrawAccount),
       getAccountMeta(accounts.unstakerLstAccount),
-      getAccountMeta(accounts.lstMintAccount),
-      getAccountMeta(accounts.stakeTokenMintAccount),
+      getAccountMeta(accounts.xorcaMintAccount),
+      getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.systemProgramAccount),
       getAccountMeta(accounts.tokenProgramAccount),
     ],
     programAddress,
     data: getUnstakeInstructionDataEncoder().encode(
-      args as UnstakeInstructionDataArgs
+      args as UnstakeInstructionDataArgs,
     ),
   } as UnstakeInstruction<
     TProgramAddress,
     TAccountUnstakerAccount,
-    TAccountStakingPoolAccount,
-    TAccountStakingPoolStakeTokenAccount,
+    TAccountXorcaStateAccount,
+    TAccountXorcaStateOrcaAta,
     TAccountPendingWithdrawAccount,
     TAccountUnstakerLstAccount,
-    TAccountLstMintAccount,
-    TAccountStakeTokenMintAccount,
+    TAccountXorcaMintAccount,
+    TAccountOrcaMintAccount,
     TAccountSystemProgramAccount,
     TAccountTokenProgramAccount
   >;
@@ -274,12 +275,12 @@ export type ParsedUnstakeInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     unstakerAccount: TAccountMetas[0];
-    stakingPoolAccount: TAccountMetas[1];
-    stakingPoolStakeTokenAccount: TAccountMetas[2];
+    xorcaStateAccount: TAccountMetas[1];
+    xorcaStateOrcaAta: TAccountMetas[2];
     pendingWithdrawAccount: TAccountMetas[3];
     unstakerLstAccount: TAccountMetas[4];
-    lstMintAccount: TAccountMetas[5];
-    stakeTokenMintAccount: TAccountMetas[6];
+    xorcaMintAccount: TAccountMetas[5];
+    orcaMintAccount: TAccountMetas[6];
     systemProgramAccount: TAccountMetas[7];
     tokenProgramAccount: TAccountMetas[8];
   };
@@ -292,11 +293,11 @@ export function parseUnstakeInstruction<
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
-    IInstructionWithData<Uint8Array>
+    IInstructionWithData<Uint8Array>,
 ): ParsedUnstakeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 9) {
     // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error("Not enough accounts");
   }
   let accountIndex = 0;
   const getNextAccount = () => {
@@ -308,12 +309,12 @@ export function parseUnstakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       unstakerAccount: getNextAccount(),
-      stakingPoolAccount: getNextAccount(),
-      stakingPoolStakeTokenAccount: getNextAccount(),
+      xorcaStateAccount: getNextAccount(),
+      xorcaStateOrcaAta: getNextAccount(),
       pendingWithdrawAccount: getNextAccount(),
       unstakerLstAccount: getNextAccount(),
-      lstMintAccount: getNextAccount(),
-      stakeTokenMintAccount: getNextAccount(),
+      xorcaMintAccount: getNextAccount(),
+      orcaMintAccount: getNextAccount(),
       systemProgramAccount: getNextAccount(),
       tokenProgramAccount: getNextAccount(),
     },

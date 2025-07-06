@@ -2,6 +2,8 @@
 
 #[allow(clippy::all, unused_imports)]
 mod generated;
+#[cfg(feature = "wasm")]
+mod math;
 mod pda;
 
 pub use generated::accounts::*;
@@ -17,3 +19,6 @@ pub use generated::types::*;
 pub(crate) use generated::*;
 
 pub use pda::*;
+
+#[cfg(feature = "wasm")]
+pub use math::*;

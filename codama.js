@@ -3,14 +3,14 @@ import { renderVisitor as renderJs } from "@codama/renderers-js";
 import { renderVisitor as renderRust } from "@codama/renderers-rust";
 import { execSync } from "child_process";
 import {
-    bytesValueNode,
-    createFromRoot,
-    enumValueNode,
-    getAllAccounts,
-    getAllDefinedTypes,
-    setAccountDiscriminatorFromFieldVisitor,
-    setStructDefaultValuesVisitor,
-    updateProgramsVisitor,
+  bytesValueNode,
+  createFromRoot,
+  enumValueNode,
+  getAllAccounts,
+  getAllDefinedTypes,
+  setAccountDiscriminatorFromFieldVisitor,
+  setStructDefaultValuesVisitor,
+  updateProgramsVisitor,
 } from "codama";
 import { existsSync, mkdirSync, readFileSync } from "fs";
 
@@ -130,16 +130,6 @@ try {
 } catch (error) {
   console.error("❌ Failed to generate Rust client:", error.message);
   process.exit(1);
-}
-
-// Formatting
-console.log("🎨 Formatting generated code...");
-try {
-  execSync("yarn prettier './js-client/**/*.{js,jsx,ts,tsx,json}' --write", { stdio: "inherit" });
-  execSync("cargo fmt -p xorca", { stdio: "inherit" });
-  console.log("✅ Code formatting completed");
-} catch (error) {
-  console.warn("⚠️  Code formatting failed:", error.message);
 }
 
 console.log("🎉 Code generation completed successfully!");

@@ -14,7 +14,7 @@ use solana_program::pubkey::Pubkey;
 pub struct Set {
     pub update_authority_account: solana_program::pubkey::Pubkey,
 
-    pub staking_pool_account: solana_program::pubkey::Pubkey,
+    pub xorca_state_account: solana_program::pubkey::Pubkey,
 }
 
 impl Set {
@@ -37,7 +37,7 @@ impl Set {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.staking_pool_account,
+            self.xorca_state_account,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -61,7 +61,7 @@ pub struct SetInstructionData {
 
 impl SetInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 6 }
+        Self { discriminator: 4 }
     }
 }
 
@@ -74,7 +74,6 @@ impl Default for SetInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SetInstructionArgs {
-    pub new_wind_up_period: Option<u64>,
     pub new_cool_down_period: Option<u64>,
     pub new_update_authority: Option<Pubkey>,
 }
@@ -84,12 +83,11 @@ pub struct SetInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` update_authority_account
-///   1. `[writable]` staking_pool_account
+///   1. `[writable]` xorca_state_account
 #[derive(Clone, Debug, Default)]
 pub struct SetBuilder {
     update_authority_account: Option<solana_program::pubkey::Pubkey>,
-    staking_pool_account: Option<solana_program::pubkey::Pubkey>,
-    new_wind_up_period: Option<u64>,
+    xorca_state_account: Option<solana_program::pubkey::Pubkey>,
     new_cool_down_period: Option<u64>,
     new_update_authority: Option<Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
@@ -108,17 +106,11 @@ impl SetBuilder {
         self
     }
     #[inline(always)]
-    pub fn staking_pool_account(
+    pub fn xorca_state_account(
         &mut self,
-        staking_pool_account: solana_program::pubkey::Pubkey,
+        xorca_state_account: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.staking_pool_account = Some(staking_pool_account);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_wind_up_period(&mut self, new_wind_up_period: u64) -> &mut Self {
-        self.new_wind_up_period = Some(new_wind_up_period);
+        self.xorca_state_account = Some(xorca_state_account);
         self
     }
     /// `[optional argument]`
@@ -157,12 +149,11 @@ impl SetBuilder {
             update_authority_account: self
                 .update_authority_account
                 .expect("update_authority_account is not set"),
-            staking_pool_account: self
-                .staking_pool_account
-                .expect("staking_pool_account is not set"),
+            xorca_state_account: self
+                .xorca_state_account
+                .expect("xorca_state_account is not set"),
         };
         let args = SetInstructionArgs {
-            new_wind_up_period: self.new_wind_up_period.clone(),
             new_cool_down_period: self.new_cool_down_period.clone(),
             new_update_authority: self.new_update_authority.clone(),
         };
@@ -175,7 +166,7 @@ impl SetBuilder {
 pub struct SetCpiAccounts<'a, 'b> {
     pub update_authority_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub staking_pool_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub xorca_state_account: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `set` CPI instruction.
@@ -185,7 +176,7 @@ pub struct SetCpi<'a, 'b> {
 
     pub update_authority_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub staking_pool_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub xorca_state_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: SetInstructionArgs,
 }
@@ -199,7 +190,7 @@ impl<'a, 'b> SetCpi<'a, 'b> {
         Self {
             __program: program,
             update_authority_account: accounts.update_authority_account,
-            staking_pool_account: accounts.staking_pool_account,
+            xorca_state_account: accounts.xorca_state_account,
             __args: args,
         }
     }
@@ -243,7 +234,7 @@ impl<'a, 'b> SetCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.staking_pool_account.key,
+            *self.xorca_state_account.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -265,7 +256,7 @@ impl<'a, 'b> SetCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(3 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.update_authority_account.clone());
-        account_infos.push(self.staking_pool_account.clone());
+        account_infos.push(self.xorca_state_account.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -283,7 +274,7 @@ impl<'a, 'b> SetCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` update_authority_account
-///   1. `[writable]` staking_pool_account
+///   1. `[writable]` xorca_state_account
 #[derive(Clone, Debug)]
 pub struct SetCpiBuilder<'a, 'b> {
     instruction: Box<SetCpiBuilderInstruction<'a, 'b>>,
@@ -294,8 +285,7 @@ impl<'a, 'b> SetCpiBuilder<'a, 'b> {
         let instruction = Box::new(SetCpiBuilderInstruction {
             __program: program,
             update_authority_account: None,
-            staking_pool_account: None,
-            new_wind_up_period: None,
+            xorca_state_account: None,
             new_cool_down_period: None,
             new_update_authority: None,
             __remaining_accounts: Vec::new(),
@@ -311,17 +301,11 @@ impl<'a, 'b> SetCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn staking_pool_account(
+    pub fn xorca_state_account(
         &mut self,
-        staking_pool_account: &'b solana_program::account_info::AccountInfo<'a>,
+        xorca_state_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.staking_pool_account = Some(staking_pool_account);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_wind_up_period(&mut self, new_wind_up_period: u64) -> &mut Self {
-        self.instruction.new_wind_up_period = Some(new_wind_up_period);
+        self.instruction.xorca_state_account = Some(xorca_state_account);
         self
     }
     /// `[optional argument]`
@@ -378,7 +362,6 @@ impl<'a, 'b> SetCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = SetInstructionArgs {
-            new_wind_up_period: self.instruction.new_wind_up_period.clone(),
             new_cool_down_period: self.instruction.new_cool_down_period.clone(),
             new_update_authority: self.instruction.new_update_authority.clone(),
         };
@@ -390,10 +373,10 @@ impl<'a, 'b> SetCpiBuilder<'a, 'b> {
                 .update_authority_account
                 .expect("update_authority_account is not set"),
 
-            staking_pool_account: self
+            xorca_state_account: self
                 .instruction
-                .staking_pool_account
-                .expect("staking_pool_account is not set"),
+                .xorca_state_account
+                .expect("xorca_state_account is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -407,8 +390,7 @@ impl<'a, 'b> SetCpiBuilder<'a, 'b> {
 struct SetCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     update_authority_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    staking_pool_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    new_wind_up_period: Option<u64>,
+    xorca_state_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     new_cool_down_period: Option<u64>,
     new_update_authority: Option<Pubkey>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

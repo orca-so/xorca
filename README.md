@@ -23,8 +23,11 @@ For more detailed Docker instructions, see [DOCKER.md](./DOCKER.md).
 
 - `solana-program/` - The main Solana program implementation
 - `rust-client/` - Rust client library for interacting with the program
+  - `src/math/` - Math utility functions (compiled to WASM)
 - `js-client/` - JavaScript/TypeScript client library
+  - `src/generated/wasm/` - Generated WASM bindings and TypeScript wrappers
 - `solana-program-test/` - Test suite for the Solana program
+- `scripts/` - Build scripts including WASM compilation
 
 ## Development
 
@@ -88,12 +91,14 @@ For Docker-based builds, you only need:
 
 ### Available Scripts
 
-- `yarn build` - Build everything locally (contract, generate code, build SDKs)
+- `yarn build` - Build everything locally (contract, generate code, build SDKs, WASM)
 - `yarn build:docker` - Build everything using Docker (no local dependencies needed)
 - `yarn build:contract` - Build the Solana program and generate IDL
+- `yarn build:wasm` - Build Rust functions to WASM for use in TypeScript
 - `yarn build:ts` - Build the TypeScript SDK only
 - `yarn build:rs` - Build the Rust SDK only
 - `yarn generate` - Generate client code from the Solana program IDL
+- `yarn copy:wasm` - Copy WASM files to the distribution directory
 - `yarn clean` - Clean generated artifacts
 - `yarn fmt` - Format code with Prettier
 

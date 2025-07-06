@@ -30,49 +30,49 @@ import {
   type FetchAccountsConfig,
   type MaybeAccount,
   type MaybeEncodedAccount,
-} from '@solana/kit';
+} from "@solana/kit";
 import {
   AccountDiscriminator,
   getAccountDiscriminatorDecoder,
   getAccountDiscriminatorEncoder,
-} from '../types';
+} from "../types";
 
 export const PENDING_WITHDRAW_DISCRIMINATOR =
   AccountDiscriminator.PendingWithdraw;
 
 export function getPendingWithdrawDiscriminatorBytes() {
   return getAccountDiscriminatorEncoder().encode(
-    PENDING_WITHDRAW_DISCRIMINATOR
+    PENDING_WITHDRAW_DISCRIMINATOR,
   );
 }
 
 export type PendingWithdraw = {
   discriminator: AccountDiscriminator;
-  withdrawableStakeAmount: bigint;
+  withdrawableOrcaAmount: bigint;
   withdrawableTimestamp: bigint;
 };
 
 export type PendingWithdrawArgs = {
-  withdrawableStakeAmount: number | bigint;
+  withdrawableOrcaAmount: number | bigint;
   withdrawableTimestamp: number | bigint;
 };
 
 export function getPendingWithdrawEncoder(): Encoder<PendingWithdrawArgs> {
   return transformEncoder(
     getStructEncoder([
-      ['discriminator', getAccountDiscriminatorEncoder()],
-      ['withdrawableStakeAmount', getU64Encoder()],
-      ['withdrawableTimestamp', getI64Encoder()],
+      ["discriminator", getAccountDiscriminatorEncoder()],
+      ["withdrawableOrcaAmount", getU64Encoder()],
+      ["withdrawableTimestamp", getI64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: PENDING_WITHDRAW_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: PENDING_WITHDRAW_DISCRIMINATOR }),
   );
 }
 
 export function getPendingWithdrawDecoder(): Decoder<PendingWithdraw> {
   return getStructDecoder([
-    ['discriminator', getAccountDiscriminatorDecoder()],
-    ['withdrawableStakeAmount', getU64Decoder()],
-    ['withdrawableTimestamp', getI64Decoder()],
+    ["discriminator", getAccountDiscriminatorDecoder()],
+    ["withdrawableOrcaAmount", getU64Decoder()],
+    ["withdrawableTimestamp", getI64Decoder()],
   ]);
 }
 
@@ -84,26 +84,26 @@ export function getPendingWithdrawCodec(): Codec<
 }
 
 export function decodePendingWithdraw<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress>
+  encodedAccount: EncodedAccount<TAddress>,
 ): Account<PendingWithdraw, TAddress>;
 export function decodePendingWithdraw<TAddress extends string = string>(
-  encodedAccount: MaybeEncodedAccount<TAddress>
+  encodedAccount: MaybeEncodedAccount<TAddress>,
 ): MaybeAccount<PendingWithdraw, TAddress>;
 export function decodePendingWithdraw<TAddress extends string = string>(
-  encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
+  encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>,
 ):
   | Account<PendingWithdraw, TAddress>
   | MaybeAccount<PendingWithdraw, TAddress> {
   return decodeAccount(
     encodedAccount as MaybeEncodedAccount<TAddress>,
-    getPendingWithdrawDecoder()
+    getPendingWithdrawDecoder(),
   );
 }
 
 export async function fetchPendingWithdraw<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig
+  config?: FetchAccountConfig,
 ): Promise<Account<PendingWithdraw, TAddress>> {
   const maybeAccount = await fetchMaybePendingWithdraw(rpc, address, config);
   assertAccountExists(maybeAccount);
@@ -115,7 +115,7 @@ export async function fetchMaybePendingWithdraw<
 >(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
-  config?: FetchAccountConfig
+  config?: FetchAccountConfig,
 ): Promise<MaybeAccount<PendingWithdraw, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
   return decodePendingWithdraw(maybeAccount);
@@ -124,12 +124,12 @@ export async function fetchMaybePendingWithdraw<
 export async function fetchAllPendingWithdraw(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig
+  config?: FetchAccountsConfig,
 ): Promise<Account<PendingWithdraw>[]> {
   const maybeAccounts = await fetchAllMaybePendingWithdraw(
     rpc,
     addresses,
-    config
+    config,
   );
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
@@ -138,11 +138,11 @@ export async function fetchAllPendingWithdraw(
 export async function fetchAllMaybePendingWithdraw(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
-  config?: FetchAccountsConfig
+  config?: FetchAccountsConfig,
 ): Promise<MaybeAccount<PendingWithdraw>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
   return maybeAccounts.map((maybeAccount) =>
-    decodePendingWithdraw(maybeAccount)
+    decodePendingWithdraw(maybeAccount),
   );
 }
 

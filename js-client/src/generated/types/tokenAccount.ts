@@ -20,13 +20,13 @@ import {
   type Codec,
   type Decoder,
   type Encoder,
-} from '@solana/kit';
+} from "@solana/kit";
 import {
   getTokenAccountStateDecoder,
   getTokenAccountStateEncoder,
   type TokenAccountState,
   type TokenAccountStateArgs,
-} from '.';
+} from ".";
 
 export type TokenAccount = {
   mint: Address;
@@ -58,33 +58,33 @@ export type TokenAccountArgs = {
 
 export function getTokenAccountEncoder(): Encoder<TokenAccountArgs> {
   return getStructEncoder([
-    ['mint', getAddressEncoder()],
-    ['owner', getAddressEncoder()],
-    ['amount', getU64Encoder()],
-    ['delegateFlag', getU32Encoder()],
-    ['delegate', getAddressEncoder()],
-    ['state', getTokenAccountStateEncoder()],
-    ['isNativeFlag', getU32Encoder()],
-    ['nativeAmount', getU64Encoder()],
-    ['delegateAmount', getU64Encoder()],
-    ['closeAuthorityFlag', getU32Encoder()],
-    ['closeAuthority', getAddressEncoder()],
+    ["mint", getAddressEncoder()],
+    ["owner", getAddressEncoder()],
+    ["amount", getU64Encoder()],
+    ["delegateFlag", getU32Encoder()],
+    ["delegate", getAddressEncoder()],
+    ["state", getTokenAccountStateEncoder()],
+    ["isNativeFlag", getU32Encoder()],
+    ["nativeAmount", getU64Encoder()],
+    ["delegateAmount", getU64Encoder()],
+    ["closeAuthorityFlag", getU32Encoder()],
+    ["closeAuthority", getAddressEncoder()],
   ]);
 }
 
 export function getTokenAccountDecoder(): Decoder<TokenAccount> {
   return getStructDecoder([
-    ['mint', getAddressDecoder()],
-    ['owner', getAddressDecoder()],
-    ['amount', getU64Decoder()],
-    ['delegateFlag', getU32Decoder()],
-    ['delegate', getAddressDecoder()],
-    ['state', getTokenAccountStateDecoder()],
-    ['isNativeFlag', getU32Decoder()],
-    ['nativeAmount', getU64Decoder()],
-    ['delegateAmount', getU64Decoder()],
-    ['closeAuthorityFlag', getU32Decoder()],
-    ['closeAuthority', getAddressDecoder()],
+    ["mint", getAddressDecoder()],
+    ["owner", getAddressDecoder()],
+    ["amount", getU64Decoder()],
+    ["delegateFlag", getU32Decoder()],
+    ["delegate", getAddressDecoder()],
+    ["state", getTokenAccountStateDecoder()],
+    ["isNativeFlag", getU32Decoder()],
+    ["nativeAmount", getU64Decoder()],
+    ["delegateAmount", getU64Decoder()],
+    ["closeAuthorityFlag", getU32Decoder()],
+    ["closeAuthority", getAddressDecoder()],
   ]);
 }
 

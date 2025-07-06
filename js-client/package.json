@@ -26,6 +26,7 @@
   "devDependencies": {
     "@solana/kit": "^2.1.0",
     "@types/node": "^20.0.0",
+    "prettier": "^3.5.3",
     "rollup": "^4.0.0",
     "typescript": "^5.8.2",
     "vite": "^6.2.2",
@@ -34,6 +35,7 @@
   },
   "scripts": {
     "build": "vite build --mode browser && vite build --mode node",
-    "test": "vitest run"
+    "test": "vitest run",
+    "fmt": "prettier './**/*.{js,jsx,ts,tsx,json}' --write"
   }
 }

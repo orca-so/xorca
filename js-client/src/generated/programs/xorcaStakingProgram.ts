@@ -11,49 +11,35 @@ import {
   getU8Encoder,
   type Address,
   type ReadonlyUint8Array,
-} from '@solana/kit';
+} from "@solana/kit";
 import {
-  type ParsedCancelStakeInstruction,
-  type ParsedClaimInstruction,
   type ParsedInitializeInstruction,
   type ParsedSetInstruction,
   type ParsedStakeInstruction,
   type ParsedUnstakeInstruction,
   type ParsedWithdrawInstruction,
-} from '../instructions';
-import { AccountDiscriminator, getAccountDiscriminatorEncoder } from '../types';
+} from "../instructions";
+import { AccountDiscriminator, getAccountDiscriminatorEncoder } from "../types";
 
 export const XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS =
-  '5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY' as Address<'5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY'>;
+  "5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY" as Address<"5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY">;
 
 export enum XorcaStakingProgramAccount {
-  PendingClaim,
   PendingWithdraw,
-  StakingPool,
+  XorcaState,
 }
 
 export function identifyXorcaStakingProgramAccount(
-  account: { data: ReadonlyUint8Array } | ReadonlyUint8Array
+  account: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): XorcaStakingProgramAccount {
-  const data = 'data' in account ? account.data : account;
+  const data = "data" in account ? account.data : account;
   if (
     containsBytes(
       data,
       getAccountDiscriminatorEncoder().encode(
-        AccountDiscriminator.PendingClaim
+        AccountDiscriminator.PendingWithdraw,
       ),
-      0
-    )
-  ) {
-    return XorcaStakingProgramAccount.PendingClaim;
-  }
-  if (
-    containsBytes(
-      data,
-      getAccountDiscriminatorEncoder().encode(
-        AccountDiscriminator.PendingWithdraw
-      ),
-      0
+      0,
     )
   ) {
     return XorcaStakingProgramAccount.PendingWithdraw;
@@ -61,72 +47,58 @@ export function identifyXorcaStakingProgramAccount(
   if (
     containsBytes(
       data,
-      getAccountDiscriminatorEncoder().encode(AccountDiscriminator.StakingPool),
-      0
+      getAccountDiscriminatorEncoder().encode(AccountDiscriminator.XorcaState),
+      0,
     )
   ) {
-    return XorcaStakingProgramAccount.StakingPool;
+    return XorcaStakingProgramAccount.XorcaState;
   }
   throw new Error(
-    'The provided account could not be identified as a xorcaStakingProgram account.'
+    "The provided account could not be identified as a xorcaStakingProgram account.",
   );
 }
 
 export enum XorcaStakingProgramInstruction {
   Stake,
-  Claim,
   Unstake,
-  CancelStake,
   Withdraw,
   Initialize,
   Set,
 }
 
 export function identifyXorcaStakingProgramInstruction(
-  instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
+  instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
 ): XorcaStakingProgramInstruction {
-  const data = 'data' in instruction ? instruction.data : instruction;
+  const data = "data" in instruction ? instruction.data : instruction;
   if (containsBytes(data, getU8Encoder().encode(0), 0)) {
     return XorcaStakingProgramInstruction.Stake;
   }
   if (containsBytes(data, getU8Encoder().encode(1), 0)) {
-    return XorcaStakingProgramInstruction.Claim;
-  }
-  if (containsBytes(data, getU8Encoder().encode(2), 0)) {
     return XorcaStakingProgramInstruction.Unstake;
   }
-  if (containsBytes(data, getU8Encoder().encode(3), 0)) {
-    return XorcaStakingProgramInstruction.CancelStake;
-  }
-  if (containsBytes(data, getU8Encoder().encode(4), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(2), 0)) {
     return XorcaStakingProgramInstruction.Withdraw;
   }
-  if (containsBytes(data, getU8Encoder().encode(5), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(3), 0)) {
     return XorcaStakingProgramInstruction.Initialize;
   }
-  if (containsBytes(data, getU8Encoder().encode(6), 0)) {
+  if (containsBytes(data, getU8Encoder().encode(4), 0)) {
     return XorcaStakingProgramInstruction.Set;
   }
   throw new Error(
-    'The provided instruction could not be identified as a xorcaStakingProgram instruction.'
+    "The provided instruction could not be identified as a xorcaStakingProgram instruction.",
   );
 }
 
 export type ParsedXorcaStakingProgramInstruction<
-  TProgram extends string = '5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY',
+  TProgram extends string = "5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY",
 > =
   | ({
       instructionType: XorcaStakingProgramInstruction.Stake;
     } & ParsedStakeInstruction<TProgram>)
   | ({
-      instructionType: XorcaStakingProgramInstruction.Claim;
-    } & ParsedClaimInstruction<TProgram>)
-  | ({
       instructionType: XorcaStakingProgramInstruction.Unstake;
     } & ParsedUnstakeInstruction<TProgram>)
-  | ({
-      instructionType: XorcaStakingProgramInstruction.CancelStake;
-    } & ParsedCancelStakeInstruction<TProgram>)
   | ({
       instructionType: XorcaStakingProgramInstruction.Withdraw;
     } & ParsedWithdrawInstruction<TProgram>)

@@ -13,11 +13,11 @@ use borsh::BorshSerialize;
 pub struct Initialize {
     pub payer_account: solana_program::pubkey::Pubkey,
 
-    pub staking_pool_account: solana_program::pubkey::Pubkey,
+    pub xorca_state_account: solana_program::pubkey::Pubkey,
 
-    pub lst_mint_account: solana_program::pubkey::Pubkey,
+    pub xorca_mint_account: solana_program::pubkey::Pubkey,
 
-    pub stake_token_mint_account: solana_program::pubkey::Pubkey,
+    pub orca_mint_account: solana_program::pubkey::Pubkey,
 
     pub update_authority_account: solana_program::pubkey::Pubkey,
 
@@ -46,15 +46,15 @@ impl Initialize {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.staking_pool_account,
+            self.xorca_state_account,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.lst_mint_account,
+            self.xorca_mint_account,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            self.stake_token_mint_account,
+            self.orca_mint_account,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -90,7 +90,7 @@ pub struct InitializeInstructionData {
 
 impl InitializeInstructionData {
     pub fn new() -> Self {
-        Self { discriminator: 5 }
+        Self { discriminator: 3 }
     }
 }
 
@@ -103,9 +103,7 @@ impl Default for InitializeInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct InitializeInstructionArgs {
-    pub wind_up_period_s: u64,
     pub cool_down_period_s: u64,
-    pub lst_mint_decimals: u8,
 }
 
 /// Instruction builder for `Initialize`.
@@ -113,24 +111,22 @@ pub struct InitializeInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer_account
-///   1. `[writable]` staking_pool_account
-///   2. `[]` lst_mint_account
-///   3. `[]` stake_token_mint_account
+///   1. `[writable]` xorca_state_account
+///   2. `[]` xorca_mint_account
+///   3. `[]` orca_mint_account
 ///   4. `[]` update_authority_account
 ///   5. `[]` system_program_account
 ///   6. `[]` token_program_account
 #[derive(Clone, Debug, Default)]
 pub struct InitializeBuilder {
     payer_account: Option<solana_program::pubkey::Pubkey>,
-    staking_pool_account: Option<solana_program::pubkey::Pubkey>,
-    lst_mint_account: Option<solana_program::pubkey::Pubkey>,
-    stake_token_mint_account: Option<solana_program::pubkey::Pubkey>,
+    xorca_state_account: Option<solana_program::pubkey::Pubkey>,
+    xorca_mint_account: Option<solana_program::pubkey::Pubkey>,
+    orca_mint_account: Option<solana_program::pubkey::Pubkey>,
     update_authority_account: Option<solana_program::pubkey::Pubkey>,
     system_program_account: Option<solana_program::pubkey::Pubkey>,
     token_program_account: Option<solana_program::pubkey::Pubkey>,
-    wind_up_period_s: Option<u64>,
     cool_down_period_s: Option<u64>,
-    lst_mint_decimals: Option<u8>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -144,27 +140,27 @@ impl InitializeBuilder {
         self
     }
     #[inline(always)]
-    pub fn staking_pool_account(
+    pub fn xorca_state_account(
         &mut self,
-        staking_pool_account: solana_program::pubkey::Pubkey,
+        xorca_state_account: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.staking_pool_account = Some(staking_pool_account);
+        self.xorca_state_account = Some(xorca_state_account);
         self
     }
     #[inline(always)]
-    pub fn lst_mint_account(
+    pub fn xorca_mint_account(
         &mut self,
-        lst_mint_account: solana_program::pubkey::Pubkey,
+        xorca_mint_account: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.lst_mint_account = Some(lst_mint_account);
+        self.xorca_mint_account = Some(xorca_mint_account);
         self
     }
     #[inline(always)]
-    pub fn stake_token_mint_account(
+    pub fn orca_mint_account(
         &mut self,
-        stake_token_mint_account: solana_program::pubkey::Pubkey,
+        orca_mint_account: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
-        self.stake_token_mint_account = Some(stake_token_mint_account);
+        self.orca_mint_account = Some(orca_mint_account);
         self
     }
     #[inline(always)]
@@ -192,18 +188,8 @@ impl InitializeBuilder {
         self
     }
     #[inline(always)]
-    pub fn wind_up_period_s(&mut self, wind_up_period_s: u64) -> &mut Self {
-        self.wind_up_period_s = Some(wind_up_period_s);
-        self
-    }
-    #[inline(always)]
     pub fn cool_down_period_s(&mut self, cool_down_period_s: u64) -> &mut Self {
         self.cool_down_period_s = Some(cool_down_period_s);
-        self
-    }
-    #[inline(always)]
-    pub fn lst_mint_decimals(&mut self, lst_mint_decimals: u8) -> &mut Self {
-        self.lst_mint_decimals = Some(lst_mint_decimals);
         self
     }
     /// Add an additional account to the instruction.
@@ -228,13 +214,15 @@ impl InitializeBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = Initialize {
             payer_account: self.payer_account.expect("payer_account is not set"),
-            staking_pool_account: self
-                .staking_pool_account
-                .expect("staking_pool_account is not set"),
-            lst_mint_account: self.lst_mint_account.expect("lst_mint_account is not set"),
-            stake_token_mint_account: self
-                .stake_token_mint_account
-                .expect("stake_token_mint_account is not set"),
+            xorca_state_account: self
+                .xorca_state_account
+                .expect("xorca_state_account is not set"),
+            xorca_mint_account: self
+                .xorca_mint_account
+                .expect("xorca_mint_account is not set"),
+            orca_mint_account: self
+                .orca_mint_account
+                .expect("orca_mint_account is not set"),
             update_authority_account: self
                 .update_authority_account
                 .expect("update_authority_account is not set"),
@@ -246,18 +234,10 @@ impl InitializeBuilder {
                 .expect("token_program_account is not set"),
         };
         let args = InitializeInstructionArgs {
-            wind_up_period_s: self
-                .wind_up_period_s
-                .clone()
-                .expect("wind_up_period_s is not set"),
             cool_down_period_s: self
                 .cool_down_period_s
                 .clone()
                 .expect("cool_down_period_s is not set"),
-            lst_mint_decimals: self
-                .lst_mint_decimals
-                .clone()
-                .expect("lst_mint_decimals is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -268,11 +248,11 @@ impl InitializeBuilder {
 pub struct InitializeCpiAccounts<'a, 'b> {
     pub payer_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub staking_pool_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub xorca_state_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub lst_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub xorca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub stake_token_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub orca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub update_authority_account: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -288,11 +268,11 @@ pub struct InitializeCpi<'a, 'b> {
 
     pub payer_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub staking_pool_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub xorca_state_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub lst_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub xorca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub stake_token_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub orca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub update_authority_account: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -312,9 +292,9 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
         Self {
             __program: program,
             payer_account: accounts.payer_account,
-            staking_pool_account: accounts.staking_pool_account,
-            lst_mint_account: accounts.lst_mint_account,
-            stake_token_mint_account: accounts.stake_token_mint_account,
+            xorca_state_account: accounts.xorca_state_account,
+            xorca_mint_account: accounts.xorca_mint_account,
+            orca_mint_account: accounts.orca_mint_account,
             update_authority_account: accounts.update_authority_account,
             system_program_account: accounts.system_program_account,
             token_program_account: accounts.token_program_account,
@@ -361,15 +341,15 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.staking_pool_account.key,
+            *self.xorca_state_account.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.lst_mint_account.key,
+            *self.xorca_mint_account.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
-            *self.stake_token_mint_account.key,
+            *self.orca_mint_account.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -403,9 +383,9 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(8 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.payer_account.clone());
-        account_infos.push(self.staking_pool_account.clone());
-        account_infos.push(self.lst_mint_account.clone());
-        account_infos.push(self.stake_token_mint_account.clone());
+        account_infos.push(self.xorca_state_account.clone());
+        account_infos.push(self.xorca_mint_account.clone());
+        account_infos.push(self.orca_mint_account.clone());
         account_infos.push(self.update_authority_account.clone());
         account_infos.push(self.system_program_account.clone());
         account_infos.push(self.token_program_account.clone());
@@ -426,9 +406,9 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer_account
-///   1. `[writable]` staking_pool_account
-///   2. `[]` lst_mint_account
-///   3. `[]` stake_token_mint_account
+///   1. `[writable]` xorca_state_account
+///   2. `[]` xorca_mint_account
+///   3. `[]` orca_mint_account
 ///   4. `[]` update_authority_account
 ///   5. `[]` system_program_account
 ///   6. `[]` token_program_account
@@ -442,15 +422,13 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         let instruction = Box::new(InitializeCpiBuilderInstruction {
             __program: program,
             payer_account: None,
-            staking_pool_account: None,
-            lst_mint_account: None,
-            stake_token_mint_account: None,
+            xorca_state_account: None,
+            xorca_mint_account: None,
+            orca_mint_account: None,
             update_authority_account: None,
             system_program_account: None,
             token_program_account: None,
-            wind_up_period_s: None,
             cool_down_period_s: None,
-            lst_mint_decimals: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -464,27 +442,27 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn staking_pool_account(
+    pub fn xorca_state_account(
         &mut self,
-        staking_pool_account: &'b solana_program::account_info::AccountInfo<'a>,
+        xorca_state_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.staking_pool_account = Some(staking_pool_account);
+        self.instruction.xorca_state_account = Some(xorca_state_account);
         self
     }
     #[inline(always)]
-    pub fn lst_mint_account(
+    pub fn xorca_mint_account(
         &mut self,
-        lst_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+        xorca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.lst_mint_account = Some(lst_mint_account);
+        self.instruction.xorca_mint_account = Some(xorca_mint_account);
         self
     }
     #[inline(always)]
-    pub fn stake_token_mint_account(
+    pub fn orca_mint_account(
         &mut self,
-        stake_token_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+        orca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.stake_token_mint_account = Some(stake_token_mint_account);
+        self.instruction.orca_mint_account = Some(orca_mint_account);
         self
     }
     #[inline(always)]
@@ -512,18 +490,8 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn wind_up_period_s(&mut self, wind_up_period_s: u64) -> &mut Self {
-        self.instruction.wind_up_period_s = Some(wind_up_period_s);
-        self
-    }
-    #[inline(always)]
     pub fn cool_down_period_s(&mut self, cool_down_period_s: u64) -> &mut Self {
         self.instruction.cool_down_period_s = Some(cool_down_period_s);
-        self
-    }
-    #[inline(always)]
-    pub fn lst_mint_decimals(&mut self, lst_mint_decimals: u8) -> &mut Self {
-        self.instruction.lst_mint_decimals = Some(lst_mint_decimals);
         self
     }
     /// Add an additional account to the instruction.
@@ -568,21 +536,11 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = InitializeInstructionArgs {
-            wind_up_period_s: self
-                .instruction
-                .wind_up_period_s
-                .clone()
-                .expect("wind_up_period_s is not set"),
             cool_down_period_s: self
                 .instruction
                 .cool_down_period_s
                 .clone()
                 .expect("cool_down_period_s is not set"),
-            lst_mint_decimals: self
-                .instruction
-                .lst_mint_decimals
-                .clone()
-                .expect("lst_mint_decimals is not set"),
         };
         let instruction = InitializeCpi {
             __program: self.instruction.__program,
@@ -592,20 +550,20 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                 .payer_account
                 .expect("payer_account is not set"),
 
-            staking_pool_account: self
+            xorca_state_account: self
                 .instruction
-                .staking_pool_account
-                .expect("staking_pool_account is not set"),
+                .xorca_state_account
+                .expect("xorca_state_account is not set"),
 
-            lst_mint_account: self
+            xorca_mint_account: self
                 .instruction
-                .lst_mint_account
-                .expect("lst_mint_account is not set"),
+                .xorca_mint_account
+                .expect("xorca_mint_account is not set"),
 
-            stake_token_mint_account: self
+            orca_mint_account: self
                 .instruction
-                .stake_token_mint_account
-                .expect("stake_token_mint_account is not set"),
+                .orca_mint_account
+                .expect("orca_mint_account is not set"),
 
             update_authority_account: self
                 .instruction
@@ -634,15 +592,13 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
 struct InitializeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     payer_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    staking_pool_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    lst_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    stake_token_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    xorca_state_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    xorca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    orca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     update_authority_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    wind_up_period_s: Option<u64>,
     cool_down_period_s: Option<u64>,
-    lst_mint_decimals: Option<u8>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

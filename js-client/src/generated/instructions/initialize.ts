@@ -28,11 +28,11 @@ import {
   type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
-} from '@solana/kit';
-import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
-import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+} from "@solana/kit";
+import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from "../programs";
+import { getAccountMetaFactory, type ResolvedAccount } from "../shared";
 
-export const INITIALIZE_DISCRIMINATOR = 5;
+export const INITIALIZE_DISCRIMINATOR = 3;
 
 export function getInitializeDiscriminatorBytes() {
   return getU8Encoder().encode(INITIALIZE_DISCRIMINATOR);
@@ -41,9 +41,9 @@ export function getInitializeDiscriminatorBytes() {
 export type InitializeInstruction<
   TProgram extends string = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
   TAccountPayerAccount extends string | IAccountMeta<string> = string,
-  TAccountStakingPoolAccount extends string | IAccountMeta<string> = string,
-  TAccountLstMintAccount extends string | IAccountMeta<string> = string,
-  TAccountStakeTokenMintAccount extends string | IAccountMeta<string> = string,
+  TAccountXorcaStateAccount extends string | IAccountMeta<string> = string,
+  TAccountXorcaMintAccount extends string | IAccountMeta<string> = string,
+  TAccountOrcaMintAccount extends string | IAccountMeta<string> = string,
   TAccountUpdateAuthorityAccount extends string | IAccountMeta<string> = string,
   TAccountSystemProgramAccount extends string | IAccountMeta<string> = string,
   TAccountTokenProgramAccount extends string | IAccountMeta<string> = string,
@@ -56,15 +56,15 @@ export type InitializeInstruction<
         ? WritableSignerAccount<TAccountPayerAccount> &
             IAccountSignerMeta<TAccountPayerAccount>
         : TAccountPayerAccount,
-      TAccountStakingPoolAccount extends string
-        ? WritableAccount<TAccountStakingPoolAccount>
-        : TAccountStakingPoolAccount,
-      TAccountLstMintAccount extends string
-        ? ReadonlyAccount<TAccountLstMintAccount>
-        : TAccountLstMintAccount,
-      TAccountStakeTokenMintAccount extends string
-        ? ReadonlyAccount<TAccountStakeTokenMintAccount>
-        : TAccountStakeTokenMintAccount,
+      TAccountXorcaStateAccount extends string
+        ? WritableAccount<TAccountXorcaStateAccount>
+        : TAccountXorcaStateAccount,
+      TAccountXorcaMintAccount extends string
+        ? ReadonlyAccount<TAccountXorcaMintAccount>
+        : TAccountXorcaMintAccount,
+      TAccountOrcaMintAccount extends string
+        ? ReadonlyAccount<TAccountOrcaMintAccount>
+        : TAccountOrcaMintAccount,
       TAccountUpdateAuthorityAccount extends string
         ? ReadonlyAccount<TAccountUpdateAuthorityAccount>
         : TAccountUpdateAuthorityAccount,
@@ -80,35 +80,27 @@ export type InitializeInstruction<
 
 export type InitializeInstructionData = {
   discriminator: number;
-  windUpPeriodS: bigint;
   coolDownPeriodS: bigint;
-  lstMintDecimals: number;
 };
 
 export type InitializeInstructionDataArgs = {
-  windUpPeriodS: number | bigint;
   coolDownPeriodS: number | bigint;
-  lstMintDecimals: number;
 };
 
 export function getInitializeInstructionDataEncoder(): Encoder<InitializeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
-      ['discriminator', getU8Encoder()],
-      ['windUpPeriodS', getU64Encoder()],
-      ['coolDownPeriodS', getU64Encoder()],
-      ['lstMintDecimals', getU8Encoder()],
+      ["discriminator", getU8Encoder()],
+      ["coolDownPeriodS", getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR }),
   );
 }
 
 export function getInitializeInstructionDataDecoder(): Decoder<InitializeInstructionData> {
   return getStructDecoder([
-    ['discriminator', getU8Decoder()],
-    ['windUpPeriodS', getU64Decoder()],
-    ['coolDownPeriodS', getU64Decoder()],
-    ['lstMintDecimals', getU8Decoder()],
+    ["discriminator", getU8Decoder()],
+    ["coolDownPeriodS", getU64Decoder()],
   ]);
 }
 
@@ -118,36 +110,34 @@ export function getInitializeInstructionDataCodec(): Codec<
 > {
   return combineCodec(
     getInitializeInstructionDataEncoder(),
-    getInitializeInstructionDataDecoder()
+    getInitializeInstructionDataDecoder(),
   );
 }
 
 export type InitializeInput<
   TAccountPayerAccount extends string = string,
-  TAccountStakingPoolAccount extends string = string,
-  TAccountLstMintAccount extends string = string,
-  TAccountStakeTokenMintAccount extends string = string,
+  TAccountXorcaStateAccount extends string = string,
+  TAccountXorcaMintAccount extends string = string,
+  TAccountOrcaMintAccount extends string = string,
   TAccountUpdateAuthorityAccount extends string = string,
   TAccountSystemProgramAccount extends string = string,
   TAccountTokenProgramAccount extends string = string,
 > = {
   payerAccount: TransactionSigner<TAccountPayerAccount>;
-  stakingPoolAccount: Address<TAccountStakingPoolAccount>;
-  lstMintAccount: Address<TAccountLstMintAccount>;
-  stakeTokenMintAccount: Address<TAccountStakeTokenMintAccount>;
+  xorcaStateAccount: Address<TAccountXorcaStateAccount>;
+  xorcaMintAccount: Address<TAccountXorcaMintAccount>;
+  orcaMintAccount: Address<TAccountOrcaMintAccount>;
   updateAuthorityAccount: Address<TAccountUpdateAuthorityAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
   tokenProgramAccount: Address<TAccountTokenProgramAccount>;
-  windUpPeriodS: InitializeInstructionDataArgs['windUpPeriodS'];
-  coolDownPeriodS: InitializeInstructionDataArgs['coolDownPeriodS'];
-  lstMintDecimals: InitializeInstructionDataArgs['lstMintDecimals'];
+  coolDownPeriodS: InitializeInstructionDataArgs["coolDownPeriodS"];
 };
 
 export function getInitializeInstruction<
   TAccountPayerAccount extends string,
-  TAccountStakingPoolAccount extends string,
-  TAccountLstMintAccount extends string,
-  TAccountStakeTokenMintAccount extends string,
+  TAccountXorcaStateAccount extends string,
+  TAccountXorcaMintAccount extends string,
+  TAccountOrcaMintAccount extends string,
   TAccountUpdateAuthorityAccount extends string,
   TAccountSystemProgramAccount extends string,
   TAccountTokenProgramAccount extends string,
@@ -156,20 +146,20 @@ export function getInitializeInstruction<
 >(
   input: InitializeInput<
     TAccountPayerAccount,
-    TAccountStakingPoolAccount,
-    TAccountLstMintAccount,
-    TAccountStakeTokenMintAccount,
+    TAccountXorcaStateAccount,
+    TAccountXorcaMintAccount,
+    TAccountOrcaMintAccount,
     TAccountUpdateAuthorityAccount,
     TAccountSystemProgramAccount,
     TAccountTokenProgramAccount
   >,
-  config?: { programAddress?: TProgramAddress }
+  config?: { programAddress?: TProgramAddress },
 ): InitializeInstruction<
   TProgramAddress,
   TAccountPayerAccount,
-  TAccountStakingPoolAccount,
-  TAccountLstMintAccount,
-  TAccountStakeTokenMintAccount,
+  TAccountXorcaStateAccount,
+  TAccountXorcaMintAccount,
+  TAccountOrcaMintAccount,
   TAccountUpdateAuthorityAccount,
   TAccountSystemProgramAccount,
   TAccountTokenProgramAccount
@@ -181,13 +171,16 @@ export function getInitializeInstruction<
   // Original accounts.
   const originalAccounts = {
     payerAccount: { value: input.payerAccount ?? null, isWritable: true },
-    stakingPoolAccount: {
-      value: input.stakingPoolAccount ?? null,
+    xorcaStateAccount: {
+      value: input.xorcaStateAccount ?? null,
       isWritable: true,
     },
-    lstMintAccount: { value: input.lstMintAccount ?? null, isWritable: false },
-    stakeTokenMintAccount: {
-      value: input.stakeTokenMintAccount ?? null,
+    xorcaMintAccount: {
+      value: input.xorcaMintAccount ?? null,
+      isWritable: false,
+    },
+    orcaMintAccount: {
+      value: input.orcaMintAccount ?? null,
       isWritable: false,
     },
     updateAuthorityAccount: {
@@ -211,27 +204,27 @@ export function getInitializeInstruction<
   // Original args.
   const args = { ...input };
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
+  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
   const instruction = {
     accounts: [
       getAccountMeta(accounts.payerAccount),
-      getAccountMeta(accounts.stakingPoolAccount),
-      getAccountMeta(accounts.lstMintAccount),
-      getAccountMeta(accounts.stakeTokenMintAccount),
+      getAccountMeta(accounts.xorcaStateAccount),
+      getAccountMeta(accounts.xorcaMintAccount),
+      getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.updateAuthorityAccount),
       getAccountMeta(accounts.systemProgramAccount),
       getAccountMeta(accounts.tokenProgramAccount),
     ],
     programAddress,
     data: getInitializeInstructionDataEncoder().encode(
-      args as InitializeInstructionDataArgs
+      args as InitializeInstructionDataArgs,
     ),
   } as InitializeInstruction<
     TProgramAddress,
     TAccountPayerAccount,
-    TAccountStakingPoolAccount,
-    TAccountLstMintAccount,
-    TAccountStakeTokenMintAccount,
+    TAccountXorcaStateAccount,
+    TAccountXorcaMintAccount,
+    TAccountOrcaMintAccount,
     TAccountUpdateAuthorityAccount,
     TAccountSystemProgramAccount,
     TAccountTokenProgramAccount
@@ -247,9 +240,9 @@ export type ParsedInitializeInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     payerAccount: TAccountMetas[0];
-    stakingPoolAccount: TAccountMetas[1];
-    lstMintAccount: TAccountMetas[2];
-    stakeTokenMintAccount: TAccountMetas[3];
+    xorcaStateAccount: TAccountMetas[1];
+    xorcaMintAccount: TAccountMetas[2];
+    orcaMintAccount: TAccountMetas[3];
     updateAuthorityAccount: TAccountMetas[4];
     systemProgramAccount: TAccountMetas[5];
     tokenProgramAccount: TAccountMetas[6];
@@ -263,11 +256,11 @@ export function parseInitializeInstruction<
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
-    IInstructionWithData<Uint8Array>
+    IInstructionWithData<Uint8Array>,
 ): ParsedInitializeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 7) {
     // TODO: Coded error.
-    throw new Error('Not enough accounts');
+    throw new Error("Not enough accounts");
   }
   let accountIndex = 0;
   const getNextAccount = () => {
@@ -279,9 +272,9 @@ export function parseInitializeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       payerAccount: getNextAccount(),
-      stakingPoolAccount: getNextAccount(),
-      lstMintAccount: getNextAccount(),
-      stakeTokenMintAccount: getNextAccount(),
+      xorcaStateAccount: getNextAccount(),
+      xorcaMintAccount: getNextAccount(),
+      orcaMintAccount: getNextAccount(),
       updateAuthorityAccount: getNextAccount(),
       systemProgramAccount: getNextAccount(),
       tokenProgramAccount: getNextAccount(),

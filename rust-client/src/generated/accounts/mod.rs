@@ -5,10 +5,8 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-pub(crate) mod r#pending_claim;
 pub(crate) mod r#pending_withdraw;
-pub(crate) mod r#staking_pool;
+pub(crate) mod r#xorca_state;
 
-pub use self::r#pending_claim::*;
 pub use self::r#pending_withdraw::*;
-pub use self::r#staking_pool::*;
+pub use self::r#xorca_state::*;

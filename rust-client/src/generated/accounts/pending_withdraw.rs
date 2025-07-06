@@ -13,7 +13,7 @@ use borsh::BorshSerialize;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PendingWithdraw {
     pub discriminator: AccountDiscriminator,
-    pub withdrawable_stake_amount: u64,
+    pub withdrawable_orca_amount: u64,
     pub withdrawable_timestamp: i64,
 }
 

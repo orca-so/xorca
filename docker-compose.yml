@@ -1,6 +1,17 @@
 name: xorca
 
 services:
+  build-solana-program:
+    image: solanafoundation/solana-verifiable-build:2.2.1
+    working_dir: /usr/src/xorca
+    command: >
+      cargo build-sbf --verbose --force-tools-install
+    profiles: [dev, test, build, publish]
+    volumes:
+      - .:/usr/src/xorca:delegated
+      - xorca_cargo_home:/usr/local/cargo:delegated
+    platform: linux/amd64
+
   generate-code:
     image: rust:1.85
     working_dir: /usr/src/xorca
@@ -14,20 +25,62 @@ services:
       && yarn install
       && yarn generate"
     profiles: [dev, build, publish]
+    depends_on:
+      build-solana-program:
+        condition: service_completed_successfully
     volumes:
       - .:/usr/src/xorca:delegated
       - xorca_cargo_home:/usr/local/cargo:delegated
     platform: linux/amd64
 
-  build-solana-program:
-    image: solanafoundation/solana-verifiable-build:2.1.13
+  build-rust:
+    image: rust:1.85
     working_dir: /usr/src/xorca
     command: >
-      cargo build-sbf --force-tools-install
-    profiles: [dev, test, build, publish]
+      sh -c "curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+      && apt-get update && apt-get install -y nodejs
+      && corepack enable
+      && corepack prepare yarn@latest --activate
+      && yarn cache clean
+      && yarn install
+      && cargo install wasm-pack
+      && rustup component add rustfmt
+      && cargo build -p xorca --features wasm
+      && cargo fmt -p xorca"
+    profiles: [build]
+    depends_on:
+      generate-code:
+        condition: service_completed_successfully
     volumes:
       - .:/usr/src/xorca:delegated
       - xorca_cargo_home:/usr/local/cargo:delegated
+    platform: linux/amd64
+    deploy:
+      resources:
+        limits:
+          memory: 8G
+          cpus: "4.0"
+
+  build-js:
+    image: rust:1.85
+    working_dir: /usr/src/xorca
+    command: >
+      sh -c "curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
+      && apt-get update && apt-get install -y nodejs
+      && corepack enable
+      && corepack prepare yarn@latest --activate
+      && yarn cache clean
+      && yarn install 
+      && yarn workspace @orca-so/xorca build
+      && yarn workspace @orca-so/xorca fmt"
+    profiles: [dev, build, publish]
+    depends_on:
+      generate-code:
+        condition: service_completed_successfully
+      build-rust:
+        condition: service_completed_successfully
+    volumes:
+      - .:/usr/src/xorca:delegated
     platform: linux/amd64
 
   solana-program-validator:
@@ -82,49 +135,6 @@ services:
         condition: service_healthy
     platform: linux/amd64
 
-  build-js:
-    image: rust:1.85
-    working_dir: /usr/src/xorca
-    command: >
-      sh -c "curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-      && apt-get update && apt-get install -y nodejs
-      && corepack enable
-      && corepack prepare yarn@latest --activate
-      && yarn cache clean
-      && yarn install && yarn workspace @orca-so/xorca build"
-    profiles: [dev, build, publish]
-    depends_on:
-      generate-code:
-        condition: service_completed_successfully
-    volumes:
-      - .:/usr/src/xorca:delegated
-    platform: linux/amd64
-
-  build-rust:
-    image: rust:1.85
-    working_dir: /usr/src/xorca
-    command: >
-      cargo build -p xorca
-    profiles: [build]
-    depends_on:
-      generate-code:
-        condition: service_completed_successfully
-    volumes:
-      - .:/usr/src/xorca:delegated
-    platform: linux/amd64
-
-  build-idl:
-    image: rust:1.85
-    working_dir: /usr/src/xorca
-    command: >
-      sh -c "cargo install shank-cli
-      && shank idl -o target/idl -r solana-program"
-    profiles: [build, publish]
-    volumes:
-      - .:/usr/src/xorca:delegated
-      - xorca_cargo_home:/usr/local/cargo:delegated
-    platform: linux/amd64
-
   build:
     image: alpine:3
     working_dir: /usr/src/xorca
@@ -133,11 +143,11 @@ services:
     depends_on:
       build-solana-program:
         condition: service_completed_successfully
-      build-js:
+      generate-code:
         condition: service_completed_successfully
       build-rust:
         condition: service_completed_successfully
-      build-idl:
+      build-js:
         condition: service_completed_successfully
     profiles: [build]
     volumes:

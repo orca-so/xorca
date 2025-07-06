@@ -22,22 +22,22 @@ pub const INITIAL_UPGRADE_AUTHORITY_ID: Pubkey = pubkey!("1111111111111111111111
 
 pub enum Instruction {
     #[account(0, writable, signer, name = "staker_account")]
-    #[account(1, writable, name = "staking_pool_account")]
-    #[account(2, writable, name = "staking_pool_stake_token_account")]
-    #[account(3, writable, name = "staker_stake_token_account")]
-    #[account(4, name = "stake_token_mint_account")]
-    #[account(5, name = "lst_mint_account")]
+    #[account(1, writable, name = "xorca_state_account")]
+    #[account(2, writable, name = "xorca_state_orca_ata")]
+    #[account(3, writable, name = "staker_orca_ata")]
+    #[account(4, name = "orca_mint_account")]
+    #[account(5, name = "xorca_mint_account")]
     #[account(6, name = "system_program_account")]
     #[account(7, name = "token_program_account")]
     Stake { stake_amount: u64 },
 
     #[account(0, writable, signer, name = "unstaker_account")]
-    #[account(1, writable, name = "staking_pool_account")]
-    #[account(2, writable, name = "staking_pool_stake_token_account")]
+    #[account(1, writable, name = "xorca_state_account")]
+    #[account(2, writable, name = "xorca_state_orca_ata")]
     #[account(3, writable, name = "pending_withdraw_account")]
     #[account(4, writable, name = "unstaker_lst_account")]
-    #[account(5, name = "lst_mint_account")]
-    #[account(6, name = "stake_token_mint_account")]
+    #[account(5, name = "xorca_mint_account")]
+    #[account(6, name = "orca_mint_account")]
     #[account(7, name = "system_program_account")]
     #[account(8, name = "token_program_account")]
     Unstake {
@@ -46,26 +46,26 @@ pub enum Instruction {
     },
 
     #[account(0, writable, signer, name = "unstaker_account")]
-    #[account(1, writable, name = "staking_pool_account")]
+    #[account(1, writable, name = "xorca_state_account")]
     #[account(2, writable, name = "pending_withdraw_account")]
-    #[account(3, writable, name = "unstaker_stake_token_account")]
-    #[account(4, writable, name = "staking_pool_stake_token_account")]
-    #[account(5, name = "stake_token_mint_account")]
+    #[account(3, writable, name = "unstaker_orca_ata")]
+    #[account(4, writable, name = "xorca_state_orca_ata")]
+    #[account(5, name = "orca_mint_account")]
     #[account(6, name = "system_program_account")]
     #[account(7, name = "token_program_account")]
     Withdraw { withdraw_index: u8 },
 
     #[account(0, writable, signer, name = "payer_account")]
-    #[account(1, writable, name = "staking_pool_account")]
-    #[account(2, name = "lst_mint_account")]
-    #[account(3, name = "stake_token_mint_account")]
+    #[account(1, writable, name = "xorca_state_account")]
+    #[account(2, name = "xorca_mint_account")]
+    #[account(3, name = "orca_mint_account")]
     #[account(4, name = "update_authority_account")]
     #[account(5, name = "system_program_account")]
     #[account(6, name = "token_program_account")]
     Initialize { cool_down_period_s: u64 },
 
     #[account(0, writable, signer, name = "update_authority_account")]
-    #[account(1, writable, name = "staking_pool_account")]
+    #[account(1, writable, name = "xorca_state_account")]
     Set {
         new_cool_down_period: Option<u64>,
         new_update_authority: Option<Pubkey>,

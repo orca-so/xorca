@@ -13,11 +13,10 @@ import {
   type Codec,
   type Decoder,
   type Encoder,
-} from '@solana/kit';
+} from "@solana/kit";
 
 export enum AccountDiscriminator {
-  StakingPool,
-  PendingClaim,
+  XorcaState,
   PendingWithdraw,
 }
 
@@ -37,6 +36,6 @@ export function getAccountDiscriminatorCodec(): Codec<
 > {
   return combineCodec(
     getAccountDiscriminatorEncoder(),
-    getAccountDiscriminatorDecoder()
+    getAccountDiscriminatorDecoder(),
   );
 }
