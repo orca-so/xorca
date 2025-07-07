@@ -23,11 +23,14 @@ For more detailed Docker instructions, see [DOCKER.md](./DOCKER.md).
 
 - `solana-program/` - The main Solana program implementation
 - `rust-client/` - Rust client library for interacting with the program
+  - `src/generated/` - Auto-generated client code from IDL
   - `src/math/` - Math utility functions (compiled to WASM)
 - `js-client/` - JavaScript/TypeScript client library
+  - `src/generated/` - Auto-generated client code from IDL
   - `src/generated/wasm/` - Generated WASM bindings and TypeScript wrappers
 - `solana-program-test/` - Test suite for the Solana program
-- `scripts/` - Build scripts including WASM compilation
+- `scripts/` - Build scripts and utilities
+- `codama.js` - Code generation script using Codama framework
 
 ## Development
 
@@ -63,23 +66,24 @@ For Docker-based builds, you only need:
    This will:
 
    - Build the Solana program and generate IDL using shank
-   - Generate TypeScript and Rust client code using codama
+   - Generate TypeScript and Rust client code using Codama
    - Build the TypeScript SDK
-   - Build the Rust SDK
+   - Build the Rust SDK with WASM features
+   - Format code with Prettier and cargo fmt
 
 3. Or build individual components:
 
    ```bash
-   # Build contract and generate code
+   # Build contract and generate IDL
    yarn build:contract
 
-   # Generate client code from IDL
+   # Generate client code from IDL using Codama
    yarn generate
 
    # Build TypeScript SDK only
    yarn build:ts
 
-   # Build Rust SDK only
+   # Build Rust SDK only (with WASM features)
    yarn build:rs
    ```
 
@@ -89,18 +93,37 @@ For Docker-based builds, you only need:
    yarn workspace @orca-so/xorca test
    ```
 
+### Code Generation
+
+The project uses [Codama](https://github.com/codama-ai/codama) for generating type-safe client code from the Solana program IDL. The generation process:
+
+1. Builds the Solana program and generates IDL using shank
+2. Uses Codama to generate TypeScript and Rust client code
+3. Includes account discriminators and padding fields
+4. Generates WASM bindings for Rust math functions
+
+The generated code is placed in:
+
+- `js-client/src/generated/` - TypeScript client code
+- `rust-client/src/generated/` - Rust client code
+
 ### Available Scripts
 
-- `yarn build` - Build everything locally (contract, generate code, build SDKs, WASM)
+- `yarn build` - Build everything locally (contract, generate code, build SDKs, format)
 - `yarn build:docker` - Build everything using Docker (no local dependencies needed)
 - `yarn build:contract` - Build the Solana program and generate IDL
-- `yarn build:wasm` - Build Rust functions to WASM for use in TypeScript
 - `yarn build:ts` - Build the TypeScript SDK only
-- `yarn build:rs` - Build the Rust SDK only
-- `yarn generate` - Generate client code from the Solana program IDL
-- `yarn copy:wasm` - Copy WASM files to the distribution directory
-- `yarn clean` - Clean generated artifacts
-- `yarn fmt` - Format code with Prettier
+- `yarn build:rs` - Build the Rust SDK with WASM features
+- `yarn generate` - Generate client code from the Solana program IDL using Codama
+- `yarn clean` - Clean generated artifacts (generated code, IDL, WASM packages)
+- `yarn fmt` - Format code with Prettier and cargo fmt
+
+### Workspaces
+
+The project uses Yarn workspaces for managing multiple packages:
+
+- `js-client` - The main JavaScript/TypeScript client library (`@orca-so/xorca`)
+- `test-server` - Test server for development (referenced in workspaces)
 
 ## Documentation
 
