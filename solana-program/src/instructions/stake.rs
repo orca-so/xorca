@@ -7,12 +7,15 @@ use crate::{
     cpi::token::TokenMint,
     error::ErrorCode,
     state::xorca_state::XorcaState,
-    util::account::get_account_info,
+    util::{account::get_account_info, math::convert_stake_token_to_lst},
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
-use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
+use pinocchio_token::{
+    instructions::{MintTo, Transfer},
+    ID as SPL_TOKEN_PROGRAM_ID,
+};
 
 pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> ProgramResult {
     let staker_account = get_account_info(accounts, 0)?;
@@ -80,6 +83,33 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
 
     // 9. Token Account Assertions
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    // Calculate LST to mint
+    let non_escrowed_orca_amount =
+        xorca_state_orca_ata_data.amount - xorca_state.escrowed_orca_amount;
+    let xorca_to_mint = convert_stake_token_to_lst(
+        *stake_amount,
+        non_escrowed_orca_amount,
+        xorca_mint_data.supply,
+    )?;
+
+    // Transfer stake tokens from staker ATA to staking pool ATA
+    let transfer_instruction = Transfer {
+        from: staker_orca_ata,
+        to: xorca_state_orca_ata,
+        authority: staker_account,
+        amount: *stake_amount,
+    };
+    transfer_instruction.invoke()?;
+
+    // Mint LST to staker LST ATA
+    let mint_to_instruction = MintTo {
+        mint: xorca_mint_account,
+        account: staker_xorca_ata,
+        mint_authority: xorca_state_account,
+        amount: xorca_to_mint,
+    };
+    mint_to_instruction.invoke_signed(&[xorca_state_seeds.as_slice().into()])?;
 
     Ok(())
 }
