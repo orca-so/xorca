@@ -24,7 +24,7 @@ services:
       && yarn cache clean
       && yarn install
       && yarn generate"
-    profiles: [dev, build, publish]
+    profiles: [dev, build, publish, test]
     depends_on:
       build-solana-program:
         condition: service_completed_successfully
