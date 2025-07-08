@@ -28,9 +28,9 @@ import {
   type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
-} from "@solana/kit";
-import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from "../programs";
-import { getAccountMetaFactory, type ResolvedAccount } from "../shared";
+} from '@solana/kit';
+import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const STAKE_DISCRIMINATOR = 0;
 
@@ -54,8 +54,7 @@ export type StakeInstruction<
   IInstructionWithAccounts<
     [
       TAccountStakerAccount extends string
-        ? WritableSignerAccount<TAccountStakerAccount> &
-            IAccountSignerMeta<TAccountStakerAccount>
+        ? WritableSignerAccount<TAccountStakerAccount> & IAccountSignerMeta<TAccountStakerAccount>
         : TAccountStakerAccount,
       TAccountXorcaStateAccount extends string
         ? WritableAccount<TAccountXorcaStateAccount>
@@ -92,17 +91,17 @@ export type StakeInstructionDataArgs = { stakeAmount: number | bigint };
 export function getStakeInstructionDataEncoder(): Encoder<StakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
-      ["discriminator", getU8Encoder()],
-      ["stakeAmount", getU64Encoder()],
+      ['discriminator', getU8Encoder()],
+      ['stakeAmount', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: STAKE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: STAKE_DISCRIMINATOR })
   );
 }
 
 export function getStakeInstructionDataDecoder(): Decoder<StakeInstructionData> {
   return getStructDecoder([
-    ["discriminator", getU8Decoder()],
-    ["stakeAmount", getU64Decoder()],
+    ['discriminator', getU8Decoder()],
+    ['stakeAmount', getU64Decoder()],
   ]);
 }
 
@@ -110,10 +109,7 @@ export function getStakeInstructionDataCodec(): Codec<
   StakeInstructionDataArgs,
   StakeInstructionData
 > {
-  return combineCodec(
-    getStakeInstructionDataEncoder(),
-    getStakeInstructionDataDecoder(),
-  );
+  return combineCodec(getStakeInstructionDataEncoder(), getStakeInstructionDataDecoder());
 }
 
 export type StakeInput<
@@ -134,7 +130,7 @@ export type StakeInput<
   xorcaMintAccount: Address<TAccountXorcaMintAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
   tokenProgramAccount: Address<TAccountTokenProgramAccount>;
-  stakeAmount: StakeInstructionDataArgs["stakeAmount"];
+  stakeAmount: StakeInstructionDataArgs['stakeAmount'];
 };
 
 export function getStakeInstruction<
@@ -146,8 +142,7 @@ export function getStakeInstruction<
   TAccountXorcaMintAccount extends string,
   TAccountSystemProgramAccount extends string,
   TAccountTokenProgramAccount extends string,
-  TProgramAddress extends
-    Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: StakeInput<
     TAccountStakerAccount,
@@ -159,7 +154,7 @@ export function getStakeInstruction<
     TAccountSystemProgramAccount,
     TAccountTokenProgramAccount
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): StakeInstruction<
   TProgramAddress,
   TAccountStakerAccount,
@@ -172,8 +167,7 @@ export function getStakeInstruction<
   TAccountTokenProgramAccount
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -204,15 +198,12 @@ export function getStakeInstruction<
       isWritable: false,
     },
   };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedAccount
-  >;
+  const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
 
   // Original args.
   const args = { ...input };
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.stakerAccount),
@@ -225,9 +216,7 @@ export function getStakeInstruction<
       getAccountMeta(accounts.tokenProgramAccount),
     ],
     programAddress,
-    data: getStakeInstructionDataEncoder().encode(
-      args as StakeInstructionDataArgs,
-    ),
+    data: getStakeInstructionDataEncoder().encode(args as StakeInstructionDataArgs),
   } as StakeInstruction<
     TProgramAddress,
     TAccountStakerAccount,
@@ -267,11 +256,11 @@ export function parseStakeInstruction<
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
-    IInstructionWithData<Uint8Array>,
+    IInstructionWithData<Uint8Array>
 ): ParsedStakeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 8) {
     // TODO: Coded error.
-    throw new Error("Not enough accounts");
+    throw new Error('Not enough accounts');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

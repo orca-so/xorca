@@ -5,7 +5,8 @@ services:
     image: solanafoundation/solana-verifiable-build:2.2.1
     working_dir: /usr/src/xorca
     command: >
-      cargo build-sbf --verbose --force-tools-install
+      sh -c "cargo build-sbf --verbose --force-tools-install
+      && shank idl -o target/idl -r solana-program"
     profiles: [dev, test, build, publish]
     volumes:
       - .:/usr/src/xorca:delegated
@@ -13,17 +14,12 @@ services:
     platform: linux/amd64
 
   generate-code:
-    image: rust:1.85
+    build:
+      context: .
+      dockerfile: Dockerfile
     working_dir: /usr/src/xorca
     command: >
-      sh -c "cargo install shank-cli
-      && curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-      && apt-get update && apt-get install -y nodejs
-      && corepack enable
-      && corepack prepare yarn@latest --activate
-      && yarn cache clean
-      && yarn install
-      && yarn generate"
+      sh -c "yarn generate"
     profiles: [dev, build, publish, test]
     depends_on:
       build-solana-program:
@@ -34,18 +30,12 @@ services:
     platform: linux/amd64
 
   build-rust:
-    image: rust:1.85
+    build:
+      context: .
+      dockerfile: Dockerfile
     working_dir: /usr/src/xorca
     command: >
-      sh -c "curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-      && apt-get update && apt-get install -y nodejs
-      && corepack enable
-      && corepack prepare yarn@latest --activate
-      && yarn cache clean
-      && yarn install
-      && cargo install wasm-pack
-      && rustup component add rustfmt
-      && cargo build -p xorca --features wasm
+      sh -c "cargo build -p xorca --features wasm
       && cargo fmt -p xorca"
     profiles: [build]
     depends_on:
@@ -59,20 +49,18 @@ services:
       resources:
         limits:
           memory: 8G
-          cpus: "4.0"
+          cpus: '4.0'
 
   build-js:
-    image: rust:1.85
+    build:
+      context: .
+      dockerfile: Dockerfile
     working_dir: /usr/src/xorca
     command: >
-      sh -c "curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-      && apt-get update && apt-get install -y nodejs
-      && corepack enable
-      && corepack prepare yarn@latest --activate
-      && yarn cache clean
-      && yarn install 
+      sh -c "yarn install --frozen-lockfile
       && yarn workspace @orca-so/xorca build
-      && yarn workspace @orca-so/xorca fmt"
+      && yarn workspace @orca-so/xorca fmt
+      && yarn fmt"
     profiles: [dev, build, publish]
     depends_on:
       generate-code:
@@ -96,22 +84,22 @@ services:
     healthcheck:
       test:
         [
-          "CMD",
-          "solana",
-          "account",
-          "xorcaStakingProgram111111111111111111111111111111111",
-          "--url",
-          "http://localhost:8899",
+          'CMD',
+          'solana',
+          'account',
+          'xorcaStakingProgram111111111111111111111111111111111',
+          '--url',
+          'http://localhost:8899',
         ]
       interval: 10s
       timeout: 10s
       retries: 20
       start_period: 30s
     ports:
-      - "127.0.0.1:1024:1024" # gossip
-      - "127.0.0.1:1027:1027" # tpu
-      - "127.0.0.1:8899:8899" # rpc
-      - "127.0.0.1:8900:8900" # ws
+      - '127.0.0.1:1024:1024' # gossip
+      - '127.0.0.1:1027:1027' # tpu
+      - '127.0.0.1:8899:8899' # rpc
+      - '127.0.0.1:8900:8900' # ws
     volumes:
       - .:/usr/src/xorca:delegated
     platform: linux/amd64
@@ -119,10 +107,10 @@ services:
       resources:
         limits:
           memory: 6G
-          cpus: "2.0"
+          cpus: '2.0'
         reservations:
           memory: 3G
-          cpus: "1.0"
+          cpus: '1.0'
     restart: unless-stopped
 
   solana-program-logs:
@@ -168,15 +156,13 @@ services:
     platform: linux/amd64
 
   test-js:
-    image: rust:1.85
+    build:
+      context: .
+      dockerfile: Dockerfile
     working_dir: /usr/src/xorca
     command: >
-      sh -c "curl -fsSL https://deb.nodesource.com/setup_lts.x | bash -
-      && apt-get update && apt-get install -y nodejs
-      && corepack enable
-      && corepack prepare yarn@latest --activate
-      && yarn cache clean
-      && yarn install && yarn workspace @orca-so/xorca test"
+      sh -c "yarn install --frozen-lockfile
+      && yarn workspace @orca-so/xorca test"
     profiles: [test]
     depends_on:
       generate-code:

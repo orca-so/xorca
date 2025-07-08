@@ -26,9 +26,9 @@ import {
   type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
-} from "@solana/kit";
-import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from "../programs";
-import { getAccountMetaFactory, type ResolvedAccount } from "../shared";
+} from '@solana/kit';
+import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const WITHDRAW_DISCRIMINATOR = 2;
 
@@ -90,17 +90,17 @@ export type WithdrawInstructionDataArgs = { withdrawIndex: number };
 export function getWithdrawInstructionDataEncoder(): Encoder<WithdrawInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
-      ["discriminator", getU8Encoder()],
-      ["withdrawIndex", getU8Encoder()],
+      ['discriminator', getU8Encoder()],
+      ['withdrawIndex', getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: WITHDRAW_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: WITHDRAW_DISCRIMINATOR })
   );
 }
 
 export function getWithdrawInstructionDataDecoder(): Decoder<WithdrawInstructionData> {
   return getStructDecoder([
-    ["discriminator", getU8Decoder()],
-    ["withdrawIndex", getU8Decoder()],
+    ['discriminator', getU8Decoder()],
+    ['withdrawIndex', getU8Decoder()],
   ]);
 }
 
@@ -108,10 +108,7 @@ export function getWithdrawInstructionDataCodec(): Codec<
   WithdrawInstructionDataArgs,
   WithdrawInstructionData
 > {
-  return combineCodec(
-    getWithdrawInstructionDataEncoder(),
-    getWithdrawInstructionDataDecoder(),
-  );
+  return combineCodec(getWithdrawInstructionDataEncoder(), getWithdrawInstructionDataDecoder());
 }
 
 export type WithdrawInput<
@@ -132,7 +129,7 @@ export type WithdrawInput<
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
   tokenProgramAccount: Address<TAccountTokenProgramAccount>;
-  withdrawIndex: WithdrawInstructionDataArgs["withdrawIndex"];
+  withdrawIndex: WithdrawInstructionDataArgs['withdrawIndex'];
 };
 
 export function getWithdrawInstruction<
@@ -144,8 +141,7 @@ export function getWithdrawInstruction<
   TAccountOrcaMintAccount extends string,
   TAccountSystemProgramAccount extends string,
   TAccountTokenProgramAccount extends string,
-  TProgramAddress extends
-    Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: WithdrawInput<
     TAccountUnstakerAccount,
@@ -157,7 +153,7 @@ export function getWithdrawInstruction<
     TAccountSystemProgramAccount,
     TAccountTokenProgramAccount
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): WithdrawInstruction<
   TProgramAddress,
   TAccountUnstakerAccount,
@@ -170,8 +166,7 @@ export function getWithdrawInstruction<
   TAccountTokenProgramAccount
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -202,15 +197,12 @@ export function getWithdrawInstruction<
       isWritable: false,
     },
   };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedAccount
-  >;
+  const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
 
   // Original args.
   const args = { ...input };
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.unstakerAccount),
@@ -223,9 +215,7 @@ export function getWithdrawInstruction<
       getAccountMeta(accounts.tokenProgramAccount),
     ],
     programAddress,
-    data: getWithdrawInstructionDataEncoder().encode(
-      args as WithdrawInstructionDataArgs,
-    ),
+    data: getWithdrawInstructionDataEncoder().encode(args as WithdrawInstructionDataArgs),
   } as WithdrawInstruction<
     TProgramAddress,
     TAccountUnstakerAccount,
@@ -265,11 +255,11 @@ export function parseWithdrawInstruction<
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
-    IInstructionWithData<Uint8Array>,
+    IInstructionWithData<Uint8Array>
 ): ParsedWithdrawInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 8) {
     // TODO: Coded error.
-    throw new Error("Not enough accounts");
+    throw new Error('Not enough accounts');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

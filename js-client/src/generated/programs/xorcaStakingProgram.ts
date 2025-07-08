@@ -6,23 +6,18 @@
  * @see https://github.com/codama-idl/codama
  */
 
-import {
-  containsBytes,
-  getU8Encoder,
-  type Address,
-  type ReadonlyUint8Array,
-} from "@solana/kit";
+import { containsBytes, getU8Encoder, type Address, type ReadonlyUint8Array } from '@solana/kit';
 import {
   type ParsedInitializeInstruction,
   type ParsedSetInstruction,
   type ParsedStakeInstruction,
   type ParsedUnstakeInstruction,
   type ParsedWithdrawInstruction,
-} from "../instructions";
-import { AccountDiscriminator, getAccountDiscriminatorEncoder } from "../types";
+} from '../instructions';
+import { AccountDiscriminator, getAccountDiscriminatorEncoder } from '../types';
 
 export const XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS =
-  "5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY" as Address<"5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY">;
+  '5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY' as Address<'5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY'>;
 
 export enum XorcaStakingProgramAccount {
   PendingWithdraw,
@@ -30,32 +25,24 @@ export enum XorcaStakingProgramAccount {
 }
 
 export function identifyXorcaStakingProgramAccount(
-  account: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
+  account: { data: ReadonlyUint8Array } | ReadonlyUint8Array
 ): XorcaStakingProgramAccount {
-  const data = "data" in account ? account.data : account;
+  const data = 'data' in account ? account.data : account;
   if (
     containsBytes(
       data,
-      getAccountDiscriminatorEncoder().encode(
-        AccountDiscriminator.PendingWithdraw,
-      ),
-      0,
+      getAccountDiscriminatorEncoder().encode(AccountDiscriminator.PendingWithdraw),
+      0
     )
   ) {
     return XorcaStakingProgramAccount.PendingWithdraw;
   }
   if (
-    containsBytes(
-      data,
-      getAccountDiscriminatorEncoder().encode(AccountDiscriminator.XorcaState),
-      0,
-    )
+    containsBytes(data, getAccountDiscriminatorEncoder().encode(AccountDiscriminator.XorcaState), 0)
   ) {
     return XorcaStakingProgramAccount.XorcaState;
   }
-  throw new Error(
-    "The provided account could not be identified as a xorcaStakingProgram account.",
-  );
+  throw new Error('The provided account could not be identified as a xorcaStakingProgram account.');
 }
 
 export enum XorcaStakingProgramInstruction {
@@ -67,9 +54,9 @@ export enum XorcaStakingProgramInstruction {
 }
 
 export function identifyXorcaStakingProgramInstruction(
-  instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array,
+  instruction: { data: ReadonlyUint8Array } | ReadonlyUint8Array
 ): XorcaStakingProgramInstruction {
-  const data = "data" in instruction ? instruction.data : instruction;
+  const data = 'data' in instruction ? instruction.data : instruction;
   if (containsBytes(data, getU8Encoder().encode(0), 0)) {
     return XorcaStakingProgramInstruction.Stake;
   }
@@ -86,12 +73,12 @@ export function identifyXorcaStakingProgramInstruction(
     return XorcaStakingProgramInstruction.Set;
   }
   throw new Error(
-    "The provided instruction could not be identified as a xorcaStakingProgram instruction.",
+    'The provided instruction could not be identified as a xorcaStakingProgram instruction.'
   );
 }
 
 export type ParsedXorcaStakingProgramInstruction<
-  TProgram extends string = "5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY",
+  TProgram extends string = '5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY',
 > =
   | ({
       instructionType: XorcaStakingProgramInstruction.Stake;

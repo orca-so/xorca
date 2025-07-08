@@ -33,9 +33,9 @@ import {
   type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
-} from "@solana/kit";
-import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from "../programs";
-import { getAccountMetaFactory, type ResolvedAccount } from "../shared";
+} from '@solana/kit';
+import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const SET_DISCRIMINATOR = 4;
 
@@ -77,30 +77,24 @@ export type SetInstructionDataArgs = {
 export function getSetInstructionDataEncoder(): Encoder<SetInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
-      ["discriminator", getU8Encoder()],
-      ["newCoolDownPeriod", getOptionEncoder(getU64Encoder())],
-      ["newUpdateAuthority", getOptionEncoder(getAddressEncoder())],
+      ['discriminator', getU8Encoder()],
+      ['newCoolDownPeriod', getOptionEncoder(getU64Encoder())],
+      ['newUpdateAuthority', getOptionEncoder(getAddressEncoder())],
     ]),
-    (value) => ({ ...value, discriminator: SET_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: SET_DISCRIMINATOR })
   );
 }
 
 export function getSetInstructionDataDecoder(): Decoder<SetInstructionData> {
   return getStructDecoder([
-    ["discriminator", getU8Decoder()],
-    ["newCoolDownPeriod", getOptionDecoder(getU64Decoder())],
-    ["newUpdateAuthority", getOptionDecoder(getAddressDecoder())],
+    ['discriminator', getU8Decoder()],
+    ['newCoolDownPeriod', getOptionDecoder(getU64Decoder())],
+    ['newUpdateAuthority', getOptionDecoder(getAddressDecoder())],
   ]);
 }
 
-export function getSetInstructionDataCodec(): Codec<
-  SetInstructionDataArgs,
-  SetInstructionData
-> {
-  return combineCodec(
-    getSetInstructionDataEncoder(),
-    getSetInstructionDataDecoder(),
-  );
+export function getSetInstructionDataCodec(): Codec<SetInstructionDataArgs, SetInstructionData> {
+  return combineCodec(getSetInstructionDataEncoder(), getSetInstructionDataDecoder());
 }
 
 export type SetInput<
@@ -109,26 +103,20 @@ export type SetInput<
 > = {
   updateAuthorityAccount: TransactionSigner<TAccountUpdateAuthorityAccount>;
   xorcaStateAccount: Address<TAccountXorcaStateAccount>;
-  newCoolDownPeriod: SetInstructionDataArgs["newCoolDownPeriod"];
-  newUpdateAuthority: SetInstructionDataArgs["newUpdateAuthority"];
+  newCoolDownPeriod: SetInstructionDataArgs['newCoolDownPeriod'];
+  newUpdateAuthority: SetInstructionDataArgs['newUpdateAuthority'];
 };
 
 export function getSetInstruction<
   TAccountUpdateAuthorityAccount extends string,
   TAccountXorcaStateAccount extends string,
-  TProgramAddress extends
-    Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: SetInput<TAccountUpdateAuthorityAccount, TAccountXorcaStateAccount>,
-  config?: { programAddress?: TProgramAddress },
-): SetInstruction<
-  TProgramAddress,
-  TAccountUpdateAuthorityAccount,
-  TAccountXorcaStateAccount
-> {
+  config?: { programAddress?: TProgramAddress }
+): SetInstruction<TProgramAddress, TAccountUpdateAuthorityAccount, TAccountXorcaStateAccount> {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -141,15 +129,12 @@ export function getSetInstruction<
       isWritable: true,
     },
   };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedAccount
-  >;
+  const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
 
   // Original args.
   const args = { ...input };
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.updateAuthorityAccount),
@@ -157,11 +142,7 @@ export function getSetInstruction<
     ],
     programAddress,
     data: getSetInstructionDataEncoder().encode(args as SetInstructionDataArgs),
-  } as SetInstruction<
-    TProgramAddress,
-    TAccountUpdateAuthorityAccount,
-    TAccountXorcaStateAccount
-  >;
+  } as SetInstruction<TProgramAddress, TAccountUpdateAuthorityAccount, TAccountXorcaStateAccount>;
 
   return instruction;
 }
@@ -184,11 +165,11 @@ export function parseSetInstruction<
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
-    IInstructionWithData<Uint8Array>,
+    IInstructionWithData<Uint8Array>
 ): ParsedSetInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 2) {
     // TODO: Coded error.
-    throw new Error("Not enough accounts");
+    throw new Error('Not enough accounts');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

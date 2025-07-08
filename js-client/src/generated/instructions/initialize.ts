@@ -28,9 +28,9 @@ import {
   type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
-} from "@solana/kit";
-import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from "../programs";
-import { getAccountMetaFactory, type ResolvedAccount } from "../shared";
+} from '@solana/kit';
+import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const INITIALIZE_DISCRIMINATOR = 3;
 
@@ -53,8 +53,7 @@ export type InitializeInstruction<
   IInstructionWithAccounts<
     [
       TAccountPayerAccount extends string
-        ? WritableSignerAccount<TAccountPayerAccount> &
-            IAccountSignerMeta<TAccountPayerAccount>
+        ? WritableSignerAccount<TAccountPayerAccount> & IAccountSignerMeta<TAccountPayerAccount>
         : TAccountPayerAccount,
       TAccountXorcaStateAccount extends string
         ? WritableAccount<TAccountXorcaStateAccount>
@@ -90,17 +89,17 @@ export type InitializeInstructionDataArgs = {
 export function getInitializeInstructionDataEncoder(): Encoder<InitializeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
-      ["discriminator", getU8Encoder()],
-      ["coolDownPeriodS", getU64Encoder()],
+      ['discriminator', getU8Encoder()],
+      ['coolDownPeriodS', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR })
   );
 }
 
 export function getInitializeInstructionDataDecoder(): Decoder<InitializeInstructionData> {
   return getStructDecoder([
-    ["discriminator", getU8Decoder()],
-    ["coolDownPeriodS", getU64Decoder()],
+    ['discriminator', getU8Decoder()],
+    ['coolDownPeriodS', getU64Decoder()],
   ]);
 }
 
@@ -108,10 +107,7 @@ export function getInitializeInstructionDataCodec(): Codec<
   InitializeInstructionDataArgs,
   InitializeInstructionData
 > {
-  return combineCodec(
-    getInitializeInstructionDataEncoder(),
-    getInitializeInstructionDataDecoder(),
-  );
+  return combineCodec(getInitializeInstructionDataEncoder(), getInitializeInstructionDataDecoder());
 }
 
 export type InitializeInput<
@@ -130,7 +126,7 @@ export type InitializeInput<
   updateAuthorityAccount: Address<TAccountUpdateAuthorityAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
   tokenProgramAccount: Address<TAccountTokenProgramAccount>;
-  coolDownPeriodS: InitializeInstructionDataArgs["coolDownPeriodS"];
+  coolDownPeriodS: InitializeInstructionDataArgs['coolDownPeriodS'];
 };
 
 export function getInitializeInstruction<
@@ -141,8 +137,7 @@ export function getInitializeInstruction<
   TAccountUpdateAuthorityAccount extends string,
   TAccountSystemProgramAccount extends string,
   TAccountTokenProgramAccount extends string,
-  TProgramAddress extends
-    Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: InitializeInput<
     TAccountPayerAccount,
@@ -153,7 +148,7 @@ export function getInitializeInstruction<
     TAccountSystemProgramAccount,
     TAccountTokenProgramAccount
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): InitializeInstruction<
   TProgramAddress,
   TAccountPayerAccount,
@@ -165,8 +160,7 @@ export function getInitializeInstruction<
   TAccountTokenProgramAccount
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -196,15 +190,12 @@ export function getInitializeInstruction<
       isWritable: false,
     },
   };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedAccount
-  >;
+  const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
 
   // Original args.
   const args = { ...input };
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.payerAccount),
@@ -216,9 +207,7 @@ export function getInitializeInstruction<
       getAccountMeta(accounts.tokenProgramAccount),
     ],
     programAddress,
-    data: getInitializeInstructionDataEncoder().encode(
-      args as InitializeInstructionDataArgs,
-    ),
+    data: getInitializeInstructionDataEncoder().encode(args as InitializeInstructionDataArgs),
   } as InitializeInstruction<
     TProgramAddress,
     TAccountPayerAccount,
@@ -256,11 +245,11 @@ export function parseInitializeInstruction<
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
-    IInstructionWithData<Uint8Array>,
+    IInstructionWithData<Uint8Array>
 ): ParsedInitializeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 7) {
     // TODO: Coded error.
-    throw new Error("Not enough accounts");
+    throw new Error('Not enough accounts');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

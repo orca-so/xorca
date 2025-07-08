@@ -22,6 +22,6 @@ pinocchio-pubkey = { version = "^0.2" }
 pinocchio-system = "0.2.3"
 pinocchio-token = { version = "^0.3.0" }
 shank = { version = "^0.4" }
-spl-token = { version = "8.0.0", features = ["no-entrypoint"] }
+spl-token = { version = "7.0.0", features = ["no-entrypoint"] }
 strum = { version = "^0.27", features = ["derive"] }
 thiserror-no-std = { version = "^2.0" }

@@ -28,9 +28,9 @@ import {
   type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
-} from "@solana/kit";
-import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from "../programs";
-import { getAccountMetaFactory, type ResolvedAccount } from "../shared";
+} from '@solana/kit';
+import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
+import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
 
 export const UNSTAKE_DISCRIMINATOR = 1;
 
@@ -100,19 +100,19 @@ export type UnstakeInstructionDataArgs = {
 export function getUnstakeInstructionDataEncoder(): Encoder<UnstakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
-      ["discriminator", getU8Encoder()],
-      ["unstakeAmount", getU64Encoder()],
-      ["withdrawIndex", getU8Encoder()],
+      ['discriminator', getU8Encoder()],
+      ['unstakeAmount', getU64Encoder()],
+      ['withdrawIndex', getU8Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: UNSTAKE_DISCRIMINATOR }),
+    (value) => ({ ...value, discriminator: UNSTAKE_DISCRIMINATOR })
   );
 }
 
 export function getUnstakeInstructionDataDecoder(): Decoder<UnstakeInstructionData> {
   return getStructDecoder([
-    ["discriminator", getU8Decoder()],
-    ["unstakeAmount", getU64Decoder()],
-    ["withdrawIndex", getU8Decoder()],
+    ['discriminator', getU8Decoder()],
+    ['unstakeAmount', getU64Decoder()],
+    ['withdrawIndex', getU8Decoder()],
   ]);
 }
 
@@ -120,10 +120,7 @@ export function getUnstakeInstructionDataCodec(): Codec<
   UnstakeInstructionDataArgs,
   UnstakeInstructionData
 > {
-  return combineCodec(
-    getUnstakeInstructionDataEncoder(),
-    getUnstakeInstructionDataDecoder(),
-  );
+  return combineCodec(getUnstakeInstructionDataEncoder(), getUnstakeInstructionDataDecoder());
 }
 
 export type UnstakeInput<
@@ -146,8 +143,8 @@ export type UnstakeInput<
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
   tokenProgramAccount: Address<TAccountTokenProgramAccount>;
-  unstakeAmount: UnstakeInstructionDataArgs["unstakeAmount"];
-  withdrawIndex: UnstakeInstructionDataArgs["withdrawIndex"];
+  unstakeAmount: UnstakeInstructionDataArgs['unstakeAmount'];
+  withdrawIndex: UnstakeInstructionDataArgs['withdrawIndex'];
 };
 
 export function getUnstakeInstruction<
@@ -160,8 +157,7 @@ export function getUnstakeInstruction<
   TAccountOrcaMintAccount extends string,
   TAccountSystemProgramAccount extends string,
   TAccountTokenProgramAccount extends string,
-  TProgramAddress extends
-    Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
+  TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: UnstakeInput<
     TAccountUnstakerAccount,
@@ -174,7 +170,7 @@ export function getUnstakeInstruction<
     TAccountSystemProgramAccount,
     TAccountTokenProgramAccount
   >,
-  config?: { programAddress?: TProgramAddress },
+  config?: { programAddress?: TProgramAddress }
 ): UnstakeInstruction<
   TProgramAddress,
   TAccountUnstakerAccount,
@@ -188,8 +184,7 @@ export function getUnstakeInstruction<
   TAccountTokenProgramAccount
 > {
   // Program address.
-  const programAddress =
-    config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
+  const programAddress = config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
 
   // Original accounts.
   const originalAccounts = {
@@ -227,15 +222,12 @@ export function getUnstakeInstruction<
       isWritable: false,
     },
   };
-  const accounts = originalAccounts as Record<
-    keyof typeof originalAccounts,
-    ResolvedAccount
-  >;
+  const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
 
   // Original args.
   const args = { ...input };
 
-  const getAccountMeta = getAccountMetaFactory(programAddress, "programId");
+  const getAccountMeta = getAccountMetaFactory(programAddress, 'programId');
   const instruction = {
     accounts: [
       getAccountMeta(accounts.unstakerAccount),
@@ -249,9 +241,7 @@ export function getUnstakeInstruction<
       getAccountMeta(accounts.tokenProgramAccount),
     ],
     programAddress,
-    data: getUnstakeInstructionDataEncoder().encode(
-      args as UnstakeInstructionDataArgs,
-    ),
+    data: getUnstakeInstructionDataEncoder().encode(args as UnstakeInstructionDataArgs),
   } as UnstakeInstruction<
     TProgramAddress,
     TAccountUnstakerAccount,
@@ -293,11 +283,11 @@ export function parseUnstakeInstruction<
 >(
   instruction: IInstruction<TProgram> &
     IInstructionWithAccounts<TAccountMetas> &
-    IInstructionWithData<Uint8Array>,
+    IInstructionWithData<Uint8Array>
 ): ParsedUnstakeInstruction<TProgram, TAccountMetas> {
   if (instruction.accounts.length < 9) {
     // TODO: Coded error.
-    throw new Error("Not enough accounts");
+    throw new Error('Not enough accounts');
   }
   let accountIndex = 0;
   const getNextAccount = () => {

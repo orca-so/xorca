@@ -13,7 +13,7 @@ import {
   type Codec,
   type Decoder,
   type Encoder,
-} from "@solana/kit";
+} from '@solana/kit';
 
 export enum AccountDiscriminator {
   XorcaState,
@@ -34,8 +34,5 @@ export function getAccountDiscriminatorCodec(): Codec<
   AccountDiscriminatorArgs,
   AccountDiscriminator
 > {
-  return combineCodec(
-    getAccountDiscriminatorEncoder(),
-    getAccountDiscriminatorDecoder(),
-  );
+  return combineCodec(getAccountDiscriminatorEncoder(), getAccountDiscriminatorDecoder());
 }

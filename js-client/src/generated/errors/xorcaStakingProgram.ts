@@ -11,8 +11,8 @@ import {
   type Address,
   type SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM,
   type SolanaError,
-} from "@solana/kit";
-import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from "../programs";
+} from '@solana/kit';
+import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 
 /** UnknownInstructionDiscriminator: Unknown instruction discriminator */
 export const XORCA_STAKING_PROGRAM_ERROR__UNKNOWN_INSTRUCTION_DISCRIMINATOR = 0x1770; // 6000
@@ -47,10 +47,8 @@ export type XorcaStakingProgramError =
   | typeof XORCA_STAKING_PROGRAM_ERROR__NOT_ENOUGH_ACCOUNT_KEYS
   | typeof XORCA_STAKING_PROGRAM_ERROR__UNKNOWN_INSTRUCTION_DISCRIMINATOR;
 
-let xorcaStakingProgramErrorMessages:
-  | Record<XorcaStakingProgramError, string>
-  | undefined;
-if (process.env.NODE_ENV !== "production") {
+let xorcaStakingProgramErrorMessages: Record<XorcaStakingProgramError, string> | undefined;
+if (process.env.NODE_ENV !== 'production') {
   xorcaStakingProgramErrorMessages = {
     [XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR]: `Arithmetic error`,
     [XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS]: `Invalid account address`,
@@ -65,35 +63,26 @@ if (process.env.NODE_ENV !== "production") {
   };
 }
 
-export function getXorcaStakingProgramErrorMessage(
-  code: XorcaStakingProgramError,
-): string {
-  if (process.env.NODE_ENV !== "production") {
-    return (
-      xorcaStakingProgramErrorMessages as Record<
-        XorcaStakingProgramError,
-        string
-      >
-    )[code];
+export function getXorcaStakingProgramErrorMessage(code: XorcaStakingProgramError): string {
+  if (process.env.NODE_ENV !== 'production') {
+    return (xorcaStakingProgramErrorMessages as Record<XorcaStakingProgramError, string>)[code];
   }
 
-  return "Error message not available in production bundles.";
+  return 'Error message not available in production bundles.';
 }
 
-export function isXorcaStakingProgramError<
-  TProgramErrorCode extends XorcaStakingProgramError,
->(
+export function isXorcaStakingProgramError<TProgramErrorCode extends XorcaStakingProgramError>(
   error: unknown,
   transactionMessage: {
     instructions: Record<number, { programAddress: Address }>;
   },
-  code?: TProgramErrorCode,
+  code?: TProgramErrorCode
 ): error is SolanaError<typeof SOLANA_ERROR__INSTRUCTION_ERROR__CUSTOM> &
   Readonly<{ context: Readonly<{ code: TProgramErrorCode }> }> {
   return isProgramError<TProgramErrorCode>(
     error,
     transactionMessage,
     XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
-    code,
+    code
   );
 }

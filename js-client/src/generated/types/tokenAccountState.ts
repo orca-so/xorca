@@ -13,7 +13,7 @@ import {
   type Codec,
   type Decoder,
   type Encoder,
-} from "@solana/kit";
+} from '@solana/kit';
 
 export enum TokenAccountState {
   Uninitialized,
@@ -31,12 +31,6 @@ export function getTokenAccountStateDecoder(): Decoder<TokenAccountState> {
   return getEnumDecoder(TokenAccountState);
 }
 
-export function getTokenAccountStateCodec(): Codec<
-  TokenAccountStateArgs,
-  TokenAccountState
-> {
-  return combineCodec(
-    getTokenAccountStateEncoder(),
-    getTokenAccountStateDecoder(),
-  );
+export function getTokenAccountStateCodec(): Codec<TokenAccountStateArgs, TokenAccountState> {
+  return combineCodec(getTokenAccountStateEncoder(), getTokenAccountStateDecoder());
 }
