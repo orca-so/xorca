@@ -7,7 +7,7 @@ use crate::{
     cpi::token::{TokenMint, ORCA_MINT_ID, XORCA_MINT_ID},
     error::ErrorCode,
     state::state::State,
-    util::{account::get_account_info, math::convert_stake_token_to_lst},
+    util::{account::get_account_info, math::convert_orca_to_xorca},
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
@@ -83,7 +83,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
 
     // Calculate LST to mint
     let non_escrowed_orca_amount = vault_account_data.amount - state.escrowed_orca_amount;
-    let xorca_to_mint = convert_stake_token_to_lst(
+    let xorca_to_mint = convert_orca_to_xorca(
         *stake_amount,
         non_escrowed_orca_amount,
         xorca_mint_data.supply,

@@ -12,7 +12,7 @@ use crate::{
     state::{pending_withdraw::PendingWithdraw, state::State},
     util::{
         account::{create_program_account, get_account_info},
-        math::convert_lst_to_stake_token,
+        math::convert_xorca_to_orca,
     },
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
@@ -108,7 +108,7 @@ pub fn process_instruction(
 
     // Calculate withdrawable ORCA amount
     let non_escrowed_orca_amount = vault_account_data.amount - state.escrowed_orca_amount;
-    let withdrawable_orca_amount = convert_lst_to_stake_token(
+    let withdrawable_orca_amount = convert_xorca_to_orca(
         *unstake_amount,
         non_escrowed_orca_amount,
         xorca_mint_data.supply,
