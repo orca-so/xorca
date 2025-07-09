@@ -2,8 +2,8 @@ use crate::generated::programs::XORCA_STAKING_PROGRAM_ID;
 use solana_program::program_error::ProgramError;
 use solana_program::pubkey::Pubkey;
 
-pub fn get_xorca_state_address() -> Result<(Pubkey, u8), ProgramError> {
-    let seeds: &[&[u8]] = &[b"xorca_state"];
+pub fn find_xorca_state_address(orca_mint: Pubkey) -> Result<(Pubkey, u8), ProgramError> {
+    let seeds: &[&[u8]] = &[b"xorca_state", orca_mint.as_ref()];
 
     Pubkey::try_find_program_address(seeds, &XORCA_STAKING_PROGRAM_ID)
         .ok_or(ProgramError::InvalidSeeds)
@@ -15,9 +15,11 @@ mod tests {
     use solana_program::pubkey;
 
     #[test]
-    fn test_get_xorca_state_address() {
-        let (address, _) = get_xorca_state_address().unwrap();
-        let xorca_state = pubkey!("EBaKP1vY2HppkakDjBz42eT1WnZ9U2Gp4aEG94uStt1T");
+    fn test_find_xorca_state_address() {
+        let (address, _) =
+            find_xorca_state_address(pubkey!("orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE"))
+                .unwrap();
+        let xorca_state = pubkey!("85zkjNZLy5HXuB3kkgmKEgN9TThH4P8M8p9yawKgkZBo");
         assert_eq!(address, xorca_state);
     }
 }

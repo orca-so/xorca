@@ -13,7 +13,7 @@ use solana_sdk::{
     pubkey::Pubkey,
     signature::{Keypair, Signature},
     signer::Signer,
-    system_instruction,
+    system_instruction, system_program,
     transaction::VersionedTransaction,
 };
 use std::error::Error;
@@ -24,8 +24,14 @@ mod assertions;
 mod tests;
 mod utils;
 
+pub const SYSTEM_PROGRAM_ID: Pubkey = system_program::ID;
 pub const JITO_TIP_ADDRESS: Pubkey =
     solana_sdk::pubkey!("96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5");
+pub const TOKEN_PROGRAM_ID: Pubkey =
+    solana_sdk::pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
+pub const ORCA_ID: Pubkey = solana_sdk::pubkey!("orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE");
+pub const XORCA_ID: Pubkey = solana_sdk::pubkey!("xorcaYqbXUNz3474ubUMJAdu2xgPsew3rUCe5ughT3N");
+
 struct TestContext {
     svm: LiteSVM,
     signer: Keypair,

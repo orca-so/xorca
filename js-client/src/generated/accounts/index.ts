@@ -6,5 +6,5 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from "./pendingWithdraw";
-export * from "./xorcaState";
+export * from './pendingWithdraw';
+export * from './xorcaState';

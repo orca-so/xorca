@@ -6,8 +6,8 @@
  * @see https://github.com/codama-idl/codama
  */
 
-export * from "./initialize";
-export * from "./set";
-export * from "./stake";
-export * from "./unstake";
-export * from "./withdraw";
+export * from './initialize';
+export * from './set';
+export * from './stake';
+export * from './unstake';
+export * from './withdraw';

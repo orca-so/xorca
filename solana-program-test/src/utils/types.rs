@@ -19,3 +19,16 @@ macro_rules! xorca_state_data {
         data
     }};
 }
+
+#[macro_export]
+macro_rules! token_mint_data {
+    ($($name:ident => $value:expr),* $(,)?) => {{
+        let mut data = crate::zeroed_type!(xorca::TokenMint);
+        data.is_initialized = true;
+        data.decimals = 9;
+        $(
+            data.$name = $value;
+        )*
+        data
+    }};
+}
