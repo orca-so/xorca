@@ -18,7 +18,7 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     let xorca_state_account = get_account_info(accounts, 1)?;
     let pending_withdraw_account = get_account_info(accounts, 2)?;
     let unstaker_orca_ata = get_account_info(accounts, 3)?;
-    let xorca_state_orca_ata = get_account_info(accounts, 4)?;
+    let vault_account = get_account_info(accounts, 4)?;
     let orca_mint_account = get_account_info(accounts, 5)?;
     let system_program_account = get_account_info(accounts, 6)?;
     let token_program_account = get_account_info(accounts, 7)?;
@@ -58,16 +58,16 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     // 4. Unstaker Stake Token Account Assertions
     make_owner_token_account_assertions(unstaker_orca_ata, unstaker_account, orca_mint_account)?;
 
-    // 5. xOrca State Orca ATA Assertions
-    let xorca_state_orca_ata_seeds = vec![
+    // 5. Vault Account Assertions
+    let vault_account_seeds = vec![
         Seed::from(xorca_state_account.key()),
         Seed::from(SPL_TOKEN_PROGRAM_ID.as_ref()),
         Seed::from(orca_mint_account.key()),
     ];
     assert_account_seeds(
-        xorca_state_orca_ata,
+        vault_account,
         &ASSOCIATED_TOKEN_PROGRAM_ID,
-        &xorca_state_orca_ata_seeds,
+        &vault_account_seeds,
     )?;
 
     // 6. Stake Token Mint Account Assertions
@@ -87,7 +87,7 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
 
     // Transfer withdrawable stake tokens from xOrca state ATA to unstaker ATA
     let transfer_instruction = Transfer {
-        from: xorca_state_orca_ata,
+        from: vault_account,
         to: unstaker_orca_ata,
         authority: xorca_state_account,
         amount: pending_withdraw_data.withdrawable_orca_amount,

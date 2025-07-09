@@ -20,7 +20,7 @@ use pinocchio_token::{
 pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> ProgramResult {
     let staker_account = get_account_info(accounts, 0)?;
     let xorca_state_account = get_account_info(accounts, 1)?;
-    let xorca_state_orca_ata = get_account_info(accounts, 2)?;
+    let vault_account = get_account_info(accounts, 2)?;
     let staker_orca_ata = get_account_info(accounts, 3)?;
     let staker_xorca_ata = get_account_info(accounts, 4)?;
     let orca_mint_account = get_account_info(accounts, 5)?;
@@ -43,22 +43,19 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     xorca_state_seeds.push(Seed::from(&xorca_state_bump));
     let xorca_state = assert_account_data_mut::<XorcaState>(xorca_state_account)?;
 
-    // 3. xOrca State Orca ATA Assertions
-    let xorca_state_orca_ata_seeds = vec![
+    // 3. Vault Account Assertions
+    let vault_account_seeds = vec![
         Seed::from(xorca_state_account.key()),
         Seed::from(SPL_TOKEN_PROGRAM_ID.as_ref()),
         Seed::from(orca_mint_account.key()),
     ];
     assert_account_seeds(
-        xorca_state_orca_ata,
+        vault_account,
         &ASSOCIATED_TOKEN_PROGRAM_ID,
-        &xorca_state_orca_ata_seeds,
+        &vault_account_seeds,
     )?;
-    let xorca_state_orca_ata_data = make_owner_token_account_assertions(
-        xorca_state_orca_ata,
-        xorca_state_account,
-        orca_mint_account,
-    )?;
+    let vault_account_data =
+        make_owner_token_account_assertions(vault_account, xorca_state_account, orca_mint_account)?;
 
     // 4. Staker Orca ATA Assertions
     let staker_orca_ata_data =
@@ -85,8 +82,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     // Calculate LST to mint
-    let non_escrowed_orca_amount =
-        xorca_state_orca_ata_data.amount - xorca_state.escrowed_orca_amount;
+    let non_escrowed_orca_amount = vault_account_data.amount - xorca_state.escrowed_orca_amount;
     let xorca_to_mint = convert_stake_token_to_lst(
         *stake_amount,
         non_escrowed_orca_amount,
@@ -96,7 +92,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     // Transfer stake tokens from staker ATA to xOrca state ATA
     let transfer_instruction = Transfer {
         from: staker_orca_ata,
-        to: xorca_state_orca_ata,
+        to: vault_account,
         authority: staker_account,
         amount: *stake_amount,
     };

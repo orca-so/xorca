@@ -23,7 +23,7 @@ pub const INITIAL_UPGRADE_AUTHORITY_ID: Pubkey = pubkey!("1111111111111111111111
 pub enum Instruction {
     #[account(0, writable, signer, name = "staker_account")]
     #[account(1, writable, name = "xorca_state_account")]
-    #[account(2, writable, name = "xorca_state_orca_ata")]
+    #[account(2, writable, name = "vault_account")]
     #[account(3, writable, name = "staker_orca_ata")]
     #[account(4, name = "orca_mint_account")]
     #[account(5, name = "xorca_mint_account")]
@@ -33,7 +33,7 @@ pub enum Instruction {
 
     #[account(0, writable, signer, name = "unstaker_account")]
     #[account(1, writable, name = "xorca_state_account")]
-    #[account(2, writable, name = "xorca_state_orca_ata")]
+    #[account(2, writable, name = "vault_account")]
     #[account(3, writable, name = "pending_withdraw_account")]
     #[account(4, writable, name = "unstaker_lst_account")]
     #[account(5, name = "xorca_mint_account")]
@@ -49,7 +49,7 @@ pub enum Instruction {
     #[account(1, writable, name = "xorca_state_account")]
     #[account(2, writable, name = "pending_withdraw_account")]
     #[account(3, writable, name = "unstaker_orca_ata")]
-    #[account(4, writable, name = "xorca_state_orca_ata")]
+    #[account(4, writable, name = "vault_account")]
     #[account(5, name = "orca_mint_account")]
     #[account(6, name = "system_program_account")]
     #[account(7, name = "token_program_account")]

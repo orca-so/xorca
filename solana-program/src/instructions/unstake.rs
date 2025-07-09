@@ -29,7 +29,7 @@ pub fn process_instruction(
 ) -> ProgramResult {
     let unstaker_account = get_account_info(accounts, 0)?;
     let xorca_state_account = get_account_info(accounts, 1)?;
-    let xorca_state_orca_ata = get_account_info(accounts, 2)?;
+    let vault_account = get_account_info(accounts, 2)?;
     let pending_withdraw_account = get_account_info(accounts, 3)?;
     let unstaker_xorca_ata = get_account_info(accounts, 4)?;
     let xorca_mint_account = get_account_info(accounts, 5)?;
@@ -52,19 +52,18 @@ pub fn process_instruction(
     xorca_state_seeds.push(Seed::from(&xorca_state_bump));
     let mut xorca_state = assert_account_data_mut::<XorcaState>(xorca_state_account)?;
 
-    // 3. xOrca State Orca ATA Assertions
-    let xorca_state_orca_ata_seeds = vec![
+    // 3. Vault Account Assertions
+    let vault_account_seeds = vec![
         Seed::from(xorca_state_account.key()),
         Seed::from(SPL_TOKEN_PROGRAM_ID.as_ref()),
         Seed::from(orca_mint_account.key()),
     ];
     assert_account_seeds(
-        xorca_state_orca_ata,
+        vault_account,
         &ASSOCIATED_TOKEN_PROGRAM_ID,
-        &xorca_state_orca_ata_seeds,
+        &vault_account_seeds,
     )?;
-    let xorca_state_orca_ata_data =
-        assert_external_account_data::<TokenAccount>(xorca_state_orca_ata)?;
+    let vault_account_data = assert_external_account_data::<TokenAccount>(vault_account)?;
 
     // 4. Pending Withdraw Account Assertions
     assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
@@ -108,8 +107,7 @@ pub fn process_instruction(
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     // Calculate withdrawable ORCA amount
-    let non_escrowed_orca_amount =
-        xorca_state_orca_ata_data.amount - xorca_state.escrowed_orca_amount;
+    let non_escrowed_orca_amount = vault_account_data.amount - xorca_state.escrowed_orca_amount;
     let withdrawable_orca_amount = convert_lst_to_stake_token(
         *unstake_amount,
         non_escrowed_orca_amount,
