@@ -1,5 +1,5 @@
 use crate::{
-    cpi::token::{TokenAccount, ORCA_MINT_ID, XORCA_MINT_ID},
+    cpi::token::TokenAccount,
     error::ErrorCode,
     state::{AccountDiscriminator, ProgramAccount},
 };
@@ -159,18 +159,6 @@ pub fn assert_external_account_data<T: BorshDeserialize>(
     Ok(account)
 }
 
-pub fn make_program_authority_account_assertions(
-    program_authority_account: &AccountInfo,
-) -> Result<[u8; 1], ProgramError> {
-    assert_account_role(program_authority_account, &[AccountRole::Writable])?;
-    let program_authority_seeds = [Seed::from(b"program_authority")];
-    assert_account_seeds(
-        program_authority_account,
-        &crate::ID,
-        &program_authority_seeds,
-    )
-}
-
 pub fn make_owner_token_account_assertions<'a>(
     owner_token_account: &'a AccountInfo,
     owner_account: &AccountInfo,
@@ -198,18 +186,4 @@ pub fn make_owner_token_account_assertions<'a>(
         return Err(ErrorCode::InvalidAccountData.into());
     }
     Ok(owner_token_account_data)
-}
-
-pub fn make_lst_mint_account_assertions(lst_mint_account: &AccountInfo) -> ProgramResult {
-    assert_account_address(lst_mint_account, &XORCA_MINT_ID)?;
-    assert_account_owner(lst_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    Ok(())
-}
-
-pub fn make_stake_token_mint_account_assertions(
-    stake_token_mint_account: &AccountInfo,
-) -> ProgramResult {
-    assert_account_address(stake_token_mint_account, &ORCA_MINT_ID)?;
-    assert_account_owner(stake_token_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    Ok(())
 }
