@@ -3,7 +3,7 @@ use crate::{
         assert_account_address, assert_account_data_mut, assert_account_owner, assert_account_role,
         assert_account_seeds, make_owner_token_account_assertions, AccountRole,
     },
-    cpi::system::get_current_unix_timestamp,
+    cpi::{system::get_current_unix_timestamp, token::ORCA_MINT_ID},
     error::ErrorCode,
     state::{pending_withdraw::PendingWithdraw, state::State},
     util::account::get_account_info,
@@ -32,7 +32,7 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     // 2. Xorca State Account Assertions
     assert_account_role(state_account, &[AccountRole::Writable])?;
     assert_account_owner(state_account, &crate::ID)?;
-    let mut state_seeds = State::seeds(orca_mint_account.key());
+    let mut state_seeds = State::seeds();
     let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
     state_seeds.push(Seed::from(&state_bump));
     let mut state = assert_account_data_mut::<State>(state_account)?;
@@ -69,8 +69,9 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
         &vault_account_seeds,
     )?;
 
-    // 6. Stake Token Mint Account Assertions
+    // 6. Orca Mint Account Assertions
     assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
+    assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
 
     // 7. System Program Account Assertions
     assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;

@@ -19,17 +19,12 @@ pub struct State {
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
-    pub xorca_mint: Pubkey,
-    #[cfg_attr(
-        feature = "serde",
-        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
-    )]
     pub update_authority: Pubkey,
     pub cool_down_period_s: u64,
 }
 
 impl State {
-    pub const LEN: usize = 81;
+    pub const LEN: usize = 49;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {

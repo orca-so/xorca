@@ -6,7 +6,7 @@ use crate::{
     },
     cpi::{
         system::get_current_unix_timestamp,
-        token::{TokenAccount, TokenMint},
+        token::{TokenAccount, TokenMint, ORCA_MINT_ID, XORCA_MINT_ID},
     },
     error::ErrorCode,
     state::{pending_withdraw::PendingWithdraw, state::State},
@@ -46,7 +46,7 @@ pub fn process_instruction(
     // 2. xOrca State Account Assertions
     assert_account_role(state_account, &[AccountRole::Writable])?;
     assert_account_owner(state_account, &crate::ID)?;
-    let mut state_seeds = State::seeds(orca_mint_account.key());
+    let mut state_seeds = State::seeds();
     let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
     state_seeds.push(Seed::from(&state_bump));
     let mut state = assert_account_data_mut::<State>(state_account)?;
@@ -90,13 +90,14 @@ pub fn process_instruction(
         return Err(ErrorCode::InsufficientFunds.into());
     }
 
-    // 6. LST Mint Account Assertions
+    // 6. xOrca Mint Account Assertions
     assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    assert_account_address(xorca_mint_account, &state.xorca_mint)?;
+    assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
     let xorca_mint_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
 
-    // 7. Stake Token Mint Account Assertions
+    // 7. Orca Mint Account Assertions
     assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
+    assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
     assert_external_account_data::<TokenMint>(orca_mint_account)?;
 
     // 8. System Program Account Assertions

@@ -20,7 +20,7 @@ fn test_initialize(
     case: &str,
 ) {
     let mut ctx = TestContext::new();
-    let (state_account, _) = find_state_address(ORCA_ID).unwrap();
+    let (state_account, _) = find_state_address().unwrap();
     let cool_down_period_s: u64 = 100;
 
     let lst_mint_authority = if case == "InvalidLSTMintAuthority" {
@@ -77,7 +77,6 @@ fn test_initialize(
                 state_account_after.data.discriminator,
                 AccountDiscriminator::State
             );
-            assert_eq!(state_account_after.data.xorca_mint, XORCA_ID);
             assert_eq!(
                 state_account_after.data.cool_down_period_s.to_le_bytes(),
                 cool_down_period_s.to_be_bytes()
