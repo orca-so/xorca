@@ -13,7 +13,7 @@ use borsh::BorshSerialize;
 pub struct Initialize {
     pub payer_account: solana_program::pubkey::Pubkey,
 
-    pub xorca_state_account: solana_program::pubkey::Pubkey,
+    pub state_account: solana_program::pubkey::Pubkey,
 
     pub xorca_mint_account: solana_program::pubkey::Pubkey,
 
@@ -46,7 +46,7 @@ impl Initialize {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            self.xorca_state_account,
+            self.state_account,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -111,7 +111,7 @@ pub struct InitializeInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer_account
-///   1. `[writable]` xorca_state_account
+///   1. `[writable]` state_account
 ///   2. `[]` xorca_mint_account
 ///   3. `[]` orca_mint_account
 ///   4. `[]` update_authority_account
@@ -120,7 +120,7 @@ pub struct InitializeInstructionArgs {
 #[derive(Clone, Debug, Default)]
 pub struct InitializeBuilder {
     payer_account: Option<solana_program::pubkey::Pubkey>,
-    xorca_state_account: Option<solana_program::pubkey::Pubkey>,
+    state_account: Option<solana_program::pubkey::Pubkey>,
     xorca_mint_account: Option<solana_program::pubkey::Pubkey>,
     orca_mint_account: Option<solana_program::pubkey::Pubkey>,
     update_authority_account: Option<solana_program::pubkey::Pubkey>,
@@ -140,11 +140,8 @@ impl InitializeBuilder {
         self
     }
     #[inline(always)]
-    pub fn xorca_state_account(
-        &mut self,
-        xorca_state_account: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
-        self.xorca_state_account = Some(xorca_state_account);
+    pub fn state_account(&mut self, state_account: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.state_account = Some(state_account);
         self
     }
     #[inline(always)]
@@ -214,9 +211,7 @@ impl InitializeBuilder {
     pub fn instruction(&self) -> solana_program::instruction::Instruction {
         let accounts = Initialize {
             payer_account: self.payer_account.expect("payer_account is not set"),
-            xorca_state_account: self
-                .xorca_state_account
-                .expect("xorca_state_account is not set"),
+            state_account: self.state_account.expect("state_account is not set"),
             xorca_mint_account: self
                 .xorca_mint_account
                 .expect("xorca_mint_account is not set"),
@@ -248,7 +243,7 @@ impl InitializeBuilder {
 pub struct InitializeCpiAccounts<'a, 'b> {
     pub payer_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub xorca_state_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub state_account: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub xorca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -268,7 +263,7 @@ pub struct InitializeCpi<'a, 'b> {
 
     pub payer_account: &'b solana_program::account_info::AccountInfo<'a>,
 
-    pub xorca_state_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub state_account: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub xorca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -292,7 +287,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
         Self {
             __program: program,
             payer_account: accounts.payer_account,
-            xorca_state_account: accounts.xorca_state_account,
+            state_account: accounts.state_account,
             xorca_mint_account: accounts.xorca_mint_account,
             orca_mint_account: accounts.orca_mint_account,
             update_authority_account: accounts.update_authority_account,
@@ -341,7 +336,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             true,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
-            *self.xorca_state_account.key,
+            *self.state_account.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -383,7 +378,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
         let mut account_infos = Vec::with_capacity(8 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.payer_account.clone());
-        account_infos.push(self.xorca_state_account.clone());
+        account_infos.push(self.state_account.clone());
         account_infos.push(self.xorca_mint_account.clone());
         account_infos.push(self.orca_mint_account.clone());
         account_infos.push(self.update_authority_account.clone());
@@ -406,7 +401,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer_account
-///   1. `[writable]` xorca_state_account
+///   1. `[writable]` state_account
 ///   2. `[]` xorca_mint_account
 ///   3. `[]` orca_mint_account
 ///   4. `[]` update_authority_account
@@ -422,7 +417,7 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         let instruction = Box::new(InitializeCpiBuilderInstruction {
             __program: program,
             payer_account: None,
-            xorca_state_account: None,
+            state_account: None,
             xorca_mint_account: None,
             orca_mint_account: None,
             update_authority_account: None,
@@ -442,11 +437,11 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn xorca_state_account(
+    pub fn state_account(
         &mut self,
-        xorca_state_account: &'b solana_program::account_info::AccountInfo<'a>,
+        state_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.xorca_state_account = Some(xorca_state_account);
+        self.instruction.state_account = Some(state_account);
         self
     }
     #[inline(always)]
@@ -550,10 +545,10 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                 .payer_account
                 .expect("payer_account is not set"),
 
-            xorca_state_account: self
+            state_account: self
                 .instruction
-                .xorca_state_account
-                .expect("xorca_state_account is not set"),
+                .state_account
+                .expect("state_account is not set"),
 
             xorca_mint_account: self
                 .instruction
@@ -592,7 +587,7 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
 struct InitializeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     payer_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    xorca_state_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    state_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     xorca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     orca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     update_authority_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,

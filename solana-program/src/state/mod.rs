@@ -4,14 +4,14 @@ use shank::ShankType;
 use strum::Display;
 
 pub mod pending_withdraw;
-pub mod xorca_state;
+pub mod state;
 
 #[derive(
     Debug, Clone, Copy, BorshSerialize, BorshDeserialize, Display, ShankType, PartialEq, Eq,
 )]
 #[repr(u8)]
 pub enum AccountDiscriminator {
-    XorcaState,      // 0
+    State,           // 0
     PendingWithdraw, // 1
 }
 

@@ -14,13 +14,13 @@ pub struct PendingWithdraw {
 
 impl PendingWithdraw {
     pub fn seeds<'a>(
-        xorca_state: &'a Pubkey,
+        state: &'a Pubkey,
         unstaker: &'a Pubkey,
         withdraw_index: &'a [u8],
     ) -> Vec<Seed<'a>> {
         vec![
             Seed::from(b"pending_withdraw"),
-            Seed::from(xorca_state),
+            Seed::from(state),
             Seed::from(unstaker),
             Seed::from(withdraw_index),
         ]

@@ -5,7 +5,7 @@ use crate::{
     },
     cpi::system::get_current_unix_timestamp,
     error::ErrorCode,
-    state::{pending_withdraw::PendingWithdraw, xorca_state::XorcaState},
+    state::{pending_withdraw::PendingWithdraw, state::State},
     util::account::get_account_info,
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
@@ -15,7 +15,7 @@ use pinocchio_token::{instructions::Transfer, ID as SPL_TOKEN_PROGRAM_ID};
 
 pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> ProgramResult {
     let unstaker_account = get_account_info(accounts, 0)?;
-    let xorca_state_account = get_account_info(accounts, 1)?;
+    let state_account = get_account_info(accounts, 1)?;
     let pending_withdraw_account = get_account_info(accounts, 2)?;
     let unstaker_orca_ata = get_account_info(accounts, 3)?;
     let vault_account = get_account_info(accounts, 4)?;
@@ -30,20 +30,19 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     )?;
 
     // 2. Xorca State Account Assertions
-    assert_account_role(xorca_state_account, &[AccountRole::Writable])?;
-    assert_account_owner(xorca_state_account, &crate::ID)?;
-    let mut xorca_state_seeds = XorcaState::seeds(orca_mint_account.key());
-    let xorca_state_bump =
-        assert_account_seeds(xorca_state_account, &crate::ID, &xorca_state_seeds)?;
-    xorca_state_seeds.push(Seed::from(&xorca_state_bump));
-    let mut xorca_state = assert_account_data_mut::<XorcaState>(xorca_state_account)?;
+    assert_account_role(state_account, &[AccountRole::Writable])?;
+    assert_account_owner(state_account, &crate::ID)?;
+    let mut state_seeds = State::seeds(orca_mint_account.key());
+    let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
+    state_seeds.push(Seed::from(&state_bump));
+    let mut state = assert_account_data_mut::<State>(state_account)?;
 
     // 3. Pending Withdraw Account Assertions
     assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
     assert_account_owner(pending_withdraw_account, &crate::ID)?;
     let withdraw_index_bytes = [*withdraw_index];
     let pending_withdraw_seeds = PendingWithdraw::seeds(
-        xorca_state_account.key(),
+        state_account.key(),
         unstaker_account.key(),
         &withdraw_index_bytes,
     );
@@ -60,7 +59,7 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
 
     // 5. Vault Account Assertions
     let vault_account_seeds = vec![
-        Seed::from(xorca_state_account.key()),
+        Seed::from(state_account.key()),
         Seed::from(SPL_TOKEN_PROGRAM_ID.as_ref()),
         Seed::from(orca_mint_account.key()),
     ];
@@ -89,13 +88,13 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     let transfer_instruction = Transfer {
         from: vault_account,
         to: unstaker_orca_ata,
-        authority: xorca_state_account,
+        authority: state_account,
         amount: pending_withdraw_data.withdrawable_orca_amount,
     };
-    transfer_instruction.invoke_signed(&[xorca_state_seeds.as_slice().into()])?;
+    transfer_instruction.invoke_signed(&[state_seeds.as_slice().into()])?;
 
     // Remove tokens from escrow
-    xorca_state.escrowed_orca_amount -= pending_withdraw_data.withdrawable_orca_amount;
+    state.escrowed_orca_amount -= pending_withdraw_data.withdrawable_orca_amount;
 
     // TODO: Close Pending Withdraw Account
     Ok(())

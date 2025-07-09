@@ -21,7 +21,7 @@ export const XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS =
 
 export enum XorcaStakingProgramAccount {
   PendingWithdraw,
-  XorcaState,
+  State,
 }
 
 export function identifyXorcaStakingProgramAccount(
@@ -37,10 +37,8 @@ export function identifyXorcaStakingProgramAccount(
   ) {
     return XorcaStakingProgramAccount.PendingWithdraw;
   }
-  if (
-    containsBytes(data, getAccountDiscriminatorEncoder().encode(AccountDiscriminator.XorcaState), 0)
-  ) {
-    return XorcaStakingProgramAccount.XorcaState;
+  if (containsBytes(data, getAccountDiscriminatorEncoder().encode(AccountDiscriminator.State), 0)) {
+    return XorcaStakingProgramAccount.State;
   }
   throw new Error('The provided account could not be identified as a xorcaStakingProgram account.');
 }

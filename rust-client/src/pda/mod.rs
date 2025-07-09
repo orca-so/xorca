@@ -1,5 +1,5 @@
 mod pending_withdraw;
-mod xorca_state;
+mod state;
 
 pub use pending_withdraw::*;
-pub use xorca_state::*;
+pub use state::*;

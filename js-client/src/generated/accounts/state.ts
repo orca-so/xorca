@@ -37,13 +37,13 @@ import {
   getAccountDiscriminatorEncoder,
 } from '../types';
 
-export const XORCA_STATE_DISCRIMINATOR = AccountDiscriminator.XorcaState;
+export const STATE_DISCRIMINATOR = AccountDiscriminator.State;
 
-export function getXorcaStateDiscriminatorBytes() {
-  return getAccountDiscriminatorEncoder().encode(XORCA_STATE_DISCRIMINATOR);
+export function getStateDiscriminatorBytes() {
+  return getAccountDiscriminatorEncoder().encode(STATE_DISCRIMINATOR);
 }
 
-export type XorcaState = {
+export type State = {
   discriminator: AccountDiscriminator;
   escrowedOrcaAmount: bigint;
   xorcaMint: Address;
@@ -51,14 +51,14 @@ export type XorcaState = {
   coolDownPeriodS: bigint;
 };
 
-export type XorcaStateArgs = {
+export type StateArgs = {
   escrowedOrcaAmount: number | bigint;
   xorcaMint: Address;
   updateAuthority: Address;
   coolDownPeriodS: number | bigint;
 };
 
-export function getXorcaStateEncoder(): Encoder<XorcaStateArgs> {
+export function getStateEncoder(): Encoder<StateArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getAccountDiscriminatorEncoder()],
@@ -67,11 +67,11 @@ export function getXorcaStateEncoder(): Encoder<XorcaStateArgs> {
       ['updateAuthority', getAddressEncoder()],
       ['coolDownPeriodS', getU64Encoder()],
     ]),
-    (value) => ({ ...value, discriminator: XORCA_STATE_DISCRIMINATOR })
+    (value) => ({ ...value, discriminator: STATE_DISCRIMINATOR })
   );
 }
 
-export function getXorcaStateDecoder(): Decoder<XorcaState> {
+export function getStateDecoder(): Decoder<State> {
   return getStructDecoder([
     ['discriminator', getAccountDiscriminatorDecoder()],
     ['escrowedOrcaAmount', getU64Decoder()],
@@ -81,60 +81,60 @@ export function getXorcaStateDecoder(): Decoder<XorcaState> {
   ]);
 }
 
-export function getXorcaStateCodec(): Codec<XorcaStateArgs, XorcaState> {
-  return combineCodec(getXorcaStateEncoder(), getXorcaStateDecoder());
+export function getStateCodec(): Codec<StateArgs, State> {
+  return combineCodec(getStateEncoder(), getStateDecoder());
 }
 
-export function decodeXorcaState<TAddress extends string = string>(
+export function decodeState<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress>
-): Account<XorcaState, TAddress>;
-export function decodeXorcaState<TAddress extends string = string>(
+): Account<State, TAddress>;
+export function decodeState<TAddress extends string = string>(
   encodedAccount: MaybeEncodedAccount<TAddress>
-): MaybeAccount<XorcaState, TAddress>;
-export function decodeXorcaState<TAddress extends string = string>(
+): MaybeAccount<State, TAddress>;
+export function decodeState<TAddress extends string = string>(
   encodedAccount: EncodedAccount<TAddress> | MaybeEncodedAccount<TAddress>
-): Account<XorcaState, TAddress> | MaybeAccount<XorcaState, TAddress> {
-  return decodeAccount(encodedAccount as MaybeEncodedAccount<TAddress>, getXorcaStateDecoder());
+): Account<State, TAddress> | MaybeAccount<State, TAddress> {
+  return decodeAccount(encodedAccount as MaybeEncodedAccount<TAddress>, getStateDecoder());
 }
 
-export async function fetchXorcaState<TAddress extends string = string>(
+export async function fetchState<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<Account<XorcaState, TAddress>> {
-  const maybeAccount = await fetchMaybeXorcaState(rpc, address, config);
+): Promise<Account<State, TAddress>> {
+  const maybeAccount = await fetchMaybeState(rpc, address, config);
   assertAccountExists(maybeAccount);
   return maybeAccount;
 }
 
-export async function fetchMaybeXorcaState<TAddress extends string = string>(
+export async function fetchMaybeState<TAddress extends string = string>(
   rpc: Parameters<typeof fetchEncodedAccount>[0],
   address: Address<TAddress>,
   config?: FetchAccountConfig
-): Promise<MaybeAccount<XorcaState, TAddress>> {
+): Promise<MaybeAccount<State, TAddress>> {
   const maybeAccount = await fetchEncodedAccount(rpc, address, config);
-  return decodeXorcaState(maybeAccount);
+  return decodeState(maybeAccount);
 }
 
-export async function fetchAllXorcaState(
+export async function fetchAllState(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<Account<XorcaState>[]> {
-  const maybeAccounts = await fetchAllMaybeXorcaState(rpc, addresses, config);
+): Promise<Account<State>[]> {
+  const maybeAccounts = await fetchAllMaybeState(rpc, addresses, config);
   assertAccountsExist(maybeAccounts);
   return maybeAccounts;
 }
 
-export async function fetchAllMaybeXorcaState(
+export async function fetchAllMaybeState(
   rpc: Parameters<typeof fetchEncodedAccounts>[0],
   addresses: Array<Address>,
   config?: FetchAccountsConfig
-): Promise<MaybeAccount<XorcaState>[]> {
+): Promise<MaybeAccount<State>[]> {
   const maybeAccounts = await fetchEncodedAccounts(rpc, addresses, config);
-  return maybeAccounts.map((maybeAccount) => decodeXorcaState(maybeAccount));
+  return maybeAccounts.map((maybeAccount) => decodeState(maybeAccount));
 }
 
-export function getXorcaStateSize(): number {
+export function getStateSize(): number {
   return 81;
 }

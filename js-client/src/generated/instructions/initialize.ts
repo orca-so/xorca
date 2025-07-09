@@ -41,7 +41,7 @@ export function getInitializeDiscriminatorBytes() {
 export type InitializeInstruction<
   TProgram extends string = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
   TAccountPayerAccount extends string | IAccountMeta<string> = string,
-  TAccountXorcaStateAccount extends string | IAccountMeta<string> = string,
+  TAccountStateAccount extends string | IAccountMeta<string> = string,
   TAccountXorcaMintAccount extends string | IAccountMeta<string> = string,
   TAccountOrcaMintAccount extends string | IAccountMeta<string> = string,
   TAccountUpdateAuthorityAccount extends string | IAccountMeta<string> = string,
@@ -55,9 +55,9 @@ export type InitializeInstruction<
       TAccountPayerAccount extends string
         ? WritableSignerAccount<TAccountPayerAccount> & IAccountSignerMeta<TAccountPayerAccount>
         : TAccountPayerAccount,
-      TAccountXorcaStateAccount extends string
-        ? WritableAccount<TAccountXorcaStateAccount>
-        : TAccountXorcaStateAccount,
+      TAccountStateAccount extends string
+        ? WritableAccount<TAccountStateAccount>
+        : TAccountStateAccount,
       TAccountXorcaMintAccount extends string
         ? ReadonlyAccount<TAccountXorcaMintAccount>
         : TAccountXorcaMintAccount,
@@ -112,7 +112,7 @@ export function getInitializeInstructionDataCodec(): Codec<
 
 export type InitializeInput<
   TAccountPayerAccount extends string = string,
-  TAccountXorcaStateAccount extends string = string,
+  TAccountStateAccount extends string = string,
   TAccountXorcaMintAccount extends string = string,
   TAccountOrcaMintAccount extends string = string,
   TAccountUpdateAuthorityAccount extends string = string,
@@ -120,7 +120,7 @@ export type InitializeInput<
   TAccountTokenProgramAccount extends string = string,
 > = {
   payerAccount: TransactionSigner<TAccountPayerAccount>;
-  xorcaStateAccount: Address<TAccountXorcaStateAccount>;
+  stateAccount: Address<TAccountStateAccount>;
   xorcaMintAccount: Address<TAccountXorcaMintAccount>;
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   updateAuthorityAccount: Address<TAccountUpdateAuthorityAccount>;
@@ -131,7 +131,7 @@ export type InitializeInput<
 
 export function getInitializeInstruction<
   TAccountPayerAccount extends string,
-  TAccountXorcaStateAccount extends string,
+  TAccountStateAccount extends string,
   TAccountXorcaMintAccount extends string,
   TAccountOrcaMintAccount extends string,
   TAccountUpdateAuthorityAccount extends string,
@@ -141,7 +141,7 @@ export function getInitializeInstruction<
 >(
   input: InitializeInput<
     TAccountPayerAccount,
-    TAccountXorcaStateAccount,
+    TAccountStateAccount,
     TAccountXorcaMintAccount,
     TAccountOrcaMintAccount,
     TAccountUpdateAuthorityAccount,
@@ -152,7 +152,7 @@ export function getInitializeInstruction<
 ): InitializeInstruction<
   TProgramAddress,
   TAccountPayerAccount,
-  TAccountXorcaStateAccount,
+  TAccountStateAccount,
   TAccountXorcaMintAccount,
   TAccountOrcaMintAccount,
   TAccountUpdateAuthorityAccount,
@@ -165,10 +165,7 @@ export function getInitializeInstruction<
   // Original accounts.
   const originalAccounts = {
     payerAccount: { value: input.payerAccount ?? null, isWritable: true },
-    xorcaStateAccount: {
-      value: input.xorcaStateAccount ?? null,
-      isWritable: true,
-    },
+    stateAccount: { value: input.stateAccount ?? null, isWritable: true },
     xorcaMintAccount: {
       value: input.xorcaMintAccount ?? null,
       isWritable: false,
@@ -199,7 +196,7 @@ export function getInitializeInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.payerAccount),
-      getAccountMeta(accounts.xorcaStateAccount),
+      getAccountMeta(accounts.stateAccount),
       getAccountMeta(accounts.xorcaMintAccount),
       getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.updateAuthorityAccount),
@@ -211,7 +208,7 @@ export function getInitializeInstruction<
   } as InitializeInstruction<
     TProgramAddress,
     TAccountPayerAccount,
-    TAccountXorcaStateAccount,
+    TAccountStateAccount,
     TAccountXorcaMintAccount,
     TAccountOrcaMintAccount,
     TAccountUpdateAuthorityAccount,
@@ -229,7 +226,7 @@ export type ParsedInitializeInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     payerAccount: TAccountMetas[0];
-    xorcaStateAccount: TAccountMetas[1];
+    stateAccount: TAccountMetas[1];
     xorcaMintAccount: TAccountMetas[2];
     orcaMintAccount: TAccountMetas[3];
     updateAuthorityAccount: TAccountMetas[4];
@@ -261,7 +258,7 @@ export function parseInitializeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       payerAccount: getNextAccount(),
-      xorcaStateAccount: getNextAccount(),
+      stateAccount: getNextAccount(),
       xorcaMintAccount: getNextAccount(),
       orcaMintAccount: getNextAccount(),
       updateAuthorityAccount: getNextAccount(),

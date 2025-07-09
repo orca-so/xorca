@@ -22,7 +22,7 @@ pub const INITIAL_UPGRADE_AUTHORITY_ID: Pubkey = pubkey!("1111111111111111111111
 
 pub enum Instruction {
     #[account(0, writable, signer, name = "staker_account")]
-    #[account(1, writable, name = "xorca_state_account")]
+    #[account(1, writable, name = "state_account")]
     #[account(2, writable, name = "vault_account")]
     #[account(3, writable, name = "staker_orca_ata")]
     #[account(4, name = "orca_mint_account")]
@@ -32,7 +32,7 @@ pub enum Instruction {
     Stake { stake_amount: u64 },
 
     #[account(0, writable, signer, name = "unstaker_account")]
-    #[account(1, writable, name = "xorca_state_account")]
+    #[account(1, writable, name = "state_account")]
     #[account(2, writable, name = "vault_account")]
     #[account(3, writable, name = "pending_withdraw_account")]
     #[account(4, writable, name = "unstaker_lst_account")]
@@ -46,7 +46,7 @@ pub enum Instruction {
     },
 
     #[account(0, writable, signer, name = "unstaker_account")]
-    #[account(1, writable, name = "xorca_state_account")]
+    #[account(1, writable, name = "state_account")]
     #[account(2, writable, name = "pending_withdraw_account")]
     #[account(3, writable, name = "unstaker_orca_ata")]
     #[account(4, writable, name = "vault_account")]
@@ -56,7 +56,7 @@ pub enum Instruction {
     Withdraw { withdraw_index: u8 },
 
     #[account(0, writable, signer, name = "payer_account")]
-    #[account(1, writable, name = "xorca_state_account")]
+    #[account(1, writable, name = "state_account")]
     #[account(2, name = "xorca_mint_account")]
     #[account(3, name = "orca_mint_account")]
     #[account(4, name = "update_authority_account")]
@@ -65,7 +65,7 @@ pub enum Instruction {
     Initialize { cool_down_period_s: u64 },
 
     #[account(0, writable, signer, name = "update_authority_account")]
-    #[account(1, writable, name = "xorca_state_account")]
+    #[account(1, writable, name = "state_account")]
     Set {
         new_cool_down_period: Option<u64>,
         new_update_authority: Option<Pubkey>,

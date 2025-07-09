@@ -12,7 +12,7 @@ use solana_program::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
-pub struct XorcaState {
+pub struct State {
     pub discriminator: AccountDiscriminator,
     pub escrowed_orca_amount: u64,
     #[cfg_attr(
@@ -28,7 +28,7 @@ pub struct XorcaState {
     pub cool_down_period_s: u64,
 }
 
-impl XorcaState {
+impl State {
     pub const LEN: usize = 81;
 
     #[inline(always)]
@@ -38,7 +38,7 @@ impl XorcaState {
     }
 }
 
-impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for XorcaState {
+impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for State {
     type Error = std::io::Error;
 
     fn try_from(
@@ -50,30 +50,30 @@ impl<'a> TryFrom<&solana_program::account_info::AccountInfo<'a>> for XorcaState 
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_xorca_state(
+pub fn fetch_state(
     rpc: &solana_client::rpc_client::RpcClient,
     address: &solana_program::pubkey::Pubkey,
-) -> Result<crate::shared::DecodedAccount<XorcaState>, std::io::Error> {
-    let accounts = fetch_all_xorca_state(rpc, &[*address])?;
+) -> Result<crate::shared::DecodedAccount<State>, std::io::Error> {
+    let accounts = fetch_all_state(rpc, &[*address])?;
     Ok(accounts[0].clone())
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_all_xorca_state(
+pub fn fetch_all_state(
     rpc: &solana_client::rpc_client::RpcClient,
     addresses: &[solana_program::pubkey::Pubkey],
-) -> Result<Vec<crate::shared::DecodedAccount<XorcaState>>, std::io::Error> {
+) -> Result<Vec<crate::shared::DecodedAccount<State>>, std::io::Error> {
     let accounts = rpc
         .get_multiple_accounts(addresses)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-    let mut decoded_accounts: Vec<crate::shared::DecodedAccount<XorcaState>> = Vec::new();
+    let mut decoded_accounts: Vec<crate::shared::DecodedAccount<State>> = Vec::new();
     for i in 0..addresses.len() {
         let address = addresses[i];
         let account = accounts[i].as_ref().ok_or(std::io::Error::new(
             std::io::ErrorKind::Other,
             format!("Account not found: {}", address),
         ))?;
-        let data = XorcaState::from_bytes(&account.data)?;
+        let data = State::from_bytes(&account.data)?;
         decoded_accounts.push(crate::shared::DecodedAccount {
             address,
             account: account.clone(),
@@ -84,27 +84,27 @@ pub fn fetch_all_xorca_state(
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_maybe_xorca_state(
+pub fn fetch_maybe_state(
     rpc: &solana_client::rpc_client::RpcClient,
     address: &solana_program::pubkey::Pubkey,
-) -> Result<crate::shared::MaybeAccount<XorcaState>, std::io::Error> {
-    let accounts = fetch_all_maybe_xorca_state(rpc, &[*address])?;
+) -> Result<crate::shared::MaybeAccount<State>, std::io::Error> {
+    let accounts = fetch_all_maybe_state(rpc, &[*address])?;
     Ok(accounts[0].clone())
 }
 
 #[cfg(feature = "fetch")]
-pub fn fetch_all_maybe_xorca_state(
+pub fn fetch_all_maybe_state(
     rpc: &solana_client::rpc_client::RpcClient,
     addresses: &[solana_program::pubkey::Pubkey],
-) -> Result<Vec<crate::shared::MaybeAccount<XorcaState>>, std::io::Error> {
+) -> Result<Vec<crate::shared::MaybeAccount<State>>, std::io::Error> {
     let accounts = rpc
         .get_multiple_accounts(addresses)
         .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-    let mut decoded_accounts: Vec<crate::shared::MaybeAccount<XorcaState>> = Vec::new();
+    let mut decoded_accounts: Vec<crate::shared::MaybeAccount<State>> = Vec::new();
     for i in 0..addresses.len() {
         let address = addresses[i];
         if let Some(account) = accounts[i].as_ref() {
-            let data = XorcaState::from_bytes(&account.data)?;
+            let data = State::from_bytes(&account.data)?;
             decoded_accounts.push(crate::shared::MaybeAccount::Exists(
                 crate::shared::DecodedAccount {
                     address,
@@ -120,26 +120,26 @@ pub fn fetch_all_maybe_xorca_state(
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountDeserialize for XorcaState {
+impl anchor_lang::AccountDeserialize for State {
     fn try_deserialize_unchecked(buf: &mut &[u8]) -> anchor_lang::Result<Self> {
         Ok(Self::deserialize(buf)?)
     }
 }
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::AccountSerialize for XorcaState {}
+impl anchor_lang::AccountSerialize for State {}
 
 #[cfg(feature = "anchor")]
-impl anchor_lang::Owner for XorcaState {
+impl anchor_lang::Owner for State {
     fn owner() -> Pubkey {
         crate::XORCA_STAKING_PROGRAM_ID
     }
 }
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::IdlBuild for XorcaState {}
+impl anchor_lang::IdlBuild for State {}
 
 #[cfg(feature = "anchor-idl-build")]
-impl anchor_lang::Discriminator for XorcaState {
+impl anchor_lang::Discriminator for State {
     const DISCRIMINATOR: [u8; 8] = [0; 8];
 }

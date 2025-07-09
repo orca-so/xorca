@@ -6,7 +6,7 @@
 //!
 
 pub(crate) mod r#pending_withdraw;
-pub(crate) mod r#xorca_state;
+pub(crate) mod r#state;
 
 pub use self::r#pending_withdraw::*;
-pub use self::r#xorca_state::*;
+pub use self::r#state::*;

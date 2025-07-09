@@ -39,7 +39,7 @@ export function getWithdrawDiscriminatorBytes() {
 export type WithdrawInstruction<
   TProgram extends string = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
   TAccountUnstakerAccount extends string | IAccountMeta<string> = string,
-  TAccountXorcaStateAccount extends string | IAccountMeta<string> = string,
+  TAccountStateAccount extends string | IAccountMeta<string> = string,
   TAccountPendingWithdrawAccount extends string | IAccountMeta<string> = string,
   TAccountUnstakerOrcaAta extends string | IAccountMeta<string> = string,
   TAccountVaultAccount extends string | IAccountMeta<string> = string,
@@ -55,9 +55,9 @@ export type WithdrawInstruction<
         ? WritableSignerAccount<TAccountUnstakerAccount> &
             IAccountSignerMeta<TAccountUnstakerAccount>
         : TAccountUnstakerAccount,
-      TAccountXorcaStateAccount extends string
-        ? WritableAccount<TAccountXorcaStateAccount>
-        : TAccountXorcaStateAccount,
+      TAccountStateAccount extends string
+        ? WritableAccount<TAccountStateAccount>
+        : TAccountStateAccount,
       TAccountPendingWithdrawAccount extends string
         ? WritableAccount<TAccountPendingWithdrawAccount>
         : TAccountPendingWithdrawAccount,
@@ -113,7 +113,7 @@ export function getWithdrawInstructionDataCodec(): Codec<
 
 export type WithdrawInput<
   TAccountUnstakerAccount extends string = string,
-  TAccountXorcaStateAccount extends string = string,
+  TAccountStateAccount extends string = string,
   TAccountPendingWithdrawAccount extends string = string,
   TAccountUnstakerOrcaAta extends string = string,
   TAccountVaultAccount extends string = string,
@@ -122,7 +122,7 @@ export type WithdrawInput<
   TAccountTokenProgramAccount extends string = string,
 > = {
   unstakerAccount: TransactionSigner<TAccountUnstakerAccount>;
-  xorcaStateAccount: Address<TAccountXorcaStateAccount>;
+  stateAccount: Address<TAccountStateAccount>;
   pendingWithdrawAccount: Address<TAccountPendingWithdrawAccount>;
   unstakerOrcaAta: Address<TAccountUnstakerOrcaAta>;
   vaultAccount: Address<TAccountVaultAccount>;
@@ -134,7 +134,7 @@ export type WithdrawInput<
 
 export function getWithdrawInstruction<
   TAccountUnstakerAccount extends string,
-  TAccountXorcaStateAccount extends string,
+  TAccountStateAccount extends string,
   TAccountPendingWithdrawAccount extends string,
   TAccountUnstakerOrcaAta extends string,
   TAccountVaultAccount extends string,
@@ -145,7 +145,7 @@ export function getWithdrawInstruction<
 >(
   input: WithdrawInput<
     TAccountUnstakerAccount,
-    TAccountXorcaStateAccount,
+    TAccountStateAccount,
     TAccountPendingWithdrawAccount,
     TAccountUnstakerOrcaAta,
     TAccountVaultAccount,
@@ -157,7 +157,7 @@ export function getWithdrawInstruction<
 ): WithdrawInstruction<
   TProgramAddress,
   TAccountUnstakerAccount,
-  TAccountXorcaStateAccount,
+  TAccountStateAccount,
   TAccountPendingWithdrawAccount,
   TAccountUnstakerOrcaAta,
   TAccountVaultAccount,
@@ -171,10 +171,7 @@ export function getWithdrawInstruction<
   // Original accounts.
   const originalAccounts = {
     unstakerAccount: { value: input.unstakerAccount ?? null, isWritable: true },
-    xorcaStateAccount: {
-      value: input.xorcaStateAccount ?? null,
-      isWritable: true,
-    },
+    stateAccount: { value: input.stateAccount ?? null, isWritable: true },
     pendingWithdrawAccount: {
       value: input.pendingWithdrawAccount ?? null,
       isWritable: true,
@@ -203,7 +200,7 @@ export function getWithdrawInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.unstakerAccount),
-      getAccountMeta(accounts.xorcaStateAccount),
+      getAccountMeta(accounts.stateAccount),
       getAccountMeta(accounts.pendingWithdrawAccount),
       getAccountMeta(accounts.unstakerOrcaAta),
       getAccountMeta(accounts.vaultAccount),
@@ -216,7 +213,7 @@ export function getWithdrawInstruction<
   } as WithdrawInstruction<
     TProgramAddress,
     TAccountUnstakerAccount,
-    TAccountXorcaStateAccount,
+    TAccountStateAccount,
     TAccountPendingWithdrawAccount,
     TAccountUnstakerOrcaAta,
     TAccountVaultAccount,
@@ -235,7 +232,7 @@ export type ParsedWithdrawInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     unstakerAccount: TAccountMetas[0];
-    xorcaStateAccount: TAccountMetas[1];
+    stateAccount: TAccountMetas[1];
     pendingWithdrawAccount: TAccountMetas[2];
     unstakerOrcaAta: TAccountMetas[3];
     vaultAccount: TAccountMetas[4];
@@ -268,7 +265,7 @@ export function parseWithdrawInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       unstakerAccount: getNextAccount(),
-      xorcaStateAccount: getNextAccount(),
+      stateAccount: getNextAccount(),
       pendingWithdrawAccount: getNextAccount(),
       unstakerOrcaAta: getNextAccount(),
       vaultAccount: getNextAccount(),

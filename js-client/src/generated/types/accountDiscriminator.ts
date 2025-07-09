@@ -16,7 +16,7 @@ import {
 } from '@solana/kit';
 
 export enum AccountDiscriminator {
-  XorcaState,
+  State,
   PendingWithdraw,
 }
 

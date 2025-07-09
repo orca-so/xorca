@@ -6,7 +6,7 @@ use super::{AccountDiscriminator, ProgramAccount};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, BorshSerialize, BorshDeserialize, ShankAccount)]
 #[repr(C)]
-pub struct XorcaState {
+pub struct State {
     discriminator: AccountDiscriminator,
     pub escrowed_orca_amount: u64,
     pub xorca_mint: Pubkey,
@@ -14,13 +14,13 @@ pub struct XorcaState {
     pub cool_down_period_s: u64,
 }
 
-impl XorcaState {
+impl State {
     pub fn seeds<'a>(orca_mint: &'a Pubkey) -> Vec<Seed<'a>> {
-        vec![Seed::from(b"xorca_state"), Seed::from(orca_mint)]
+        vec![Seed::from(b"state"), Seed::from(orca_mint)]
     }
 }
 
-impl ProgramAccount for XorcaState {
+impl ProgramAccount for State {
     const LEN: usize = 2048;
-    const DISCRIMINATOR: AccountDiscriminator = AccountDiscriminator::XorcaState;
+    const DISCRIMINATOR: AccountDiscriminator = AccountDiscriminator::State;
 }

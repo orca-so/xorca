@@ -1,32 +1,32 @@
 use crate::{
-    assert_program_error, assert_program_success, token_mint_data, xorca_state_data, TestContext,
+    assert_program_error, assert_program_success, state_data, token_mint_data, TestContext,
     ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
 };
 use rstest::rstest;
 use solana_sdk::pubkey::Pubkey;
 use xorca::{
-    find_xorca_state_address, AccountDiscriminator, Initialize, InitializeInstructionArgs,
-    XorcaStakingProgramError, XorcaState,
+    find_state_address, AccountDiscriminator, Initialize, InitializeInstructionArgs, State,
+    XorcaStakingProgramError,
 };
 
 #[rstest]
 fn test_initialize(
     #[values(
         "Success",
-        "XorcaStateExists",
+        "StateExists",
         "InvalidLSTMintAuthority",
         "InvalidUpdateAuthority"
     )]
     case: &str,
 ) {
     let mut ctx = TestContext::new();
-    let (xorca_state_account, _) = find_xorca_state_address(ORCA_ID).unwrap();
+    let (state_account, _) = find_state_address(ORCA_ID).unwrap();
     let cool_down_period_s: u64 = 100;
 
     let lst_mint_authority = if case == "InvalidLSTMintAuthority" {
         Pubkey::default()
     } else {
-        xorca_state_account
+        state_account
     };
 
     let update_authority = if case == "InvalidUpdateAuthority" {
@@ -35,8 +35,8 @@ fn test_initialize(
         Pubkey::default()
     };
 
-    if case == "XorcaStateExists" {
-        ctx.write_account(xorca_state_account, xorca::ID, xorca_state_data!())
+    if case == "StateExists" {
+        ctx.write_account(state_account, xorca::ID, state_data!())
             .unwrap();
     }
 
@@ -58,7 +58,7 @@ fn test_initialize(
     // Define instruction
     let ix: solana_sdk::instruction::Instruction = Initialize {
         payer_account: ctx.signer(),
-        xorca_state_account,
+        state_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         update_authority_account: update_authority,
@@ -72,27 +72,20 @@ fn test_initialize(
     match case {
         "Success" => {
             assert_program_success!(result);
-            let xorca_state_account_after =
-                ctx.get_account::<XorcaState>(xorca_state_account).unwrap();
+            let state_account_after = ctx.get_account::<State>(state_account).unwrap();
             assert_eq!(
-                xorca_state_account_after.data.discriminator,
-                AccountDiscriminator::XorcaState
+                state_account_after.data.discriminator,
+                AccountDiscriminator::State
             );
-            assert_eq!(xorca_state_account_after.data.xorca_mint, XORCA_ID);
+            assert_eq!(state_account_after.data.xorca_mint, XORCA_ID);
             assert_eq!(
-                xorca_state_account_after
-                    .data
-                    .cool_down_period_s
-                    .to_le_bytes(),
+                state_account_after.data.cool_down_period_s.to_le_bytes(),
                 cool_down_period_s.to_be_bytes()
             );
-            assert_eq!(
-                xorca_state_account_after.data.update_authority,
-                Pubkey::default()
-            );
-            assert_eq!(xorca_state_account_after.data.escrowed_orca_amount, 0);
+            assert_eq!(state_account_after.data.update_authority, Pubkey::default());
+            assert_eq!(state_account_after.data.escrowed_orca_amount, 0);
         }
-        "XorcaStateExists" => {
+        "StateExists" => {
             assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);
         }
         "InvalidLSTMintAuthority" => {

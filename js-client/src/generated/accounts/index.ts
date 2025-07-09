@@ -7,4 +7,4 @@
  */
 
 export * from './pendingWithdraw';
-export * from './xorcaState';
+export * from './state';
