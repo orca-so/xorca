@@ -32,12 +32,12 @@ fn setup_stake_test_context(ctx: &mut TestContext, case: &str) -> Stake {
     let mut initial_staker_xorca_amount = 0;
 
     // Adjust initial values for specific success case
-    if case == "SuccessMoreThan1_1" {
-        initial_state_escrowed_orca = 39_232_982_923;
-        initial_xorca_supply = 358_384_859_821_223;
-        initial_vault_orca_amount = 923_384_268_587;
-        initial_staker_orca_amount = 5_123_538;
-        initial_staker_xorca_amount = 12_823_658_283;
+    if case == "SuccessMoreThan1_1Exchange" {
+        initial_state_escrowed_orca = 39_232_982_923; // 39,232.982923 ORCA
+        initial_xorca_supply = 358_384_859_821_223; // 358,384.859821223 xORCA
+        initial_vault_orca_amount = 923_384_268_587; // 923,384.268587 ORCA
+        initial_staker_orca_amount = 5_123_538; // 5.123538 ORCA
+        initial_staker_xorca_amount = 12_823_658_283; // 12.823658283 xORCA
     }
 
     // Write state account
@@ -66,7 +66,7 @@ fn setup_stake_test_context(ctx: &mut TestContext, case: &str) -> Stake {
             supply => initial_xorca_supply,
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => XORCA_PROGRAM_ID,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
@@ -191,12 +191,13 @@ fn setup_stake_test_context(ctx: &mut TestContext, case: &str) -> Stake {
         staker_orca_ata: staker_orca_ata_pda,
         staker_xorca_ata: staker_xorca_ata_pda,
         staker_account: staker_signer,
+        token_program_account: TOKEN_PROGRAM_ID,
     }
 }
 
 #[rstest]
-#[case("Success1_1")]
-#[case("SuccessMoreThan1_1")]
+#[case("Success1_1Exchange")]
+#[case("SuccessMoreThan1_1Exchange")]
 #[case("InvalidStateAccountOwner")]
 #[case("InvalidStateAccountSeeds")]
 #[case("InvalidStakerOrcaAtaOwnerData")]
@@ -210,7 +211,7 @@ fn test_stake_instruction(#[case] case: &str) {
     let accounts = setup_stake_test_context(&mut ctx, case);
 
     // Determine stake amount based on success case
-    let stake_amount = if case == "SuccessMoreThan1_1" {
+    let stake_amount = if case == "SuccessMoreThan1_1Exchange" {
         2_384_964 // stake 2.384964 ORCA
     } else {
         1_000_000 // stake 1 ORCA
@@ -225,6 +226,7 @@ fn test_stake_instruction(#[case] case: &str) {
         staker_xorca_ata: accounts.staker_xorca_ata,
         xorca_mint_account: accounts.xorca_mint_account,
         orca_mint_account: accounts.orca_mint_account,
+        token_program_account: accounts.token_program_account,
     }
     .instruction(StakeInstructionArgs { stake_amount });
 
@@ -233,7 +235,7 @@ fn test_stake_instruction(#[case] case: &str) {
 
     // Assertions based on the test case
     match case {
-        "Success1_1" => {
+        "Success1_1Exchange" => {
             assert_program_success!(result);
             let vault_account_after = ctx
                 .get_account::<TokenAccount>(accounts.vault_account)
@@ -269,9 +271,9 @@ fn test_stake_instruction(#[case] case: &str) {
                 state_account_after.data.escrowed_orca_amount, 0,
                 "Escrowed Orca amount should be unchanged (0 ORCA)"
             );
-            // TODO: Test exchange rate still 1:1 after stake
+            // // TODO: Test exchange rate still 1:1 after stake
         }
-        "SuccessMoreThan1_1" => {
+        "SuccessMoreThan1_1Exchange" => {
             assert_program_success!(result);
             let vault_account_after = ctx
                 .get_account::<TokenAccount>(accounts.vault_account)
@@ -295,10 +297,12 @@ fn test_stake_instruction(#[case] case: &str) {
                 staker_orca_ata_after.data.amount, 2_738_574,
                 "Staker Orca ATA should have 2.738574 ORCA"
             );
+            // ASSERTION CURRENTLY FAILS
             assert_eq!(
                 staker_xorca_ata_after.data.amount, 13_790_387_622,
                 "Staker xOrca ATA should have 13.790387622 xORCA"
             );
+            // ASSERTION CURRENTLY FAILS
             assert_eq!(
                 xorca_mint_account_after.data.supply, 358_385_826_550_562,
                 "xOrca supply should be 358,385.826550562 xORCA"

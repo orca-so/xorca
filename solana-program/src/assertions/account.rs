@@ -6,7 +6,7 @@ use crate::{
 use base58::ToBase58;
 use borsh::BorshDeserialize;
 use pinocchio::{
-    account_info::{AccountInfo, RefMut},
+    account_info::{AccountInfo, Ref, RefMut},
     instruction::Seed,
     program_error::ProgramError,
     pubkey::{find_program_address, Pubkey},
@@ -100,6 +100,16 @@ pub fn assert_account_address(account: &impl Key, address: &Pubkey) -> ProgramRe
         return Err(ErrorCode::IncorrectAccountAddress.into());
     }
     Ok(())
+}
+
+pub fn assert_account_data<T: ProgramAccount>(
+    account: &AccountInfo,
+) -> Result<Ref<'_, T>, ProgramError> {
+    assert_account_len(account, T::LEN)?;
+    assert_account_discriminator(account, &[T::DISCRIMINATOR])?;
+
+    let data = account.try_borrow_data()?;
+    Ok(T::from_bytes(data))
 }
 
 pub fn assert_account_data_mut<T: ProgramAccount>(
