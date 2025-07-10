@@ -243,7 +243,7 @@ fn make_state_account_invalid_owner(ctx: &mut TestContext, state_account_pda: Pu
         .unwrap();
 }
 
-fn make_state_account_invalid_seeds(ctx: &mut TestContext, state_account_pda: Pubkey) -> Pubkey {
+fn make_state_account_invalid_seeds(ctx: &mut TestContext) -> Pubkey {
     let invalid_state_pda = Pubkey::find_program_address(&[b"invalid_seed"], &XORCA_PROGRAM_ID).0;
     ctx.write_account(
         invalid_state_pda,
@@ -516,7 +516,7 @@ fn test_stake_invalid_state_account_seeds() {
         staker_signer,
         stake_amount,
     );
-    let invalid_state_pda = make_state_account_invalid_seeds(&mut ctx, correct_state_pda);
+    let invalid_state_pda = make_state_account_invalid_seeds(&mut ctx);
     let ix = Stake {
         staker_account: staker_signer,
         state_account: invalid_state_pda,

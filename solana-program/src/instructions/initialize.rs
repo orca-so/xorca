@@ -38,7 +38,7 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &u64) -
     // 3. xOrca Mint Account Assertions
     assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
     let xorca_mint_account_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
-    assert_account_address(&xorca_mint_account_data.mint_authority, &crate::ID)?;
+    assert_account_address(state_account, &xorca_mint_account_data.mint_authority)?;
     if xorca_mint_account_data.supply != 0 {
         return Err(ErrorCode::InvalidAccountData.into());
     }

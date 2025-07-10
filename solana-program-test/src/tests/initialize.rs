@@ -1,6 +1,6 @@
 use crate::{
     assert_program_error, assert_program_success, state_data, token_mint_data, TestContext,
-    ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID, XORCA_PROGRAM_ID,
+    ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
 };
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer;
@@ -29,7 +29,7 @@ fn test_initialize_success() {
             supply => 0,
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => XORCA_PROGRAM_ID,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
@@ -74,11 +74,6 @@ fn test_initialize_success() {
         "Raw account data (first 64 bytes): {:?}",
         &raw_account.data[..64]
     );
-
-    // Manually deserialize using Borsh
-    let mut data_slice = &raw_account.data[..];
-    let manual_state: State = borsh::BorshDeserialize::deserialize(&mut data_slice).unwrap();
-    println!("Manually deserialized State: {:?}", manual_state);
 
     let state_account_after = ctx.get_account::<State>(state_account).unwrap();
     println!("Decoded State from client: {:?}", state_account_after.data);
@@ -243,7 +238,7 @@ fn test_initialize_xorca_mint_frozen() {
             supply => 0,
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => XORCA_PROGRAM_ID,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 1, // Has freeze authority
             freeze_authority => Pubkey::default(),
@@ -298,7 +293,7 @@ fn test_initialize_xorca_mint_already_initialized() {
             supply => 1000000, // Non-zero supply
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => XORCA_PROGRAM_ID,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
@@ -353,7 +348,7 @@ fn test_initialize_invalid_orca_mint_account() {
             supply => 0,
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => XORCA_PROGRAM_ID,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
@@ -463,7 +458,7 @@ fn test_initialize_invalid_system_account() {
             supply => 0,
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => XORCA_PROGRAM_ID,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
@@ -506,7 +501,6 @@ fn test_initialize_invalid_system_account() {
 /// Test 7: Insufficient lamports for rent for the staking pool account / mint initialization
 #[test]
 fn test_initialize_insufficient_lamports() {
-    let mut ctx = TestContext::new();
     let (state_account, _) = find_state_address().unwrap();
     let cool_down_period_s: u64 = 100;
 
@@ -536,7 +530,7 @@ fn test_initialize_insufficient_lamports() {
                 supply => 0,
                 decimals => 9,
                 mint_authority_flag => 1,
-                mint_authority => XORCA_PROGRAM_ID,
+                mint_authority => state_account,
                 is_initialized => true,
                 freeze_authority_flag => 0,
                 freeze_authority => Pubkey::default(),
@@ -593,7 +587,7 @@ fn test_initialize_invalid_update_authority() {
             supply => 0,
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => XORCA_PROGRAM_ID,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
@@ -648,7 +642,7 @@ fn test_initialize_xorca_mint_no_authority() {
             supply => 0,
             decimals => 9,
             mint_authority_flag => 0, // No mint authority
-            mint_authority => XORCA_PROGRAM_ID,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
