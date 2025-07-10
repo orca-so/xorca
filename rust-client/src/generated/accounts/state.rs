@@ -14,6 +14,7 @@ use solana_program::pubkey::Pubkey;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct State {
     pub discriminator: AccountDiscriminator,
+    pub padding1: [u8; 7],
     pub escrowed_orca_amount: u64,
     pub cool_down_period_s: u64,
     #[cfg_attr(
@@ -21,10 +22,12 @@ pub struct State {
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
     )]
     pub update_authority: Pubkey,
+    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::Bytes>"))]
+    pub padding2: [u8; 1992],
 }
 
 impl State {
-    pub const LEN: usize = 49;
+    pub const LEN: usize = 2048;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {
