@@ -63,12 +63,12 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     let state = assert_account_data_mut::<State>(state_account)?;
 
     // 6. Orca Mint Account Assertions
-    assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
     assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
+    assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     // 7. xOrca Mint Account Assertions
-    assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
     assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
+    assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
     let xorca_mint_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
 
     // Calculate xOrca to mint
