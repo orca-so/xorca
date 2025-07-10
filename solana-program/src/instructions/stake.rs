@@ -11,7 +11,6 @@ use crate::{
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
-use pinocchio_log::log;
 use pinocchio_token::{
     instructions::{MintTo, Transfer},
     ID as SPL_TOKEN_PROGRAM_ID,
@@ -80,21 +79,11 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     // Calculate xOrca to mint
     let non_escrowed_orca_amount = vault_account_data.amount - state.escrowed_orca_amount;
 
-    log!("stake amount: {}", *stake_amount);
-
-    log!("vault amount: {}", vault_account_data.amount);
-    log!("escrowed orca amount: {}", state.escrowed_orca_amount);
-    log!("non escrowed orca amount: {}", non_escrowed_orca_amount);
-
-    log!("xorca mint supply: {}", xorca_mint_data.supply);
-
     let xorca_to_mint = convert_orca_to_xorca(
         *stake_amount,
         non_escrowed_orca_amount,
         xorca_mint_data.supply,
     )?;
-
-    log!("xorca to mint: {}", xorca_to_mint);
 
     // Transfer Orca from staker ATA to vault
     let transfer_instruction = Transfer {
