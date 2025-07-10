@@ -40,6 +40,9 @@ pub enum XorcaStakingProgramError {
     /// 6009 - Insufficient funds error
     #[error("Insufficient funds error")]
     InsufficientFunds = 0x1779,
+    /// 6010 - State account already initialized
+    #[error("State account already initialized")]
+    StateAccountAlreadyInitialized = 0x177A,
 }
 
 impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {

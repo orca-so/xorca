@@ -31,6 +31,8 @@ pub const TOKEN_PROGRAM_ID: Pubkey =
     solana_sdk::pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
 pub const ORCA_ID: Pubkey = solana_sdk::pubkey!("orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE");
 pub const XORCA_ID: Pubkey = solana_sdk::pubkey!("xorcaYqbXUNz3474ubUMJAdu2xgPsew3rUCe5ughT3N");
+pub const XORCA_PROGRAM_ID: Pubkey =
+    solana_sdk::pubkey!("5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY");
 
 struct TestContext {
     svm: LiteSVM,
@@ -47,7 +49,7 @@ impl TestContext {
             .with_log_bytes_limit(Some(100_000));
         svm.airdrop(&signer.pubkey(), LAMPORTS_PER_SOL).unwrap();
         svm.add_program(
-            Pubkey::from_str("5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY").unwrap(),
+            XORCA_PROGRAM_ID,
             include_bytes!("../../target/deploy/xorca_staking_program.so"),
         );
         Self {
@@ -91,7 +93,30 @@ impl TestContext {
     }
 
     pub fn send(&mut self, ix: Instruction) -> TransactionResult {
-        self.sends(&[ix])
+        let result = self.sends(&[ix]);
+
+        // Print logs from the result
+        match &result {
+            Ok(meta) => {
+                println!("Transaction succeeded!");
+                println!("Transaction logs:");
+                for log in &meta.logs {
+                    println!("  {}", log);
+                }
+                println!("Compute units consumed: {}", meta.compute_units_consumed);
+            }
+            Err(e) => {
+                println!("Transaction failed with error: {:?}", e);
+                // Access metadata directly from the error
+                println!("Transaction logs:");
+                for log in &e.meta.logs {
+                    println!("  {}", log);
+                }
+                println!("Compute units consumed: {}", e.meta.compute_units_consumed);
+            }
+        }
+
+        result
     }
 
     pub fn sends(&mut self, ix: &[Instruction]) -> TransactionResult {
@@ -142,5 +167,24 @@ impl TestContext {
             .get_account(&address)
             .ok_or(format!("Account not found: {}", address))?;
         Ok(account)
+    }
+
+    pub fn print_transaction_logs(&self, result: &TransactionResult) {
+        match result {
+            Ok(_) => {
+                println!("Transaction succeeded!");
+                // Note: For successful transactions, logs might not be directly accessible
+                // You may need to check the transaction result structure for your specific LiteSVM version
+            }
+            Err(e) => {
+                println!("Transaction failed with error: {:?}", e);
+                // Access metadata directly from the error
+                println!("Transaction logs:");
+                for log in &e.meta.logs {
+                    println!("  {}", log);
+                }
+                println!("Compute units consumed: {}", e.meta.compute_units_consumed);
+            }
+        }
     }
 }

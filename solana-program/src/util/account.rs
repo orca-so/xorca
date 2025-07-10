@@ -1,4 +1,5 @@
 use crate::{cpi::system::CreateAccount, error::ErrorCode, state::ProgramAccount};
+use borsh::BorshSerialize;
 use pinocchio::{
     account_info::{AccountInfo, RefMut},
     instruction::Signer,
@@ -64,4 +65,32 @@ pub fn create_program_account<'a, T: ProgramAccount>(
     let mut data = new_account.try_borrow_mut_data()?;
     data[0] = T::DISCRIMINATOR as u8;
     Ok(T::from_bytes_mut(data))
+}
+
+pub fn create_program_account_borsh<T: ProgramAccount + BorshSerialize + Default>(
+    system_program: &AccountInfo,
+    funder: &AccountInfo,
+    new_account: &AccountInfo,
+    signers: &[Signer],
+    data: &T,
+) -> Result<(), ProgramError> {
+    create_account(
+        system_program,
+        funder,
+        new_account,
+        T::LEN,
+        &crate::ID,
+        signers,
+    )?;
+
+    // Create the initial state with Borsh serialization
+    let serialized_data = borsh::to_vec(data).map_err(|_| ProgramError::InvalidAccountData)?;
+
+    let mut data = new_account.try_borrow_mut_data()?;
+    if serialized_data.len() > data.len() {
+        return Err(ProgramError::InvalidAccountData);
+    }
+    data[..serialized_data.len()].copy_from_slice(&serialized_data);
+
+    Ok(())
 }

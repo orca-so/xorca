@@ -61,7 +61,6 @@ pub enum Instruction {
     #[account(3, name = "orca_mint_account")]
     #[account(4, name = "update_authority_account")]
     #[account(5, name = "system_program_account")]
-    #[account(6, name = "token_program_account")]
     Initialize { cool_down_period_s: u64 },
 
     #[account(0, writable, signer, name = "update_authority_account")]

@@ -31,6 +31,9 @@ pub enum ErrorCode {
 
     #[error("Insufficient funds error")]
     InsufficientFunds = 6009, // 0x1779
+
+    #[error("State account already initialized")]
+    StateAccountAlreadyInitialized = 6010, // 0x177A
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {

@@ -34,6 +34,8 @@ export const XORCA_STAKING_PROGRAM_ERROR__INVALID_ACCOUNT_DATA = 0x1777; // 6007
 export const XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR = 0x1778; // 6008
 /** InsufficientFunds: Insufficient funds error */
 export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_FUNDS = 0x1779; // 6009
+/** StateAccountAlreadyInitialized: State account already initialized */
+export const XORCA_STAKING_PROGRAM_ERROR__STATE_ACCOUNT_ALREADY_INITIALIZED = 0x177a; // 6010
 
 export type XorcaStakingProgramError =
   | typeof XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR
@@ -45,6 +47,7 @@ export type XorcaStakingProgramError =
   | typeof XORCA_STAKING_PROGRAM_ERROR__INVALID_ACCOUNT_ROLE
   | typeof XORCA_STAKING_PROGRAM_ERROR__INVALID_SEEDS
   | typeof XORCA_STAKING_PROGRAM_ERROR__NOT_ENOUGH_ACCOUNT_KEYS
+  | typeof XORCA_STAKING_PROGRAM_ERROR__STATE_ACCOUNT_ALREADY_INITIALIZED
   | typeof XORCA_STAKING_PROGRAM_ERROR__UNKNOWN_INSTRUCTION_DISCRIMINATOR;
 
 let xorcaStakingProgramErrorMessages: Record<XorcaStakingProgramError, string> | undefined;
@@ -59,6 +62,7 @@ if (process.env.NODE_ENV !== 'production') {
     [XORCA_STAKING_PROGRAM_ERROR__INVALID_ACCOUNT_ROLE]: `Invalid account role`,
     [XORCA_STAKING_PROGRAM_ERROR__INVALID_SEEDS]: `Invalid seeds`,
     [XORCA_STAKING_PROGRAM_ERROR__NOT_ENOUGH_ACCOUNT_KEYS]: `Not enough account keys`,
+    [XORCA_STAKING_PROGRAM_ERROR__STATE_ACCOUNT_ALREADY_INITIALIZED]: `State account already initialized`,
     [XORCA_STAKING_PROGRAM_ERROR__UNKNOWN_INSTRUCTION_DISCRIMINATOR]: `Unknown instruction discriminator`,
   };
 }

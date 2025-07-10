@@ -46,14 +46,14 @@ export function getStateDiscriminatorBytes() {
 export type State = {
   discriminator: AccountDiscriminator;
   escrowedOrcaAmount: bigint;
-  updateAuthority: Address;
   coolDownPeriodS: bigint;
+  updateAuthority: Address;
 };
 
 export type StateArgs = {
   escrowedOrcaAmount: number | bigint;
-  updateAuthority: Address;
   coolDownPeriodS: number | bigint;
+  updateAuthority: Address;
 };
 
 export function getStateEncoder(): Encoder<StateArgs> {
@@ -61,8 +61,8 @@ export function getStateEncoder(): Encoder<StateArgs> {
     getStructEncoder([
       ['discriminator', getAccountDiscriminatorEncoder()],
       ['escrowedOrcaAmount', getU64Encoder()],
-      ['updateAuthority', getAddressEncoder()],
       ['coolDownPeriodS', getU64Encoder()],
+      ['updateAuthority', getAddressEncoder()],
     ]),
     (value) => ({ ...value, discriminator: STATE_DISCRIMINATOR })
   );
@@ -72,8 +72,8 @@ export function getStateDecoder(): Decoder<State> {
   return getStructDecoder([
     ['discriminator', getAccountDiscriminatorDecoder()],
     ['escrowedOrcaAmount', getU64Decoder()],
-    ['updateAuthority', getAddressDecoder()],
     ['coolDownPeriodS', getU64Decoder()],
+    ['updateAuthority', getAddressDecoder()],
   ]);
 }
 

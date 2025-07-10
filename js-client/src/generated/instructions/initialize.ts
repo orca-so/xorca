@@ -46,7 +46,6 @@ export type InitializeInstruction<
   TAccountOrcaMintAccount extends string | IAccountMeta<string> = string,
   TAccountUpdateAuthorityAccount extends string | IAccountMeta<string> = string,
   TAccountSystemProgramAccount extends string | IAccountMeta<string> = string,
-  TAccountTokenProgramAccount extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -70,9 +69,6 @@ export type InitializeInstruction<
       TAccountSystemProgramAccount extends string
         ? ReadonlyAccount<TAccountSystemProgramAccount>
         : TAccountSystemProgramAccount,
-      TAccountTokenProgramAccount extends string
-        ? ReadonlyAccount<TAccountTokenProgramAccount>
-        : TAccountTokenProgramAccount,
       ...TRemainingAccounts,
     ]
   >;
@@ -117,7 +113,6 @@ export type InitializeInput<
   TAccountOrcaMintAccount extends string = string,
   TAccountUpdateAuthorityAccount extends string = string,
   TAccountSystemProgramAccount extends string = string,
-  TAccountTokenProgramAccount extends string = string,
 > = {
   payerAccount: TransactionSigner<TAccountPayerAccount>;
   stateAccount: Address<TAccountStateAccount>;
@@ -125,7 +120,6 @@ export type InitializeInput<
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   updateAuthorityAccount: Address<TAccountUpdateAuthorityAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
-  tokenProgramAccount: Address<TAccountTokenProgramAccount>;
   coolDownPeriodS: InitializeInstructionDataArgs['coolDownPeriodS'];
 };
 
@@ -136,7 +130,6 @@ export function getInitializeInstruction<
   TAccountOrcaMintAccount extends string,
   TAccountUpdateAuthorityAccount extends string,
   TAccountSystemProgramAccount extends string,
-  TAccountTokenProgramAccount extends string,
   TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: InitializeInput<
@@ -145,8 +138,7 @@ export function getInitializeInstruction<
     TAccountXorcaMintAccount,
     TAccountOrcaMintAccount,
     TAccountUpdateAuthorityAccount,
-    TAccountSystemProgramAccount,
-    TAccountTokenProgramAccount
+    TAccountSystemProgramAccount
   >,
   config?: { programAddress?: TProgramAddress }
 ): InitializeInstruction<
@@ -156,8 +148,7 @@ export function getInitializeInstruction<
   TAccountXorcaMintAccount,
   TAccountOrcaMintAccount,
   TAccountUpdateAuthorityAccount,
-  TAccountSystemProgramAccount,
-  TAccountTokenProgramAccount
+  TAccountSystemProgramAccount
 > {
   // Program address.
   const programAddress = config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
@@ -182,10 +173,6 @@ export function getInitializeInstruction<
       value: input.systemProgramAccount ?? null,
       isWritable: false,
     },
-    tokenProgramAccount: {
-      value: input.tokenProgramAccount ?? null,
-      isWritable: false,
-    },
   };
   const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
 
@@ -201,7 +188,6 @@ export function getInitializeInstruction<
       getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.updateAuthorityAccount),
       getAccountMeta(accounts.systemProgramAccount),
-      getAccountMeta(accounts.tokenProgramAccount),
     ],
     programAddress,
     data: getInitializeInstructionDataEncoder().encode(args as InitializeInstructionDataArgs),
@@ -212,8 +198,7 @@ export function getInitializeInstruction<
     TAccountXorcaMintAccount,
     TAccountOrcaMintAccount,
     TAccountUpdateAuthorityAccount,
-    TAccountSystemProgramAccount,
-    TAccountTokenProgramAccount
+    TAccountSystemProgramAccount
   >;
 
   return instruction;
@@ -231,7 +216,6 @@ export type ParsedInitializeInstruction<
     orcaMintAccount: TAccountMetas[3];
     updateAuthorityAccount: TAccountMetas[4];
     systemProgramAccount: TAccountMetas[5];
-    tokenProgramAccount: TAccountMetas[6];
   };
   data: InitializeInstructionData;
 };
@@ -244,7 +228,7 @@ export function parseInitializeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 7) {
+  if (instruction.accounts.length < 6) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -263,7 +247,6 @@ export function parseInitializeInstruction<
       orcaMintAccount: getNextAccount(),
       updateAuthorityAccount: getNextAccount(),
       systemProgramAccount: getNextAccount(),
-      tokenProgramAccount: getNextAccount(),
     },
     data: getInitializeInstructionDataDecoder().decode(instruction.data),
   };
