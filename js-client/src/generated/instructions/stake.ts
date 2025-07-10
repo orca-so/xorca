@@ -41,10 +41,10 @@ export function getStakeDiscriminatorBytes() {
 export type StakeInstruction<
   TProgram extends string = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
   TAccountStakerAccount extends string | IAccountMeta<string> = string,
-  TAccountStateAccount extends string | IAccountMeta<string> = string,
   TAccountVaultAccount extends string | IAccountMeta<string> = string,
   TAccountStakerOrcaAta extends string | IAccountMeta<string> = string,
   TAccountStakerXorcaAta extends string | IAccountMeta<string> = string,
+  TAccountStateAccount extends string | IAccountMeta<string> = string,
   TAccountOrcaMintAccount extends string | IAccountMeta<string> = string,
   TAccountXorcaMintAccount extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
@@ -55,9 +55,6 @@ export type StakeInstruction<
       TAccountStakerAccount extends string
         ? WritableSignerAccount<TAccountStakerAccount> & IAccountSignerMeta<TAccountStakerAccount>
         : TAccountStakerAccount,
-      TAccountStateAccount extends string
-        ? WritableAccount<TAccountStateAccount>
-        : TAccountStateAccount,
       TAccountVaultAccount extends string
         ? WritableAccount<TAccountVaultAccount>
         : TAccountVaultAccount,
@@ -67,6 +64,9 @@ export type StakeInstruction<
       TAccountStakerXorcaAta extends string
         ? WritableAccount<TAccountStakerXorcaAta>
         : TAccountStakerXorcaAta,
+      TAccountStateAccount extends string
+        ? ReadonlyAccount<TAccountStateAccount>
+        : TAccountStateAccount,
       TAccountOrcaMintAccount extends string
         ? ReadonlyAccount<TAccountOrcaMintAccount>
         : TAccountOrcaMintAccount,
@@ -110,18 +110,18 @@ export function getStakeInstructionDataCodec(): Codec<
 
 export type StakeInput<
   TAccountStakerAccount extends string = string,
-  TAccountStateAccount extends string = string,
   TAccountVaultAccount extends string = string,
   TAccountStakerOrcaAta extends string = string,
   TAccountStakerXorcaAta extends string = string,
+  TAccountStateAccount extends string = string,
   TAccountOrcaMintAccount extends string = string,
   TAccountXorcaMintAccount extends string = string,
 > = {
   stakerAccount: TransactionSigner<TAccountStakerAccount>;
-  stateAccount: Address<TAccountStateAccount>;
   vaultAccount: Address<TAccountVaultAccount>;
   stakerOrcaAta: Address<TAccountStakerOrcaAta>;
   stakerXorcaAta: Address<TAccountStakerXorcaAta>;
+  stateAccount: Address<TAccountStateAccount>;
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   xorcaMintAccount: Address<TAccountXorcaMintAccount>;
   stakeAmount: StakeInstructionDataArgs['stakeAmount'];
@@ -129,20 +129,20 @@ export type StakeInput<
 
 export function getStakeInstruction<
   TAccountStakerAccount extends string,
-  TAccountStateAccount extends string,
   TAccountVaultAccount extends string,
   TAccountStakerOrcaAta extends string,
   TAccountStakerXorcaAta extends string,
+  TAccountStateAccount extends string,
   TAccountOrcaMintAccount extends string,
   TAccountXorcaMintAccount extends string,
   TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: StakeInput<
     TAccountStakerAccount,
-    TAccountStateAccount,
     TAccountVaultAccount,
     TAccountStakerOrcaAta,
     TAccountStakerXorcaAta,
+    TAccountStateAccount,
     TAccountOrcaMintAccount,
     TAccountXorcaMintAccount
   >,
@@ -150,10 +150,10 @@ export function getStakeInstruction<
 ): StakeInstruction<
   TProgramAddress,
   TAccountStakerAccount,
-  TAccountStateAccount,
   TAccountVaultAccount,
   TAccountStakerOrcaAta,
   TAccountStakerXorcaAta,
+  TAccountStateAccount,
   TAccountOrcaMintAccount,
   TAccountXorcaMintAccount
 > {
@@ -163,10 +163,10 @@ export function getStakeInstruction<
   // Original accounts.
   const originalAccounts = {
     stakerAccount: { value: input.stakerAccount ?? null, isWritable: true },
-    stateAccount: { value: input.stateAccount ?? null, isWritable: true },
     vaultAccount: { value: input.vaultAccount ?? null, isWritable: true },
     stakerOrcaAta: { value: input.stakerOrcaAta ?? null, isWritable: true },
     stakerXorcaAta: { value: input.stakerXorcaAta ?? null, isWritable: true },
+    stateAccount: { value: input.stateAccount ?? null, isWritable: false },
     orcaMintAccount: {
       value: input.orcaMintAccount ?? null,
       isWritable: false,
@@ -185,10 +185,10 @@ export function getStakeInstruction<
   const instruction = {
     accounts: [
       getAccountMeta(accounts.stakerAccount),
-      getAccountMeta(accounts.stateAccount),
       getAccountMeta(accounts.vaultAccount),
       getAccountMeta(accounts.stakerOrcaAta),
       getAccountMeta(accounts.stakerXorcaAta),
+      getAccountMeta(accounts.stateAccount),
       getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.xorcaMintAccount),
     ],
@@ -197,10 +197,10 @@ export function getStakeInstruction<
   } as StakeInstruction<
     TProgramAddress,
     TAccountStakerAccount,
-    TAccountStateAccount,
     TAccountVaultAccount,
     TAccountStakerOrcaAta,
     TAccountStakerXorcaAta,
+    TAccountStateAccount,
     TAccountOrcaMintAccount,
     TAccountXorcaMintAccount
   >;
@@ -215,10 +215,10 @@ export type ParsedStakeInstruction<
   programAddress: Address<TProgram>;
   accounts: {
     stakerAccount: TAccountMetas[0];
-    stateAccount: TAccountMetas[1];
-    vaultAccount: TAccountMetas[2];
-    stakerOrcaAta: TAccountMetas[3];
-    stakerXorcaAta: TAccountMetas[4];
+    vaultAccount: TAccountMetas[1];
+    stakerOrcaAta: TAccountMetas[2];
+    stakerXorcaAta: TAccountMetas[3];
+    stateAccount: TAccountMetas[4];
     orcaMintAccount: TAccountMetas[5];
     xorcaMintAccount: TAccountMetas[6];
   };
@@ -247,10 +247,10 @@ export function parseStakeInstruction<
     programAddress: instruction.programAddress,
     accounts: {
       stakerAccount: getNextAccount(),
-      stateAccount: getNextAccount(),
       vaultAccount: getNextAccount(),
       stakerOrcaAta: getNextAccount(),
       stakerXorcaAta: getNextAccount(),
+      stateAccount: getNextAccount(),
       orcaMintAccount: getNextAccount(),
       xorcaMintAccount: getNextAccount(),
     },

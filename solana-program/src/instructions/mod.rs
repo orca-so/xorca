@@ -22,10 +22,10 @@ pub const INITIAL_UPGRADE_AUTHORITY_ID: Pubkey = pubkey!("1111111111111111111111
 
 pub enum Instruction {
     #[account(0, writable, signer, name = "staker_account")]
-    #[account(1, writable, name = "state_account")]
-    #[account(2, writable, name = "vault_account")]
-    #[account(3, writable, name = "staker_orca_ata")]
-    #[account(4, writable, name = "staker_xorca_ata")]
+    #[account(1, writable, name = "vault_account")]
+    #[account(2, writable, name = "staker_orca_ata")]
+    #[account(3, writable, name = "staker_xorca_ata")]
+    #[account(4, name = "state_account")]
     #[account(5, name = "orca_mint_account")]
     #[account(6, name = "xorca_mint_account")]
     Stake { stake_amount: u64 },

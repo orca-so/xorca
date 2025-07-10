@@ -11,7 +11,6 @@ use crate::{
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
-use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 use pinocchio_token::{
     instructions::{MintTo, Transfer},
     ID as SPL_TOKEN_PROGRAM_ID,
@@ -19,10 +18,10 @@ use pinocchio_token::{
 
 pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> ProgramResult {
     let staker_account = get_account_info(accounts, 0)?;
-    let state_account = get_account_info(accounts, 1)?;
-    let vault_account = get_account_info(accounts, 2)?;
-    let staker_orca_ata = get_account_info(accounts, 3)?;
-    let staker_xorca_ata = get_account_info(accounts, 4)?;
+    let vault_account = get_account_info(accounts, 1)?;
+    let staker_orca_ata = get_account_info(accounts, 2)?;
+    let staker_xorca_ata = get_account_info(accounts, 3)?;
+    let state_account = get_account_info(accounts, 4)?;
     let orca_mint_account = get_account_info(accounts, 5)?;
     let xorca_mint_account = get_account_info(accounts, 6)?;
 
@@ -32,15 +31,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
         &[AccountRole::Signer, AccountRole::Writable],
     )?;
 
-    // 2. State Account Assertions
-    assert_account_role(state_account, &[AccountRole::Writable])?;
-    assert_account_owner(state_account, &crate::ID)?;
-    let mut state_seeds = State::seeds();
-    let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
-    state_seeds.push(Seed::from(&state_bump));
-    let state = assert_account_data_mut::<State>(state_account)?;
-
-    // 3. Vault Account Assertions
+    // 2. Vault Account Assertions
     let vault_account_seeds = vec![
         Seed::from(state_account.key()),
         Seed::from(SPL_TOKEN_PROGRAM_ID.as_ref()),
@@ -54,15 +45,22 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     let vault_account_data =
         make_owner_token_account_assertions(vault_account, state_account, orca_mint_account)?;
 
-    // 4. Staker Orca ATA Assertions
+    // 3. Staker Orca ATA Assertions
     let staker_orca_ata_data =
         make_owner_token_account_assertions(staker_orca_ata, staker_account, orca_mint_account)?;
     if staker_orca_ata_data.amount < *stake_amount {
         return Err(ErrorCode::InsufficientFunds.into());
     }
 
-    // 5. Staker xORCA ATA Assertions
+    // 4. Staker xORCA ATA Assertions
     make_owner_token_account_assertions(staker_xorca_ata, staker_account, xorca_mint_account)?;
+
+    // 5. State Account Assertions
+    assert_account_owner(state_account, &crate::ID)?;
+    let mut state_seeds = State::seeds();
+    let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
+    state_seeds.push(Seed::from(&state_bump));
+    let state = assert_account_data_mut::<State>(state_account)?;
 
     // 6. Orca Mint Account Assertions
     assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
@@ -73,7 +71,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
     let xorca_mint_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
 
-    // Calculate LST to mint
+    // Calculate xOrca to mint
     let non_escrowed_orca_amount = vault_account_data.amount - state.escrowed_orca_amount;
     let xorca_to_mint = convert_orca_to_xorca(
         *stake_amount,
@@ -81,7 +79,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
         xorca_mint_data.supply,
     )?;
 
-    // Transfer stake tokens from staker ATA to xOrca state ATA
+    // Transfer Orca from staker ATA to vault
     let transfer_instruction = Transfer {
         from: staker_orca_ata,
         to: vault_account,
@@ -90,7 +88,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     };
     transfer_instruction.invoke()?;
 
-    // Mint LST to staker LST ATA
+    // Mint xOrca to staker xOrca ATA
     let mint_to_instruction = MintTo {
         mint: xorca_mint_account,
         account: staker_xorca_ata,
