@@ -2,7 +2,7 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use pinocchio::{instruction::Seed, pubkey::Pubkey};
 use shank::ShankAccount;
 
-use super::{AccountDiscriminator, ProgramAccount};
+use super::{AccountDiscriminator, ProgramAccount, DEFAULT_ACCOUNT_LEN};
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, BorshSerialize, BorshDeserialize, ShankAccount)]
 #[repr(C)]
@@ -28,6 +28,6 @@ impl PendingWithdraw {
 }
 
 impl ProgramAccount for PendingWithdraw {
-    const LEN: usize = 2048;
+    const LEN: usize = DEFAULT_ACCOUNT_LEN;
     const DISCRIMINATOR: AccountDiscriminator = AccountDiscriminator::PendingWithdraw;
 }

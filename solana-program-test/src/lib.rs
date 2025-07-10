@@ -17,7 +17,6 @@ use solana_sdk::{
     transaction::VersionedTransaction,
 };
 use std::error::Error;
-use std::str::FromStr;
 use xorca::DecodedAccount;
 
 mod assertions;
@@ -33,6 +32,8 @@ pub const ORCA_ID: Pubkey = solana_sdk::pubkey!("orcaEKTdK7LKz57vaAYr9QeNsVEPfiu
 pub const XORCA_ID: Pubkey = solana_sdk::pubkey!("xorcaYqbXUNz3474ubUMJAdu2xgPsew3rUCe5ughT3N");
 pub const XORCA_PROGRAM_ID: Pubkey =
     solana_sdk::pubkey!("5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY");
+pub const ATA_PROGRAM_ID: Pubkey =
+    solana_sdk::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 
 struct TestContext {
     svm: LiteSVM,
@@ -89,6 +90,20 @@ impl TestContext {
                 rent_epoch: 0,
             },
         )?;
+        Ok(())
+    }
+
+    pub fn pad_account(
+        &mut self,
+        address: Pubkey,
+        target_size: usize,
+    ) -> Result<(), Box<dyn Error>> {
+        let mut account = self.get_raw_account(address)?;
+        let current_len = account.data.len();
+        if current_len < target_size {
+            account.data.resize(target_size, 0);
+            self.svm.set_account(address, account)?;
+        }
         Ok(())
     }
 

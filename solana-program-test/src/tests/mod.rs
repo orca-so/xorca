@@ -1,1 +1,2 @@
 mod initialize;
+mod stake;

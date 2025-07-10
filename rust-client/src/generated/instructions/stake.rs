@@ -19,6 +19,8 @@ pub struct Stake {
 
     pub staker_orca_ata: solana_program::pubkey::Pubkey,
 
+    pub staker_xorca_ata: solana_program::pubkey::Pubkey,
+
     pub orca_mint_account: solana_program::pubkey::Pubkey,
 
     pub xorca_mint_account: solana_program::pubkey::Pubkey,
@@ -38,7 +40,7 @@ impl Stake {
         args: StakeInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.staker_account,
             true,
@@ -53,6 +55,10 @@ impl Stake {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.staker_orca_ata,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.staker_xorca_ata,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -108,14 +114,16 @@ pub struct StakeInstructionArgs {
 ///   1. `[writable]` state_account
 ///   2. `[writable]` vault_account
 ///   3. `[writable]` staker_orca_ata
-///   4. `[]` orca_mint_account
-///   5. `[]` xorca_mint_account
+///   4. `[writable]` staker_xorca_ata
+///   5. `[]` orca_mint_account
+///   6. `[]` xorca_mint_account
 #[derive(Clone, Debug, Default)]
 pub struct StakeBuilder {
     staker_account: Option<solana_program::pubkey::Pubkey>,
     state_account: Option<solana_program::pubkey::Pubkey>,
     vault_account: Option<solana_program::pubkey::Pubkey>,
     staker_orca_ata: Option<solana_program::pubkey::Pubkey>,
+    staker_xorca_ata: Option<solana_program::pubkey::Pubkey>,
     orca_mint_account: Option<solana_program::pubkey::Pubkey>,
     xorca_mint_account: Option<solana_program::pubkey::Pubkey>,
     stake_amount: Option<u64>,
@@ -147,6 +155,14 @@ impl StakeBuilder {
         staker_orca_ata: solana_program::pubkey::Pubkey,
     ) -> &mut Self {
         self.staker_orca_ata = Some(staker_orca_ata);
+        self
+    }
+    #[inline(always)]
+    pub fn staker_xorca_ata(
+        &mut self,
+        staker_xorca_ata: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.staker_xorca_ata = Some(staker_xorca_ata);
         self
     }
     #[inline(always)]
@@ -195,6 +211,7 @@ impl StakeBuilder {
             state_account: self.state_account.expect("state_account is not set"),
             vault_account: self.vault_account.expect("vault_account is not set"),
             staker_orca_ata: self.staker_orca_ata.expect("staker_orca_ata is not set"),
+            staker_xorca_ata: self.staker_xorca_ata.expect("staker_xorca_ata is not set"),
             orca_mint_account: self
                 .orca_mint_account
                 .expect("orca_mint_account is not set"),
@@ -220,6 +237,8 @@ pub struct StakeCpiAccounts<'a, 'b> {
 
     pub staker_orca_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
+    pub staker_xorca_ata: &'b solana_program::account_info::AccountInfo<'a>,
+
     pub orca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub xorca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
@@ -237,6 +256,8 @@ pub struct StakeCpi<'a, 'b> {
     pub vault_account: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub staker_orca_ata: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub staker_xorca_ata: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub orca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
 
@@ -257,6 +278,7 @@ impl<'a, 'b> StakeCpi<'a, 'b> {
             state_account: accounts.state_account,
             vault_account: accounts.vault_account,
             staker_orca_ata: accounts.staker_orca_ata,
+            staker_xorca_ata: accounts.staker_xorca_ata,
             orca_mint_account: accounts.orca_mint_account,
             xorca_mint_account: accounts.xorca_mint_account,
             __args: args,
@@ -296,7 +318,7 @@ impl<'a, 'b> StakeCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(7 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.staker_account.key,
             true,
@@ -311,6 +333,10 @@ impl<'a, 'b> StakeCpi<'a, 'b> {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.staker_orca_ata.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.staker_xorca_ata.key,
             false,
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
@@ -337,12 +363,13 @@ impl<'a, 'b> StakeCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(8 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.staker_account.clone());
         account_infos.push(self.state_account.clone());
         account_infos.push(self.vault_account.clone());
         account_infos.push(self.staker_orca_ata.clone());
+        account_infos.push(self.staker_xorca_ata.clone());
         account_infos.push(self.orca_mint_account.clone());
         account_infos.push(self.xorca_mint_account.clone());
         remaining_accounts
@@ -365,8 +392,9 @@ impl<'a, 'b> StakeCpi<'a, 'b> {
 ///   1. `[writable]` state_account
 ///   2. `[writable]` vault_account
 ///   3. `[writable]` staker_orca_ata
-///   4. `[]` orca_mint_account
-///   5. `[]` xorca_mint_account
+///   4. `[writable]` staker_xorca_ata
+///   5. `[]` orca_mint_account
+///   6. `[]` xorca_mint_account
 #[derive(Clone, Debug)]
 pub struct StakeCpiBuilder<'a, 'b> {
     instruction: Box<StakeCpiBuilderInstruction<'a, 'b>>,
@@ -380,6 +408,7 @@ impl<'a, 'b> StakeCpiBuilder<'a, 'b> {
             state_account: None,
             vault_account: None,
             staker_orca_ata: None,
+            staker_xorca_ata: None,
             orca_mint_account: None,
             xorca_mint_account: None,
             stake_amount: None,
@@ -417,6 +446,14 @@ impl<'a, 'b> StakeCpiBuilder<'a, 'b> {
         staker_orca_ata: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.staker_orca_ata = Some(staker_orca_ata);
+        self
+    }
+    #[inline(always)]
+    pub fn staker_xorca_ata(
+        &mut self,
+        staker_xorca_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.staker_xorca_ata = Some(staker_xorca_ata);
         self
     }
     #[inline(always)]
@@ -511,6 +548,11 @@ impl<'a, 'b> StakeCpiBuilder<'a, 'b> {
                 .staker_orca_ata
                 .expect("staker_orca_ata is not set"),
 
+            staker_xorca_ata: self
+                .instruction
+                .staker_xorca_ata
+                .expect("staker_xorca_ata is not set"),
+
             orca_mint_account: self
                 .instruction
                 .orca_mint_account
@@ -536,6 +578,7 @@ struct StakeCpiBuilderInstruction<'a, 'b> {
     state_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     vault_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     staker_orca_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    staker_xorca_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     orca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     xorca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     stake_amount: Option<u64>,

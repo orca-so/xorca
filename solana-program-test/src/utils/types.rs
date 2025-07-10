@@ -32,3 +32,14 @@ macro_rules! token_mint_data {
         data
     }};
 }
+#[macro_export]
+macro_rules! token_account_data {
+    ($($name:ident => $value:expr),* $(,)?) => {{
+        let mut data = crate::zeroed_type!(xorca::TokenAccount);
+        data.state = xorca::TokenAccountState::Initialized;
+        $(
+            data.$name = $value;
+        )*
+        data
+    }};
+}
