@@ -25,8 +25,6 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     let staker_xorca_ata = get_account_info(accounts, 4)?;
     let orca_mint_account = get_account_info(accounts, 5)?;
     let xorca_mint_account = get_account_info(accounts, 6)?;
-    let system_program_account = get_account_info(accounts, 7)?;
-    let token_program_account = get_account_info(accounts, 8)?;
 
     // 1. Staker Account Assertions
     assert_account_role(
@@ -74,12 +72,6 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
     assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
     let xorca_mint_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
-
-    // 8. System Program Account Assertions
-    assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;
-
-    // 9. Token Account Assertions
-    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     // Calculate LST to mint
     let non_escrowed_orca_amount = vault_account_data.amount - state.escrowed_orca_amount;

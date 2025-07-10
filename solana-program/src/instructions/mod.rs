@@ -27,8 +27,6 @@ pub enum Instruction {
     #[account(3, writable, name = "staker_orca_ata")]
     #[account(4, name = "orca_mint_account")]
     #[account(5, name = "xorca_mint_account")]
-    #[account(6, name = "system_program_account")]
-    #[account(7, name = "token_program_account")]
     Stake { stake_amount: u64 },
 
     #[account(0, writable, signer, name = "unstaker_account")]

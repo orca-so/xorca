@@ -46,8 +46,6 @@ export type StakeInstruction<
   TAccountStakerOrcaAta extends string | IAccountMeta<string> = string,
   TAccountOrcaMintAccount extends string | IAccountMeta<string> = string,
   TAccountXorcaMintAccount extends string | IAccountMeta<string> = string,
-  TAccountSystemProgramAccount extends string | IAccountMeta<string> = string,
-  TAccountTokenProgramAccount extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -71,12 +69,6 @@ export type StakeInstruction<
       TAccountXorcaMintAccount extends string
         ? ReadonlyAccount<TAccountXorcaMintAccount>
         : TAccountXorcaMintAccount,
-      TAccountSystemProgramAccount extends string
-        ? ReadonlyAccount<TAccountSystemProgramAccount>
-        : TAccountSystemProgramAccount,
-      TAccountTokenProgramAccount extends string
-        ? ReadonlyAccount<TAccountTokenProgramAccount>
-        : TAccountTokenProgramAccount,
       ...TRemainingAccounts,
     ]
   >;
@@ -119,8 +111,6 @@ export type StakeInput<
   TAccountStakerOrcaAta extends string = string,
   TAccountOrcaMintAccount extends string = string,
   TAccountXorcaMintAccount extends string = string,
-  TAccountSystemProgramAccount extends string = string,
-  TAccountTokenProgramAccount extends string = string,
 > = {
   stakerAccount: TransactionSigner<TAccountStakerAccount>;
   stateAccount: Address<TAccountStateAccount>;
@@ -128,8 +118,6 @@ export type StakeInput<
   stakerOrcaAta: Address<TAccountStakerOrcaAta>;
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   xorcaMintAccount: Address<TAccountXorcaMintAccount>;
-  systemProgramAccount: Address<TAccountSystemProgramAccount>;
-  tokenProgramAccount: Address<TAccountTokenProgramAccount>;
   stakeAmount: StakeInstructionDataArgs['stakeAmount'];
 };
 
@@ -140,8 +128,6 @@ export function getStakeInstruction<
   TAccountStakerOrcaAta extends string,
   TAccountOrcaMintAccount extends string,
   TAccountXorcaMintAccount extends string,
-  TAccountSystemProgramAccount extends string,
-  TAccountTokenProgramAccount extends string,
   TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: StakeInput<
@@ -150,9 +136,7 @@ export function getStakeInstruction<
     TAccountVaultAccount,
     TAccountStakerOrcaAta,
     TAccountOrcaMintAccount,
-    TAccountXorcaMintAccount,
-    TAccountSystemProgramAccount,
-    TAccountTokenProgramAccount
+    TAccountXorcaMintAccount
   >,
   config?: { programAddress?: TProgramAddress }
 ): StakeInstruction<
@@ -162,9 +146,7 @@ export function getStakeInstruction<
   TAccountVaultAccount,
   TAccountStakerOrcaAta,
   TAccountOrcaMintAccount,
-  TAccountXorcaMintAccount,
-  TAccountSystemProgramAccount,
-  TAccountTokenProgramAccount
+  TAccountXorcaMintAccount
 > {
   // Program address.
   const programAddress = config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
@@ -183,14 +165,6 @@ export function getStakeInstruction<
       value: input.xorcaMintAccount ?? null,
       isWritable: false,
     },
-    systemProgramAccount: {
-      value: input.systemProgramAccount ?? null,
-      isWritable: false,
-    },
-    tokenProgramAccount: {
-      value: input.tokenProgramAccount ?? null,
-      isWritable: false,
-    },
   };
   const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
 
@@ -206,8 +180,6 @@ export function getStakeInstruction<
       getAccountMeta(accounts.stakerOrcaAta),
       getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.xorcaMintAccount),
-      getAccountMeta(accounts.systemProgramAccount),
-      getAccountMeta(accounts.tokenProgramAccount),
     ],
     programAddress,
     data: getStakeInstructionDataEncoder().encode(args as StakeInstructionDataArgs),
@@ -218,9 +190,7 @@ export function getStakeInstruction<
     TAccountVaultAccount,
     TAccountStakerOrcaAta,
     TAccountOrcaMintAccount,
-    TAccountXorcaMintAccount,
-    TAccountSystemProgramAccount,
-    TAccountTokenProgramAccount
+    TAccountXorcaMintAccount
   >;
 
   return instruction;
@@ -238,8 +208,6 @@ export type ParsedStakeInstruction<
     stakerOrcaAta: TAccountMetas[3];
     orcaMintAccount: TAccountMetas[4];
     xorcaMintAccount: TAccountMetas[5];
-    systemProgramAccount: TAccountMetas[6];
-    tokenProgramAccount: TAccountMetas[7];
   };
   data: StakeInstructionData;
 };
@@ -252,7 +220,7 @@ export function parseStakeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedStakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 8) {
+  if (instruction.accounts.length < 6) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -271,8 +239,6 @@ export function parseStakeInstruction<
       stakerOrcaAta: getNextAccount(),
       orcaMintAccount: getNextAccount(),
       xorcaMintAccount: getNextAccount(),
-      systemProgramAccount: getNextAccount(),
-      tokenProgramAccount: getNextAccount(),
     },
     data: getStakeInstructionDataDecoder().decode(instruction.data),
   };
