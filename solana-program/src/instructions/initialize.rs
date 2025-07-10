@@ -6,11 +6,10 @@ use crate::{
     cpi::token::{TokenMint, ORCA_MINT_ID, XORCA_MINT_ID},
     error::ErrorCode,
     instructions::INITIAL_UPGRADE_AUTHORITY_ID,
-    state::{state::State, AccountDiscriminator},
+    state::state::State,
     util::account::{create_program_account_borsh, get_account_info},
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
-use pinocchio_log::log;
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
 
