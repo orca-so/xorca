@@ -10,23 +10,23 @@ pub struct State {
     // Explicit padding to ensure that the next field (u64) is 8-byte aligned
     // in memory when #[repr(C)] is used.
     // Calculation: 8 (desired alignment) - 1 (discriminator size) = 7 bytes.
-    pub _padding1: [u8; 7],
+    pub padding1: [u8; 7],
     pub escrowed_orca_amount: u64, // 8 bytes
     pub cool_down_period_s: u64,   // 8 bytes
     pub update_authority: Pubkey,  // 32 bytes
     // DEFAULT_ACCOUNT_LEN (2048 bytes) - 56 = 1992 bytes.
-    pub _padding2: [u8; 1992],
+    pub padding2: [u8; 1992],
 }
 
 impl Default for State {
     fn default() -> Self {
         Self {
             discriminator: AccountDiscriminator::State,
-            _padding1: [0; 7],
+            padding1: [0; 7],
             escrowed_orca_amount: 0,
             update_authority: Pubkey::default(),
             cool_down_period_s: 0,
-            _padding2: [0; 1992],
+            padding2: [0; 1992],
         }
     }
 }
@@ -54,11 +54,11 @@ mod tests {
         // are correctly serialized/deserialized and reinterpreted.
         let expected = State {
             discriminator: AccountDiscriminator::State,
-            _padding1: [0xAA; 7],
+            padding1: [0xAA; 7],
             escrowed_orca_amount: 0x1122334455667788,
             cool_down_period_s: 0xAABBCCDDEEFF0011,
             update_authority: Pubkey::default(),
-            _padding2: [0xCC; 1992],
+            padding2: [0xCC; 1992],
         };
 
         // 1. Serialize the struct using Borsh.
@@ -95,11 +95,11 @@ mod tests {
 
         // 4. Assert that all fields (including padding) match.
         assert_eq!(actual.discriminator, expected.discriminator);
-        assert_eq!(actual._padding1, expected._padding1, "Padding1 mismatch");
+        assert_eq!(actual.padding1, expected.padding1, "Padding1 mismatch");
         assert_eq!(actual.escrowed_orca_amount, expected.escrowed_orca_amount);
         assert_eq!(actual.cool_down_period_s, expected.cool_down_period_s);
         assert_eq!(actual.update_authority, expected.update_authority);
-        assert_eq!(actual._padding2, expected._padding2, "Padding2 mismatch");
+        assert_eq!(actual.padding2, expected.padding2, "Padding2 mismatch");
 
         // 5. Sanity check: Ensure standard Borsh deserialization also works as expected.
         let deserialized_state = State::try_from_slice(&bytes).unwrap();
@@ -109,9 +109,9 @@ mod tests {
     #[test]
     fn test_state_calculated_sizes() {
         // 1. Calculate the expected size of the core data fields
-        //    (excluding final _padding2, but including _padding1)
+        //    (excluding final padding2, but including padding1)
         let core_data_with_internal_padding_size: usize = size_of::<AccountDiscriminator>() // 1 byte
-            + size_of::<[u8; 7]>() // 7 bytes (_padding1)
+            + size_of::<[u8; 7]>() // 7 bytes (padding1)
             + size_of::<u64>() // 8 bytes
             + size_of::<u64>() // 8 bytes
             + size_of::<Pubkey>(); // 32 bytes

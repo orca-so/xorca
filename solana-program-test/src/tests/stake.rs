@@ -10,10 +10,10 @@ use xorca::{
 
 /// Sets up the basic test context with correct PDAs and initial mint accounts.
 fn setup_base_stake_context(ctx: &mut TestContext) -> (Pubkey, Pubkey, Pubkey, Pubkey, Pubkey) {
-    let state_pda = find_state_address().unwrap().0;
+    let state_account = find_state_address().unwrap().0;
     let staker_signer = ctx.signer();
     ctx.write_account(
-        state_pda,
+        state_account,
         XORCA_PROGRAM_ID,
         state_data!(
             escrowed_orca_amount => 0,
@@ -22,7 +22,7 @@ fn setup_base_stake_context(ctx: &mut TestContext) -> (Pubkey, Pubkey, Pubkey, P
         ),
     )
     .unwrap();
-    ctx.pad_account(state_pda, DEFAULT_ACCOUNT_LEN).unwrap();
+    ctx.pad_account(state_account, DEFAULT_ACCOUNT_LEN).unwrap();
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
@@ -30,7 +30,7 @@ fn setup_base_stake_context(ctx: &mut TestContext) -> (Pubkey, Pubkey, Pubkey, P
             supply => 0,
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => state_pda,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
@@ -51,9 +51,9 @@ fn setup_base_stake_context(ctx: &mut TestContext) -> (Pubkey, Pubkey, Pubkey, P
         ),
     )
     .unwrap();
-    let vault_account_pda = Pubkey::find_program_address(
+    let vault_account = Pubkey::find_program_address(
         &[
-            &state_pda.to_bytes(),
+            &state_account.to_bytes(),
             &TOKEN_PROGRAM_ID.to_bytes(),
             &ORCA_ID.to_bytes(),
         ],
@@ -61,16 +61,16 @@ fn setup_base_stake_context(ctx: &mut TestContext) -> (Pubkey, Pubkey, Pubkey, P
     )
     .0;
     ctx.write_account(
-        vault_account_pda,
+        vault_account,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => ORCA_ID,
-            owner => state_pda,
+            owner => state_account,
             amount => 0, // Initial vault amount 0
         ),
     )
     .unwrap();
-    let staker_orca_ata_pda = Pubkey::find_program_address(
+    let staker_orca_ata = Pubkey::find_program_address(
         &[
             &staker_signer.to_bytes(),
             &TOKEN_PROGRAM_ID.to_bytes(),
@@ -80,7 +80,7 @@ fn setup_base_stake_context(ctx: &mut TestContext) -> (Pubkey, Pubkey, Pubkey, P
     )
     .0;
     ctx.write_account(
-        staker_orca_ata_pda,
+        staker_orca_ata,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => ORCA_ID,
@@ -89,7 +89,7 @@ fn setup_base_stake_context(ctx: &mut TestContext) -> (Pubkey, Pubkey, Pubkey, P
         ),
     )
     .unwrap();
-    let staker_xorca_ata_pda = Pubkey::find_program_address(
+    let staker_xorca_ata = Pubkey::find_program_address(
         &[
             &staker_signer.to_bytes(),
             &TOKEN_PROGRAM_ID.to_bytes(),
@@ -99,7 +99,7 @@ fn setup_base_stake_context(ctx: &mut TestContext) -> (Pubkey, Pubkey, Pubkey, P
     )
     .0;
     ctx.write_account(
-        staker_xorca_ata_pda,
+        staker_xorca_ata,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => XORCA_ID,
@@ -109,23 +109,23 @@ fn setup_base_stake_context(ctx: &mut TestContext) -> (Pubkey, Pubkey, Pubkey, P
     )
     .unwrap();
     (
-        state_pda,
-        vault_account_pda,
-        staker_orca_ata_pda,
-        staker_xorca_ata_pda,
+        state_account,
+        vault_account,
+        staker_orca_ata,
+        staker_xorca_ata,
         staker_signer,
     )
 }
 
 fn set_balances_for_1_1_exchange(
     ctx: &mut TestContext,
-    state_pda: Pubkey,
-    staker_orca_ata_pda: Pubkey,
+    state_account: Pubkey,
+    staker_orca_ata: Pubkey,
     staker_signer: Pubkey,
     orca_stake_amount: u64,
 ) {
     ctx.write_account(
-        state_pda,
+        state_account,
         XORCA_PROGRAM_ID,
         state_data!(
             escrowed_orca_amount => 0, // No escrowed ORCA initially for 1:1
@@ -134,7 +134,7 @@ fn set_balances_for_1_1_exchange(
         ),
     )
     .unwrap();
-    ctx.pad_account(state_pda, DEFAULT_ACCOUNT_LEN).unwrap();
+    ctx.pad_account(state_account, DEFAULT_ACCOUNT_LEN).unwrap();
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
@@ -142,7 +142,7 @@ fn set_balances_for_1_1_exchange(
             supply => 0,// 0 xORCA supply
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => state_pda,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
@@ -150,7 +150,7 @@ fn set_balances_for_1_1_exchange(
     )
     .unwrap();
     ctx.write_account(
-        staker_orca_ata_pda,
+        staker_orca_ata,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => ORCA_ID,
@@ -163,15 +163,15 @@ fn set_balances_for_1_1_exchange(
 
 fn set_balances_for_more_than_1_1_exchange(
     ctx: &mut TestContext,
-    state_pda: Pubkey,
-    vault_account_pda: Pubkey,
-    staker_orca_ata_pda: Pubkey,
-    staker_xorca_ata_pda: Pubkey,
+    state_account: Pubkey,
+    vault_account: Pubkey,
+    staker_orca_ata: Pubkey,
+    staker_xorca_ata: Pubkey,
     staker_signer: Pubkey,
     orca_stake_amount: u64,
 ) {
     ctx.write_account(
-        state_pda,
+        state_account,
         XORCA_PROGRAM_ID,
         state_data!(
             escrowed_orca_amount => 39_232_982_923, // 39,232.982923 ORCA
@@ -180,7 +180,7 @@ fn set_balances_for_more_than_1_1_exchange(
         ),
     )
     .unwrap();
-    ctx.pad_account(state_pda, DEFAULT_ACCOUNT_LEN).unwrap();
+    ctx.pad_account(state_account, DEFAULT_ACCOUNT_LEN).unwrap();
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
@@ -188,7 +188,7 @@ fn set_balances_for_more_than_1_1_exchange(
             supply => 358_384_859_821_223, // 358,384.859821223 xORCA
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => state_pda,
+            mint_authority => state_account,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
@@ -196,17 +196,17 @@ fn set_balances_for_more_than_1_1_exchange(
     )
     .unwrap();
     ctx.write_account(
-        vault_account_pda,
+        vault_account,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => ORCA_ID,
-            owner => state_pda,
+            owner => state_account,
             amount => 923_384_268_587, // 923,384.268587 ORCA
         ),
     )
     .unwrap();
     ctx.write_account(
-        staker_orca_ata_pda,
+        staker_orca_ata,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => ORCA_ID,
@@ -216,7 +216,7 @@ fn set_balances_for_more_than_1_1_exchange(
     )
     .unwrap();
     ctx.write_account(
-        staker_xorca_ata_pda,
+        staker_xorca_ata,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => XORCA_ID,
@@ -228,9 +228,9 @@ fn set_balances_for_more_than_1_1_exchange(
 }
 
 // --- Invalid Account Configuration Helpers ---
-fn make_state_account_invalid_owner(ctx: &mut TestContext, state_account_pda: Pubkey) {
+fn make_state_account_invalid_owner(ctx: &mut TestContext, state_account: Pubkey) {
     ctx.write_account(
-        state_account_pda,
+        state_account,
         TOKEN_PROGRAM_ID, // Incorrect owner
         state_data!(
             escrowed_orca_amount => 0,
@@ -239,14 +239,14 @@ fn make_state_account_invalid_owner(ctx: &mut TestContext, state_account_pda: Pu
         ),
     )
     .unwrap();
-    ctx.pad_account(state_account_pda, DEFAULT_ACCOUNT_LEN)
-        .unwrap();
+    ctx.pad_account(state_account, DEFAULT_ACCOUNT_LEN).unwrap();
 }
 
 fn make_state_account_invalid_seeds(ctx: &mut TestContext) -> Pubkey {
-    let invalid_state_pda = Pubkey::find_program_address(&[b"invalid_seed"], &XORCA_PROGRAM_ID).0;
+    let invalid_state_account =
+        Pubkey::find_program_address(&[b"invalid_seed"], &XORCA_PROGRAM_ID).0;
     ctx.write_account(
-        invalid_state_pda,
+        invalid_state_account,
         XORCA_PROGRAM_ID,
         state_data!(
             escrowed_orca_amount => 0,
@@ -255,14 +255,14 @@ fn make_state_account_invalid_seeds(ctx: &mut TestContext) -> Pubkey {
         ),
     )
     .unwrap();
-    ctx.pad_account(invalid_state_pda, DEFAULT_ACCOUNT_LEN)
+    ctx.pad_account(invalid_state_account, DEFAULT_ACCOUNT_LEN)
         .unwrap();
-    invalid_state_pda
+    invalid_state_account
 }
 
-fn make_staker_orca_ata_invalid_owner_in_data(ctx: &mut TestContext, staker_orca_ata_pda: Pubkey) {
+fn make_staker_orca_ata_invalid_owner_in_data(ctx: &mut TestContext, staker_orca_ata: Pubkey) {
     ctx.write_account(
-        staker_orca_ata_pda,
+        staker_orca_ata,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => ORCA_ID,
@@ -273,9 +273,9 @@ fn make_staker_orca_ata_invalid_owner_in_data(ctx: &mut TestContext, staker_orca
     .unwrap();
 }
 
-fn make_staker_orca_ata_invalid_mint_in_data(ctx: &mut TestContext, staker_orca_ata_pda: Pubkey) {
+fn make_staker_orca_ata_invalid_mint_in_data(ctx: &mut TestContext, staker_orca_ata: Pubkey) {
     ctx.write_account(
-        staker_orca_ata_pda,
+        staker_orca_ata,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => XORCA_ID, // Invalid mint in account data
@@ -286,9 +286,9 @@ fn make_staker_orca_ata_invalid_mint_in_data(ctx: &mut TestContext, staker_orca_
     .unwrap();
 }
 
-fn make_staker_orca_ata_invalid_program_owner(ctx: &mut TestContext, staker_orca_ata_pda: Pubkey) {
+fn make_staker_orca_ata_invalid_program_owner(ctx: &mut TestContext, staker_orca_ata: Pubkey) {
     ctx.write_account(
-        staker_orca_ata_pda,
+        staker_orca_ata,
         ATA_PROGRAM_ID, // Incorrect program owner for the account itself
         token_account_data!(
             mint => ORCA_ID,
@@ -299,12 +299,9 @@ fn make_staker_orca_ata_invalid_program_owner(ctx: &mut TestContext, staker_orca
     .unwrap();
 }
 
-fn make_staker_xorca_ata_invalid_owner_in_data(
-    ctx: &mut TestContext,
-    staker_xorca_ata_pda: Pubkey,
-) {
+fn make_staker_xorca_ata_invalid_owner_in_data(ctx: &mut TestContext, staker_xorca_ata: Pubkey) {
     ctx.write_account(
-        staker_xorca_ata_pda,
+        staker_xorca_ata,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => XORCA_ID,
@@ -315,9 +312,9 @@ fn make_staker_xorca_ata_invalid_owner_in_data(
     .unwrap();
 }
 
-fn make_staker_xorca_ata_invalid_mint_in_data(ctx: &mut TestContext, staker_xorca_ata_pda: Pubkey) {
+fn make_staker_xorca_ata_invalid_mint_in_data(ctx: &mut TestContext, staker_xorca_ata: Pubkey) {
     ctx.write_account(
-        staker_xorca_ata_pda,
+        staker_xorca_ata,
         TOKEN_PROGRAM_ID,
         token_account_data!(
             mint => ORCA_ID, // Invalid mint in account data
@@ -328,12 +325,9 @@ fn make_staker_xorca_ata_invalid_mint_in_data(ctx: &mut TestContext, staker_xorc
     .unwrap();
 }
 
-fn make_staker_xorca_ata_invalid_program_owner(
-    ctx: &mut TestContext,
-    staker_xorca_ata_pda: Pubkey,
-) {
+fn make_staker_xorca_ata_invalid_program_owner(ctx: &mut TestContext, staker_xorca_ata: Pubkey) {
     ctx.write_account(
-        staker_xorca_ata_pda,
+        staker_xorca_ata,
         ATA_PROGRAM_ID, // Incorrect program owner for the account itself
         token_account_data!(
             mint => XORCA_ID,
@@ -349,23 +343,23 @@ fn make_staker_xorca_ata_invalid_program_owner(
 #[test]
 fn test_stake_success_1_1_exchange() {
     let mut ctx = TestContext::new();
-    let (state_pda, vault_account_pda, staker_orca_ata_pda, staker_xorca_ata_pda, staker_signer) =
+    let (state_account, vault_account, staker_orca_ata, staker_xorca_ata, staker_signer) =
         setup_base_stake_context(&mut ctx);
     let stake_amount = 1_000_000; // 1 ORCA
     set_balances_for_1_1_exchange(
         &mut ctx,
-        state_pda,
-        staker_orca_ata_pda,
+        state_account,
+        staker_orca_ata,
         staker_signer,
         stake_amount,
     );
 
     let ix = Stake {
         staker_account: staker_signer,
-        state_account: state_pda,
-        vault_account: vault_account_pda,
-        staker_orca_ata: staker_orca_ata_pda,
-        staker_xorca_ata: staker_xorca_ata_pda,
+        state_account: state_account,
+        vault_account: vault_account,
+        staker_orca_ata: staker_orca_ata,
+        staker_xorca_ata: staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -373,15 +367,11 @@ fn test_stake_success_1_1_exchange() {
     .instruction(StakeInstructionArgs { stake_amount });
     let result = ctx.send(ix);
     assert_program_success!(result);
-    let vault_account_after = ctx.get_account::<TokenAccount>(vault_account_pda).unwrap();
-    let staker_orca_ata_after = ctx
-        .get_account::<TokenAccount>(staker_orca_ata_pda)
-        .unwrap();
-    let staker_xorca_ata_after = ctx
-        .get_account::<TokenAccount>(staker_xorca_ata_pda)
-        .unwrap();
+    let vault_account_after = ctx.get_account::<TokenAccount>(vault_account).unwrap();
+    let staker_orca_ata_after = ctx.get_account::<TokenAccount>(staker_orca_ata).unwrap();
+    let staker_xorca_ata_after = ctx.get_account::<TokenAccount>(staker_xorca_ata).unwrap();
     let xorca_mint_account_after = ctx.get_account::<TokenMint>(XORCA_ID).unwrap();
-    let state_account_after = ctx.get_account::<State>(state_pda).unwrap();
+    let state_account_after = ctx.get_account::<State>(state_account).unwrap();
     assert_eq!(
         vault_account_after.data.amount, 1_000_000,
         "Vault account should have 1 ORCA"
@@ -409,24 +399,24 @@ fn test_stake_success_1_1_exchange() {
 #[test]
 fn test_stake_success_more_than_1_1_exchange() {
     let mut ctx = TestContext::new();
-    let (state_pda, vault_account_pda, staker_orca_ata_pda, staker_xorca_ata_pda, staker_signer) =
+    let (state_account, vault_account, staker_orca_ata, staker_xorca_ata, staker_signer) =
         setup_base_stake_context(&mut ctx);
     let stake_amount = 2_384_964; // 2.384964 ORCA
     set_balances_for_more_than_1_1_exchange(
         &mut ctx,
-        state_pda,
-        vault_account_pda,
-        staker_orca_ata_pda,
-        staker_xorca_ata_pda,
+        state_account,
+        vault_account,
+        staker_orca_ata,
+        staker_xorca_ata,
         staker_signer,
         5_123_538, // Initial staker ORCA amount
     );
     let ix = Stake {
         staker_account: staker_signer,
-        state_account: state_pda,
-        vault_account: vault_account_pda,
-        staker_orca_ata: staker_orca_ata_pda,
-        staker_xorca_ata: staker_xorca_ata_pda,
+        state_account: state_account,
+        vault_account: vault_account,
+        staker_orca_ata: staker_orca_ata,
+        staker_xorca_ata: staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -434,15 +424,11 @@ fn test_stake_success_more_than_1_1_exchange() {
     .instruction(StakeInstructionArgs { stake_amount });
     let result = ctx.send(ix);
     assert_program_success!(result);
-    let vault_account_after = ctx.get_account::<TokenAccount>(vault_account_pda).unwrap();
-    let staker_orca_ata_after = ctx
-        .get_account::<TokenAccount>(staker_orca_ata_pda)
-        .unwrap();
-    let staker_xorca_ata_after = ctx
-        .get_account::<TokenAccount>(staker_xorca_ata_pda)
-        .unwrap();
+    let vault_account_after = ctx.get_account::<TokenAccount>(vault_account).unwrap();
+    let staker_orca_ata_after = ctx.get_account::<TokenAccount>(staker_orca_ata).unwrap();
+    let staker_xorca_ata_after = ctx.get_account::<TokenAccount>(staker_xorca_ata).unwrap();
     let xorca_mint_account_after = ctx.get_account::<TokenMint>(XORCA_ID).unwrap();
-    let state_account_after = ctx.get_account::<State>(state_pda).unwrap();
+    let state_account_after = ctx.get_account::<State>(state_account).unwrap();
     assert_eq!(
         vault_account_after.data.amount,
         923_386_653_551, // 923,384.268587 + 2.384964 ORCA = 923,386.653551
@@ -472,23 +458,23 @@ fn test_stake_success_more_than_1_1_exchange() {
 #[test]
 fn test_stake_invalid_state_account_owner() {
     let mut ctx = TestContext::new();
-    let (state_pda, vault_account_pda, staker_orca_ata_pda, staker_xorca_ata_pda, staker_signer) =
+    let (state_account, vault_account, staker_orca_ata, staker_xorca_ata, staker_signer) =
         setup_base_stake_context(&mut ctx);
     let stake_amount = 1_000_000;
     set_balances_for_1_1_exchange(
         &mut ctx,
-        state_pda,
-        staker_orca_ata_pda,
+        state_account,
+        staker_orca_ata,
         staker_signer,
         stake_amount,
     );
-    make_state_account_invalid_owner(&mut ctx, state_pda);
+    make_state_account_invalid_owner(&mut ctx, state_account);
     let ix = Stake {
         staker_account: staker_signer,
-        state_account: state_pda,
-        vault_account: vault_account_pda,
-        staker_orca_ata: staker_orca_ata_pda,
-        staker_xorca_ata: staker_xorca_ata_pda,
+        state_account: state_account,
+        vault_account: vault_account,
+        staker_orca_ata: staker_orca_ata,
+        staker_xorca_ata: staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -501,28 +487,23 @@ fn test_stake_invalid_state_account_owner() {
 #[test]
 fn test_stake_invalid_state_account_seeds() {
     let mut ctx = TestContext::new();
-    let (
-        correct_state_pda,
-        vault_account_pda,
-        staker_orca_ata_pda,
-        staker_xorca_ata_pda,
-        staker_signer,
-    ) = setup_base_stake_context(&mut ctx);
+    let (correct_state_account, vault_account, staker_orca_ata, staker_xorca_ata, staker_signer) =
+        setup_base_stake_context(&mut ctx);
     let stake_amount = 1_000_000;
     set_balances_for_1_1_exchange(
         &mut ctx,
-        correct_state_pda,
-        staker_orca_ata_pda,
+        correct_state_account,
+        staker_orca_ata,
         staker_signer,
         stake_amount,
     );
-    let invalid_state_pda = make_state_account_invalid_seeds(&mut ctx);
+    let invalid_state_account = make_state_account_invalid_seeds(&mut ctx);
     let ix = Stake {
         staker_account: staker_signer,
-        state_account: invalid_state_pda,
-        vault_account: vault_account_pda,
-        staker_orca_ata: staker_orca_ata_pda,
-        staker_xorca_ata: staker_xorca_ata_pda,
+        state_account: invalid_state_account,
+        vault_account: vault_account,
+        staker_orca_ata: staker_orca_ata,
+        staker_xorca_ata: staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -535,23 +516,23 @@ fn test_stake_invalid_state_account_seeds() {
 #[test]
 fn test_stake_invalid_staker_orca_ata_owner_data() {
     let mut ctx = TestContext::new();
-    let (state_pda, vault_account_pda, staker_orca_ata_pda, staker_xorca_ata_pda, staker_signer) =
+    let (state_account, vault_account, staker_orca_ata, staker_xorca_ata, staker_signer) =
         setup_base_stake_context(&mut ctx);
     let stake_amount = 1_000_000;
     set_balances_for_1_1_exchange(
         &mut ctx,
-        state_pda,
-        staker_orca_ata_pda,
+        state_account,
+        staker_orca_ata,
         staker_signer,
         stake_amount,
     );
-    make_staker_orca_ata_invalid_owner_in_data(&mut ctx, staker_orca_ata_pda);
+    make_staker_orca_ata_invalid_owner_in_data(&mut ctx, staker_orca_ata);
     let ix = Stake {
         staker_account: staker_signer,
-        state_account: state_pda,
-        vault_account: vault_account_pda,
-        staker_orca_ata: staker_orca_ata_pda,
-        staker_xorca_ata: staker_xorca_ata_pda,
+        state_account: state_account,
+        vault_account: vault_account,
+        staker_orca_ata: staker_orca_ata,
+        staker_xorca_ata: staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -564,23 +545,23 @@ fn test_stake_invalid_staker_orca_ata_owner_data() {
 #[test]
 fn test_stake_invalid_staker_orca_ata_mint_data() {
     let mut ctx = TestContext::new();
-    let (state_pda, vault_account_pda, staker_orca_ata_pda, staker_xorca_ata_pda, staker_signer) =
+    let (state_account, vault_account, staker_orca_ata, staker_xorca_ata, staker_signer) =
         setup_base_stake_context(&mut ctx);
     let stake_amount = 1_000_000;
     set_balances_for_1_1_exchange(
         &mut ctx,
-        state_pda,
-        staker_orca_ata_pda,
+        state_account,
+        staker_orca_ata,
         staker_signer,
         stake_amount,
     );
-    make_staker_orca_ata_invalid_mint_in_data(&mut ctx, staker_orca_ata_pda);
+    make_staker_orca_ata_invalid_mint_in_data(&mut ctx, staker_orca_ata);
     let ix = Stake {
         staker_account: staker_signer,
-        state_account: state_pda,
-        vault_account: vault_account_pda,
-        staker_orca_ata: staker_orca_ata_pda,
-        staker_xorca_ata: staker_xorca_ata_pda,
+        state_account: state_account,
+        vault_account: vault_account,
+        staker_orca_ata: staker_orca_ata,
+        staker_xorca_ata: staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -593,23 +574,23 @@ fn test_stake_invalid_staker_orca_ata_mint_data() {
 #[test]
 fn test_stake_invalid_staker_orca_ata_program_owner() {
     let mut ctx = TestContext::new();
-    let (state_pda, vault_account_pda, staker_orca_ata_pda, staker_xorca_ata_pda, staker_signer) =
+    let (state_account, vault_account, staker_orca_ata, staker_xorca_ata, staker_signer) =
         setup_base_stake_context(&mut ctx);
     let stake_amount = 1_000_000;
     set_balances_for_1_1_exchange(
         &mut ctx,
-        state_pda,
-        staker_orca_ata_pda,
+        state_account,
+        staker_orca_ata,
         staker_signer,
         stake_amount,
     );
-    make_staker_orca_ata_invalid_program_owner(&mut ctx, staker_orca_ata_pda);
+    make_staker_orca_ata_invalid_program_owner(&mut ctx, staker_orca_ata);
     let ix = Stake {
         staker_account: staker_signer,
-        state_account: state_pda,
-        vault_account: vault_account_pda,
-        staker_orca_ata: staker_orca_ata_pda,
-        staker_xorca_ata: staker_xorca_ata_pda,
+        state_account: state_account,
+        vault_account: vault_account,
+        staker_orca_ata: staker_orca_ata,
+        staker_xorca_ata: staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -622,24 +603,24 @@ fn test_stake_invalid_staker_orca_ata_program_owner() {
 #[test]
 fn test_stake_invalid_staker_xorca_ata_owner_data() {
     let mut ctx = TestContext::new();
-    let (state_pda, vault_account_pda, staker_orca_ata_pda, staker_xorca_ata_pda, staker_signer) =
+    let (state_account, vault_account, staker_orca_ata, staker_xorca_ata, staker_signer) =
         setup_base_stake_context(&mut ctx);
 
     let stake_amount = 1_000_000;
     set_balances_for_1_1_exchange(
         &mut ctx,
-        state_pda,
-        staker_orca_ata_pda,
+        state_account,
+        staker_orca_ata,
         staker_signer,
         stake_amount,
     );
-    make_staker_xorca_ata_invalid_owner_in_data(&mut ctx, staker_xorca_ata_pda);
+    make_staker_xorca_ata_invalid_owner_in_data(&mut ctx, staker_xorca_ata);
     let ix = Stake {
         staker_account: staker_signer,
-        state_account: state_pda,
-        vault_account: vault_account_pda,
-        staker_orca_ata: staker_orca_ata_pda,
-        staker_xorca_ata: staker_xorca_ata_pda,
+        state_account: state_account,
+        vault_account: vault_account,
+        staker_orca_ata: staker_orca_ata,
+        staker_xorca_ata: staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -652,23 +633,23 @@ fn test_stake_invalid_staker_xorca_ata_owner_data() {
 #[test]
 fn test_stake_invalid_staker_xorca_ata_mint_data() {
     let mut ctx = TestContext::new();
-    let (state_pda, vault_account_pda, staker_orca_ata_pda, staker_xorca_ata_pda, staker_signer) =
+    let (state_account, vault_account, staker_orca_ata, staker_xorca_ata, staker_signer) =
         setup_base_stake_context(&mut ctx);
     let stake_amount = 1_000_000;
     set_balances_for_1_1_exchange(
         &mut ctx,
-        state_pda,
-        staker_orca_ata_pda,
+        state_account,
+        staker_orca_ata,
         staker_signer,
         stake_amount,
     );
-    make_staker_xorca_ata_invalid_mint_in_data(&mut ctx, staker_xorca_ata_pda);
+    make_staker_xorca_ata_invalid_mint_in_data(&mut ctx, staker_xorca_ata);
     let ix = Stake {
         staker_account: staker_signer,
-        state_account: state_pda,
-        vault_account: vault_account_pda,
-        staker_orca_ata: staker_orca_ata_pda,
-        staker_xorca_ata: staker_xorca_ata_pda,
+        state_account: state_account,
+        vault_account: vault_account,
+        staker_orca_ata: staker_orca_ata,
+        staker_xorca_ata: staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -681,23 +662,23 @@ fn test_stake_invalid_staker_xorca_ata_mint_data() {
 #[test]
 fn test_stake_invalid_staker_xorca_ata_program_owner() {
     let mut ctx = TestContext::new();
-    let (state_pda, vault_account_pda, staker_orca_ata_pda, staker_xorca_ata_pda, staker_signer) =
+    let (state_account, vault_account, staker_orca_ata, staker_xorca_ata, staker_signer) =
         setup_base_stake_context(&mut ctx);
     let stake_amount = 1_000_000;
     set_balances_for_1_1_exchange(
         &mut ctx,
-        state_pda,
-        staker_orca_ata_pda,
+        state_account,
+        staker_orca_ata,
         staker_signer,
         stake_amount,
     );
-    make_staker_xorca_ata_invalid_program_owner(&mut ctx, staker_xorca_ata_pda);
+    make_staker_xorca_ata_invalid_program_owner(&mut ctx, staker_xorca_ata);
     let ix = Stake {
         staker_account: staker_signer,
-        state_account: state_pda,
-        vault_account: vault_account_pda,
-        staker_orca_ata: staker_orca_ata_pda,
-        staker_xorca_ata: staker_xorca_ata_pda,
+        state_account: state_account,
+        vault_account: vault_account,
+        staker_orca_ata: staker_orca_ata,
+        staker_xorca_ata: staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
