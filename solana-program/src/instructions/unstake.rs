@@ -64,7 +64,8 @@ pub fn process_instruction(
         &ASSOCIATED_TOKEN_PROGRAM_ID,
         &vault_account_seeds,
     )?;
-    let vault_account_data = assert_external_account_data::<TokenAccount>(vault_account)?;
+    let vault_account_data =
+        make_owner_token_account_assertions(vault_account, state_account, orca_mint_account)?;
 
     // 4. Pending Withdraw Account Assertions
     assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
