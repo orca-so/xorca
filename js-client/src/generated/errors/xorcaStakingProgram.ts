@@ -36,9 +36,12 @@ export const XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR = 0x1778; // 6008
 export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_FUNDS = 0x1779; // 6009
 /** StateAccountAlreadyInitialized: State account already initialized */
 export const XORCA_STAKING_PROGRAM_ERROR__STATE_ACCOUNT_ALREADY_INITIALIZED = 0x177a; // 6010
+/** CoolDownPeriodStillActive: Cool down period still active */
+export const XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_PERIOD_STILL_ACTIVE = 0x177b; // 6011
 
 export type XorcaStakingProgramError =
   | typeof XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR
+  | typeof XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_PERIOD_STILL_ACTIVE
   | typeof XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS
   | typeof XORCA_STAKING_PROGRAM_ERROR__INCORRECT_OWNER
   | typeof XORCA_STAKING_PROGRAM_ERROR__INCORRECT_PROGRAM_ID
@@ -54,6 +57,7 @@ let xorcaStakingProgramErrorMessages: Record<XorcaStakingProgramError, string> |
 if (process.env.NODE_ENV !== 'production') {
   xorcaStakingProgramErrorMessages = {
     [XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR]: `Arithmetic error`,
+    [XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_PERIOD_STILL_ACTIVE]: `Cool down period still active`,
     [XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS]: `Invalid account address`,
     [XORCA_STAKING_PROGRAM_ERROR__INCORRECT_OWNER]: `Incorrect owner`,
     [XORCA_STAKING_PROGRAM_ERROR__INCORRECT_PROGRAM_ID]: `Incorrect program id`,

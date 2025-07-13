@@ -34,6 +34,9 @@ pub enum ErrorCode {
 
     #[error("State account already initialized")]
     StateAccountAlreadyInitialized = 6010, // 0x177A
+
+    #[error("Cool down period still active")]
+    CoolDownPeriodStillActive = 6011, // 0x177B
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {

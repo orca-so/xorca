@@ -72,6 +72,7 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
         &ASSOCIATED_TOKEN_PROGRAM_ID,
         &vault_account_seeds,
     )?;
+    make_owner_token_account_assertions(vault_account, state_account, orca_mint_account)?;
 
     // 6. Orca Mint Account Assertions
     assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
@@ -86,7 +87,7 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     // Validate pending withdraw
     let current_unix_timestamp = get_current_unix_timestamp()?;
     if current_unix_timestamp < withdrawable_timestamp {
-        return Err(ErrorCode::InvalidAccountData.into());
+        return Err(ErrorCode::CoolDownPeriodStillActive.into());
     }
 
     // Transfer withdrawable stake tokens from xOrca state ATA to unstaker ATA
