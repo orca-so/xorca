@@ -11,7 +11,8 @@ use xorca::{
 /// Sets up the basic test context with correct PDAs and initial mint accounts.
 fn setup_base_unstake_context(
     ctx: &mut TestContext,
-) -> (Pubkey, Pubkey, Pubkey, Pubkey, Pubkey, u8) {
+    withdraw_index: u8,
+) -> (Pubkey, Pubkey, Pubkey, Pubkey, Pubkey) {
     let state_account = find_state_address().unwrap().0;
     let unstaker_signer = ctx.signer();
     ctx.write_account(
@@ -91,7 +92,6 @@ fn setup_base_unstake_context(
         ),
     )
     .unwrap();
-    let withdraw_index = 0;
     let pending_withdraw_account = find_pending_withdraw_pda(&unstaker_signer, &withdraw_index)
         .unwrap()
         .0;
@@ -101,8 +101,61 @@ fn setup_base_unstake_context(
         unstaker_xorca_ata,
         unstaker_signer,
         pending_withdraw_account,
-        withdraw_index,
     )
+}
+
+fn set_balances_for_more_than_1_1_exchange(
+    ctx: &mut TestContext,
+    state_account: Pubkey,
+    vault_account: Pubkey,
+    unstaker_xorca_ata: Pubkey,
+    unstaker_signer: Pubkey,
+) {
+    ctx.write_account(
+        state_account,
+        XORCA_PROGRAM_ID,
+        state_data!(
+            escrowed_orca_amount => 85_286_845_854, // 85,286.845854 ORCA
+            update_authority => Pubkey::default(),
+            cool_down_period_s => 30 * 24 * 60 * 60, // 30 days
+        ),
+    )
+    .unwrap();
+    ctx.pad_account(state_account, DEFAULT_ACCOUNT_LEN).unwrap();
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        token_mint_data!(
+            supply => 53_854_483_292_939_239, // 53,854,483.292939239 xORCA
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => state_account,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        vault_account,
+        TOKEN_PROGRAM_ID,
+        token_account_data!(
+            mint => ORCA_ID,
+            owner => state_account,
+            amount => 84_934_688_959_145, // 84,934,688.959145 ORCA
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        unstaker_xorca_ata,
+        TOKEN_PROGRAM_ID,
+        token_account_data!(
+            mint => XORCA_ID,
+            owner => unstaker_signer,
+            amount => 95_611_428_484, // 95.611428484 xORCA
+        ),
+    )
+    .unwrap();
 }
 
 // --- Test Functions ---
@@ -110,14 +163,14 @@ fn setup_base_unstake_context(
 #[test]
 fn test_unstake_success_1_1_exchange() {
     let mut ctx = TestContext::new();
+    let withdraw_index = 0;
     let (
         state_account,
         vault_account,
         unstaker_xorca_ata,
         unstaker_signer,
         pending_withdraw_account,
-        withdraw_index,
-    ) = setup_base_unstake_context(&mut ctx);
+    ) = setup_base_unstake_context(&mut ctx, withdraw_index);
     let unstake_amount = 10_000_000_000; // 10 xORCA
     let ix = Unstake {
         unstaker_account: unstaker_signer,
@@ -174,6 +227,83 @@ fn test_unstake_success_1_1_exchange() {
         pending_withdraw_after.data.withdrawable_timestamp,
         current_timestamp + 7 * 24 * 60 * 60,
         "Pending withdraw timestamp should be 7 days from now"
+    );
+    assert_eq!(pending_withdraw_after.data.padding1, [0; 7]);
+    assert_eq!(pending_withdraw_after.data.padding2, [0; 2024]);
+}
+
+#[test]
+fn test_unstake_success_more_than_1_1_exchange() {
+    let mut ctx = TestContext::new();
+    let withdraw_index = 2;
+    let (
+        state_account,
+        vault_account,
+        unstaker_xorca_ata,
+        unstaker_signer,
+        pending_withdraw_account,
+    ) = setup_base_unstake_context(&mut ctx, withdraw_index);
+    set_balances_for_more_than_1_1_exchange(
+        &mut ctx,
+        state_account,
+        vault_account,
+        unstaker_xorca_ata,
+        unstaker_signer,
+    );
+    let unstake_amount = 58_238_823_121; // 58.238823121 xORCA
+    let mut initial_clock = ctx.svm.get_sysvar::<Clock>();
+    let current_timestamp = 1752397740;
+    initial_clock.unix_timestamp = current_timestamp;
+    ctx.svm.set_sysvar::<Clock>(&initial_clock);
+    let ix = Unstake {
+        unstaker_account: unstaker_signer,
+        state_account,
+        vault_account,
+        pending_withdraw_account,
+        unstaker_xorca_ata,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+        token_program_account: TOKEN_PROGRAM_ID,
+    }
+    .instruction(UnstakeInstructionArgs {
+        unstake_amount,
+        withdraw_index,
+    });
+    let result = ctx.send(ix);
+    assert_program_success!(result);
+    let vault_account_after = ctx.get_account::<TokenAccount>(vault_account).unwrap();
+    let unstaker_xorca_ata_after = ctx.get_account::<TokenAccount>(unstaker_xorca_ata).unwrap();
+    let xorca_mint_account_after = ctx.get_account::<TokenMint>(XORCA_ID).unwrap();
+    let state_account_after = ctx.get_account::<State>(state_account).unwrap();
+
+    assert_eq!(
+        vault_account_after.data.amount, 84_934_688_959_145,
+        "Vault account should have 84,934,688.959145 ORCA"
+    );
+    assert_eq!(
+        unstaker_xorca_ata_after.data.amount, 37_372_605_363,
+        "Staker xOrca ATA should have 37.372605363 xORCA"
+    );
+    assert_eq!(
+        xorca_mint_account_after.data.supply, 53_854_425_054_116_118,
+        "xOrca supply should be 53854425.054116118 xORCA"
+    );
+    assert_eq!(
+        state_account_after.data.escrowed_orca_amount, 85_378_602_918,
+        "Escrowed Orca amount should be 85,378.602918 ORCA"
+    );
+    let pending_withdraw_after = ctx
+        .get_account::<PendingWithdraw>(pending_withdraw_account)
+        .unwrap();
+    assert_eq!(
+        pending_withdraw_after.data.withdrawable_orca_amount, 91_757_064,
+        "Pending withdraw amount should be 91.757064 ORCA"
+    );
+    assert_eq!(
+        pending_withdraw_after.data.withdrawable_timestamp,
+        current_timestamp + 30 * 24 * 60 * 60,
+        "Pending withdraw timestamp should be 30 days from now"
     );
     assert_eq!(pending_withdraw_after.data.padding1, [0; 7]);
     assert_eq!(pending_withdraw_after.data.padding2, [0; 2024]);
