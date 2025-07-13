@@ -9,7 +9,7 @@ use pinocchio::{account_info::AccountInfo, pubkey::Pubkey, ProgramResult};
 
 pub fn process_instruction(
     accounts: &[AccountInfo],
-    new_cool_down_period: &Option<u64>,
+    new_cool_down_period: &Option<i64>,
     new_update_authority: &Option<Pubkey>,
 ) -> ProgramResult {
     let update_authority_account = get_account_info(accounts, 0)?;

@@ -41,11 +41,8 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
     assert_account_owner(pending_withdraw_account, &crate::ID)?;
     let withdraw_index_bytes = [*withdraw_index];
-    let pending_withdraw_seeds = PendingWithdraw::seeds(
-        state_account.key(),
-        unstaker_account.key(),
-        &withdraw_index_bytes,
-    );
+    let pending_withdraw_seeds =
+        PendingWithdraw::seeds(unstaker_account.key(), &withdraw_index_bytes);
     assert_account_seeds(
         pending_withdraw_account,
         &crate::ID,

@@ -141,7 +141,7 @@ fn make_xorca_mint_no_authority_flag(ctx: &mut TestContext, state_account: Pubke
 #[test]
 fn test_initialize_success() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: u64 = 100;
+    let cool_down_period_s: i64 = 100;
     let state_account = setup_base_initialize_context(&mut ctx);
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -187,7 +187,7 @@ fn test_initialize_success() {
 #[test]
 fn test_initialize_state_already_exists() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: u64 = 7 * 24 * 60 * 60;
+    let cool_down_period_s: i64 = 7 * 24 * 60 * 60;
     let state_account = setup_base_initialize_context(&mut ctx);
     make_state_already_initialized(&mut ctx, state_account);
     let ix = Initialize {
@@ -210,7 +210,7 @@ fn test_initialize_state_already_exists() {
 #[test]
 fn test_initialize_invalid_xorca_mint_account_owner() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: u64 = 100;
+    let cool_down_period_s: i64 = 100;
     let state_account = setup_base_initialize_context(&mut ctx);
     make_xorca_mint_invalid_owner(&mut ctx);
     let ix = Initialize {
@@ -230,7 +230,7 @@ fn test_initialize_invalid_xorca_mint_account_owner() {
 #[test]
 fn test_initialize_xorca_mint_frozen() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: u64 = 100;
+    let cool_down_period_s: i64 = 100;
     let state_account = setup_base_initialize_context(&mut ctx);
     make_xorca_mint_frozen(&mut ctx, state_account);
     let ix = Initialize {
@@ -250,7 +250,7 @@ fn test_initialize_xorca_mint_frozen() {
 #[test]
 fn test_initialize_xorca_mint_already_initialized_supply() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: u64 = 100;
+    let cool_down_period_s: i64 = 100;
     let state_account = setup_base_initialize_context(&mut ctx);
     make_xorca_mint_already_initialized_supply(&mut ctx, state_account);
     let ix = Initialize {
@@ -270,7 +270,7 @@ fn test_initialize_xorca_mint_already_initialized_supply() {
 #[test]
 fn test_initialize_invalid_orca_mint_account_owner() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: u64 = 100;
+    let cool_down_period_s: i64 = 100;
     let state_account = setup_base_initialize_context(&mut ctx);
     make_orca_mint_invalid_owner(&mut ctx);
     let ix = Initialize {
@@ -290,7 +290,7 @@ fn test_initialize_invalid_orca_mint_account_owner() {
 #[test]
 fn test_initialize_invalid_xorca_mint_authority() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: u64 = 100;
+    let cool_down_period_s: i64 = 100;
     let state_account = setup_base_initialize_context(&mut ctx);
     make_xorca_mint_invalid_authority(&mut ctx);
     let ix = Initialize {
@@ -310,7 +310,7 @@ fn test_initialize_invalid_xorca_mint_authority() {
 #[test]
 fn test_initialize_invalid_system_account() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: u64 = 100;
+    let cool_down_period_s: i64 = 100;
     let state_account = setup_base_initialize_context(&mut ctx);
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -328,7 +328,7 @@ fn test_initialize_invalid_system_account() {
 /// Test 6: Insufficient lamports for rent for the staking pool account / mint initialization
 #[test]
 fn test_initialize_insufficient_lamports() {
-    let cool_down_period_s: u64 = 100;
+    let cool_down_period_s: i64 = 100;
     let mut poor_payer_ctx = TestContext::new();
     poor_payer_ctx
         .svm
@@ -361,7 +361,7 @@ fn test_initialize_insufficient_lamports() {
 #[test]
 fn test_initialize_invalid_update_authority_address() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: u64 = 100;
+    let cool_down_period_s: i64 = 100;
     let state_account = setup_base_initialize_context(&mut ctx);
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -380,7 +380,7 @@ fn test_initialize_invalid_update_authority_address() {
 #[test]
 fn test_initialize_xorca_mint_no_authority_flag() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: u64 = 100;
+    let cool_down_period_s: i64 = 100;
     let state_account = setup_base_initialize_context(&mut ctx);
     make_xorca_mint_no_authority_flag(&mut ctx, state_account);
     let ix = Initialize {

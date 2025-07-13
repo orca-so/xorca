@@ -12,7 +12,7 @@ pub struct State {
     // Calculation: 8 (desired alignment) - 1 (discriminator size) = 7 bytes.
     pub padding1: [u8; 7],
     pub escrowed_orca_amount: u64, // 8 bytes
-    pub cool_down_period_s: u64,   // 8 bytes
+    pub cool_down_period_s: i64,   // 8 bytes
     pub update_authority: Pubkey,  // 32 bytes
     // DEFAULT_ACCOUNT_LEN (2048 bytes) - 56 = 1992 bytes.
     pub padding2: [u8; 1992],
@@ -56,7 +56,7 @@ mod tests {
             discriminator: AccountDiscriminator::State,
             padding1: [0xAA; 7],
             escrowed_orca_amount: 0x1122334455667788,
-            cool_down_period_s: 0xAABBCCDDEEFF0011,
+            cool_down_period_s: 7 * 24 * 60 * 60,
             update_authority: Pubkey::default(),
             padding2: [0xCC; 1992],
         };

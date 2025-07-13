@@ -1,8 +1,8 @@
 use crate::{
     assertions::account::{
-        assert_account_address, assert_account_data_mut, assert_account_owner, assert_account_role,
-        assert_account_seeds, assert_external_account_data, make_owner_token_account_assertions,
-        AccountRole,
+        assert_account_address, assert_account_data, assert_account_data_mut, assert_account_owner,
+        assert_account_role, assert_account_seeds, assert_external_account_data,
+        make_owner_token_account_assertions, AccountRole,
     },
     cpi::{
         system::get_current_unix_timestamp,
@@ -19,8 +19,6 @@ use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 use pinocchio_token::{instructions::Burn, ID as SPL_TOKEN_PROGRAM_ID};
-
-const COOL_DOWN_PERIOD_S: i64 = 15 * 24 * 60 * 60; // 15 days
 
 pub fn process_instruction(
     accounts: &[AccountInfo],
@@ -49,7 +47,11 @@ pub fn process_instruction(
     let mut state_seeds = State::seeds();
     let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
     state_seeds.push(Seed::from(&state_bump));
-    let mut state = assert_account_data_mut::<State>(state_account)?;
+    let initial_escrowed_orca_amount = {
+        // Use a block to control scope
+        let state_ref = assert_account_data::<State>(state_account)?;
+        state_ref.escrowed_orca_amount
+    };
 
     // 3. Vault Account Assertions
     let vault_account_seeds = vec![
@@ -68,11 +70,8 @@ pub fn process_instruction(
     assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
     assert_account_owner(pending_withdraw_account, &SYSTEM_PROGRAM_ID)?;
     let withdraw_index_bytes = [*withdraw_index];
-    let mut pending_withdraw_seeds = PendingWithdraw::seeds(
-        state_account.key(),
-        unstaker_account.key(),
-        &withdraw_index_bytes,
-    );
+    let mut pending_withdraw_seeds =
+        PendingWithdraw::seeds(unstaker_account.key(), &withdraw_index_bytes);
     let pending_withdraw_bump = assert_account_seeds(
         pending_withdraw_account,
         &crate::ID,
@@ -92,6 +91,7 @@ pub fn process_instruction(
 
     // 6. xOrca Mint Account Assertions
     assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
+    assert_account_role(xorca_mint_account, &[AccountRole::Writable])?;
     assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
     let xorca_mint_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
 
@@ -107,24 +107,25 @@ pub fn process_instruction(
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     // Calculate withdrawable ORCA amount
-    let non_escrowed_orca_amount = vault_account_data.amount - state.escrowed_orca_amount;
+    let non_escrowed_orca_amount = vault_account_data.amount - initial_escrowed_orca_amount;
     let withdrawable_orca_amount = convert_xorca_to_orca(
         *unstake_amount,
         non_escrowed_orca_amount,
         xorca_mint_data.supply,
     )?;
 
-    // Decrement the xOrca State escrowed ORCA amount by the withdrawable ORCA amount
-    state.escrowed_orca_amount -= withdrawable_orca_amount;
-
     // Burn unstaker's LST tokens
     let burn_instruction = Burn {
         mint: xorca_mint_account,
         account: unstaker_xorca_ata,
-        authority: state_account,
+        authority: unstaker_account,
         amount: *unstake_amount,
     };
-    burn_instruction.invoke_signed(&[state_seeds.as_slice().into()])?;
+    burn_instruction.invoke()?;
+
+    // Add the unstake ORCA amount to escrowed ORCA amount
+    let mut state = assert_account_data_mut::<State>(state_account)?;
+    state.escrowed_orca_amount += withdrawable_orca_amount;
 
     // Create new pending withdraw account
     let mut pending_withdraw_data = create_program_account::<PendingWithdraw>(
@@ -138,7 +139,7 @@ pub fn process_instruction(
     pending_withdraw_data.withdrawable_orca_amount = withdrawable_orca_amount;
     let current_unix_timestamp = get_current_unix_timestamp()?;
     let withdrawable_timestamp = current_unix_timestamp
-        .checked_add(COOL_DOWN_PERIOD_S)
+        .checked_add(state.cool_down_period_s)
         .ok_or(ErrorCode::ArithmeticError)?;
     pending_withdraw_data.withdrawable_timestamp = withdrawable_timestamp;
 

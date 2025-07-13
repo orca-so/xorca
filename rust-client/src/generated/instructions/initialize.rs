@@ -97,7 +97,7 @@ impl Default for InitializeInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct InitializeInstructionArgs {
-    pub cool_down_period_s: u64,
+    pub cool_down_period_s: i64,
 }
 
 /// Instruction builder for `Initialize`.
@@ -118,7 +118,7 @@ pub struct InitializeBuilder {
     orca_mint_account: Option<solana_program::pubkey::Pubkey>,
     update_authority_account: Option<solana_program::pubkey::Pubkey>,
     system_program_account: Option<solana_program::pubkey::Pubkey>,
-    cool_down_period_s: Option<u64>,
+    cool_down_period_s: Option<i64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -169,7 +169,7 @@ impl InitializeBuilder {
         self
     }
     #[inline(always)]
-    pub fn cool_down_period_s(&mut self, cool_down_period_s: u64) -> &mut Self {
+    pub fn cool_down_period_s(&mut self, cool_down_period_s: i64) -> &mut Self {
         self.cool_down_period_s = Some(cool_down_period_s);
         self
     }
@@ -446,7 +446,7 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn cool_down_period_s(&mut self, cool_down_period_s: u64) -> &mut Self {
+    pub fn cool_down_period_s(&mut self, cool_down_period_s: i64) -> &mut Self {
         self.instruction.cool_down_period_s = Some(cool_down_period_s);
         self
     }
@@ -548,7 +548,7 @@ struct InitializeCpiBuilderInstruction<'a, 'b> {
     orca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     update_authority_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    cool_down_period_s: Option<u64>,
+    cool_down_period_s: Option<i64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

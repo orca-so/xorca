@@ -74,7 +74,7 @@ impl Default for SetInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SetInstructionArgs {
-    pub new_cool_down_period: Option<u64>,
+    pub new_cool_down_period: Option<i64>,
     pub new_update_authority: Option<Pubkey>,
 }
 
@@ -88,7 +88,7 @@ pub struct SetInstructionArgs {
 pub struct SetBuilder {
     update_authority_account: Option<solana_program::pubkey::Pubkey>,
     state_account: Option<solana_program::pubkey::Pubkey>,
-    new_cool_down_period: Option<u64>,
+    new_cool_down_period: Option<i64>,
     new_update_authority: Option<Pubkey>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -112,7 +112,7 @@ impl SetBuilder {
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn new_cool_down_period(&mut self, new_cool_down_period: u64) -> &mut Self {
+    pub fn new_cool_down_period(&mut self, new_cool_down_period: i64) -> &mut Self {
         self.new_cool_down_period = Some(new_cool_down_period);
         self
     }
@@ -305,7 +305,7 @@ impl<'a, 'b> SetCpiBuilder<'a, 'b> {
     }
     /// `[optional argument]`
     #[inline(always)]
-    pub fn new_cool_down_period(&mut self, new_cool_down_period: u64) -> &mut Self {
+    pub fn new_cool_down_period(&mut self, new_cool_down_period: i64) -> &mut Self {
         self.instruction.new_cool_down_period = Some(new_cool_down_period);
         self
     }
@@ -386,7 +386,7 @@ struct SetCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     update_authority_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     state_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    new_cool_down_period: Option<u64>,
+    new_cool_down_period: Option<i64>,
     new_update_authority: Option<Pubkey>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

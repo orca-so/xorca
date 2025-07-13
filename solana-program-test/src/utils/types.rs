@@ -43,3 +43,15 @@ macro_rules! token_account_data {
         data
     }};
 }
+
+#[macro_export]
+macro_rules! pending_withdraw_data {
+    ($($name:ident => $value:expr),* $(,)?) => {{
+        let mut data = crate::zeroed_type!(xorca::PendingWithdraw);
+        data.discriminator = xorca::AccountDiscriminator::PendingWithdraw;
+        $(
+            data.$name = $value;
+        )*
+        data
+    }};
+}

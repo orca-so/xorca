@@ -10,12 +10,12 @@ import {
   combineCodec,
   getAddressDecoder,
   getAddressEncoder,
+  getI64Decoder,
+  getI64Encoder,
   getOptionDecoder,
   getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
-  getU64Decoder,
-  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -78,7 +78,7 @@ export function getSetInstructionDataEncoder(): Encoder<SetInstructionDataArgs> 
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['newCoolDownPeriod', getOptionEncoder(getU64Encoder())],
+      ['newCoolDownPeriod', getOptionEncoder(getI64Encoder())],
       ['newUpdateAuthority', getOptionEncoder(getAddressEncoder())],
     ]),
     (value) => ({ ...value, discriminator: SET_DISCRIMINATOR })
@@ -88,7 +88,7 @@ export function getSetInstructionDataEncoder(): Encoder<SetInstructionDataArgs> 
 export function getSetInstructionDataDecoder(): Decoder<SetInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['newCoolDownPeriod', getOptionDecoder(getU64Decoder())],
+    ['newCoolDownPeriod', getOptionDecoder(getI64Decoder())],
     ['newUpdateAuthority', getOptionDecoder(getAddressDecoder())],
   ]);
 }

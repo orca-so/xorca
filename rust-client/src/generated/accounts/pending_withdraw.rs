@@ -13,12 +13,15 @@ use borsh::BorshSerialize;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PendingWithdraw {
     pub discriminator: AccountDiscriminator,
+    pub padding1: [u8; 7],
     pub withdrawable_orca_amount: u64,
     pub withdrawable_timestamp: i64,
+    #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::Bytes>"))]
+    pub padding2: [u8; 2024],
 }
 
 impl PendingWithdraw {
-    pub const LEN: usize = 17;
+    pub const LEN: usize = 2048;
 
     #[inline(always)]
     pub fn from_bytes(data: &[u8]) -> Result<Self, std::io::Error> {

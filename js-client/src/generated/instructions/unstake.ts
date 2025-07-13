@@ -44,7 +44,7 @@ export type UnstakeInstruction<
   TAccountStateAccount extends string | IAccountMeta<string> = string,
   TAccountVaultAccount extends string | IAccountMeta<string> = string,
   TAccountPendingWithdrawAccount extends string | IAccountMeta<string> = string,
-  TAccountUnstakerLstAccount extends string | IAccountMeta<string> = string,
+  TAccountUnstakerXorcaAta extends string | IAccountMeta<string> = string,
   TAccountXorcaMintAccount extends string | IAccountMeta<string> = string,
   TAccountOrcaMintAccount extends string | IAccountMeta<string> = string,
   TAccountSystemProgramAccount extends string | IAccountMeta<string> = string,
@@ -67,11 +67,11 @@ export type UnstakeInstruction<
       TAccountPendingWithdrawAccount extends string
         ? WritableAccount<TAccountPendingWithdrawAccount>
         : TAccountPendingWithdrawAccount,
-      TAccountUnstakerLstAccount extends string
-        ? WritableAccount<TAccountUnstakerLstAccount>
-        : TAccountUnstakerLstAccount,
+      TAccountUnstakerXorcaAta extends string
+        ? WritableAccount<TAccountUnstakerXorcaAta>
+        : TAccountUnstakerXorcaAta,
       TAccountXorcaMintAccount extends string
-        ? ReadonlyAccount<TAccountXorcaMintAccount>
+        ? WritableAccount<TAccountXorcaMintAccount>
         : TAccountXorcaMintAccount,
       TAccountOrcaMintAccount extends string
         ? ReadonlyAccount<TAccountOrcaMintAccount>
@@ -128,7 +128,7 @@ export type UnstakeInput<
   TAccountStateAccount extends string = string,
   TAccountVaultAccount extends string = string,
   TAccountPendingWithdrawAccount extends string = string,
-  TAccountUnstakerLstAccount extends string = string,
+  TAccountUnstakerXorcaAta extends string = string,
   TAccountXorcaMintAccount extends string = string,
   TAccountOrcaMintAccount extends string = string,
   TAccountSystemProgramAccount extends string = string,
@@ -138,7 +138,7 @@ export type UnstakeInput<
   stateAccount: Address<TAccountStateAccount>;
   vaultAccount: Address<TAccountVaultAccount>;
   pendingWithdrawAccount: Address<TAccountPendingWithdrawAccount>;
-  unstakerLstAccount: Address<TAccountUnstakerLstAccount>;
+  unstakerXorcaAta: Address<TAccountUnstakerXorcaAta>;
   xorcaMintAccount: Address<TAccountXorcaMintAccount>;
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
@@ -152,7 +152,7 @@ export function getUnstakeInstruction<
   TAccountStateAccount extends string,
   TAccountVaultAccount extends string,
   TAccountPendingWithdrawAccount extends string,
-  TAccountUnstakerLstAccount extends string,
+  TAccountUnstakerXorcaAta extends string,
   TAccountXorcaMintAccount extends string,
   TAccountOrcaMintAccount extends string,
   TAccountSystemProgramAccount extends string,
@@ -164,7 +164,7 @@ export function getUnstakeInstruction<
     TAccountStateAccount,
     TAccountVaultAccount,
     TAccountPendingWithdrawAccount,
-    TAccountUnstakerLstAccount,
+    TAccountUnstakerXorcaAta,
     TAccountXorcaMintAccount,
     TAccountOrcaMintAccount,
     TAccountSystemProgramAccount,
@@ -177,7 +177,7 @@ export function getUnstakeInstruction<
   TAccountStateAccount,
   TAccountVaultAccount,
   TAccountPendingWithdrawAccount,
-  TAccountUnstakerLstAccount,
+  TAccountUnstakerXorcaAta,
   TAccountXorcaMintAccount,
   TAccountOrcaMintAccount,
   TAccountSystemProgramAccount,
@@ -195,13 +195,13 @@ export function getUnstakeInstruction<
       value: input.pendingWithdrawAccount ?? null,
       isWritable: true,
     },
-    unstakerLstAccount: {
-      value: input.unstakerLstAccount ?? null,
+    unstakerXorcaAta: {
+      value: input.unstakerXorcaAta ?? null,
       isWritable: true,
     },
     xorcaMintAccount: {
       value: input.xorcaMintAccount ?? null,
-      isWritable: false,
+      isWritable: true,
     },
     orcaMintAccount: {
       value: input.orcaMintAccount ?? null,
@@ -228,7 +228,7 @@ export function getUnstakeInstruction<
       getAccountMeta(accounts.stateAccount),
       getAccountMeta(accounts.vaultAccount),
       getAccountMeta(accounts.pendingWithdrawAccount),
-      getAccountMeta(accounts.unstakerLstAccount),
+      getAccountMeta(accounts.unstakerXorcaAta),
       getAccountMeta(accounts.xorcaMintAccount),
       getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.systemProgramAccount),
@@ -242,7 +242,7 @@ export function getUnstakeInstruction<
     TAccountStateAccount,
     TAccountVaultAccount,
     TAccountPendingWithdrawAccount,
-    TAccountUnstakerLstAccount,
+    TAccountUnstakerXorcaAta,
     TAccountXorcaMintAccount,
     TAccountOrcaMintAccount,
     TAccountSystemProgramAccount,
@@ -262,7 +262,7 @@ export type ParsedUnstakeInstruction<
     stateAccount: TAccountMetas[1];
     vaultAccount: TAccountMetas[2];
     pendingWithdrawAccount: TAccountMetas[3];
-    unstakerLstAccount: TAccountMetas[4];
+    unstakerXorcaAta: TAccountMetas[4];
     xorcaMintAccount: TAccountMetas[5];
     orcaMintAccount: TAccountMetas[6];
     systemProgramAccount: TAccountMetas[7];
@@ -296,7 +296,7 @@ export function parseUnstakeInstruction<
       stateAccount: getNextAccount(),
       vaultAccount: getNextAccount(),
       pendingWithdrawAccount: getNextAccount(),
-      unstakerLstAccount: getNextAccount(),
+      unstakerXorcaAta: getNextAccount(),
       xorcaMintAccount: getNextAccount(),
       orcaMintAccount: getNextAccount(),
       systemProgramAccount: getNextAccount(),

@@ -13,7 +13,7 @@ use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
 
-pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &u64) -> ProgramResult {
+pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -> ProgramResult {
     let payer_account = get_account_info(accounts, 0)?;
     let state_account = get_account_info(accounts, 1)?;
     let xorca_mint_account = get_account_info(accounts, 2)?;

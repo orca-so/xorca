@@ -8,10 +8,10 @@
 
 import {
   combineCodec,
+  getI64Decoder,
+  getI64Encoder,
   getStructDecoder,
   getStructEncoder,
-  getU64Decoder,
-  getU64Encoder,
   getU8Decoder,
   getU8Encoder,
   transformEncoder,
@@ -86,7 +86,7 @@ export function getInitializeInstructionDataEncoder(): Encoder<InitializeInstruc
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['coolDownPeriodS', getU64Encoder()],
+      ['coolDownPeriodS', getI64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: INITIALIZE_DISCRIMINATOR })
   );
@@ -95,7 +95,7 @@ export function getInitializeInstructionDataEncoder(): Encoder<InitializeInstruc
 export function getInitializeInstructionDataDecoder(): Decoder<InitializeInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['coolDownPeriodS', getU64Decoder()],
+    ['coolDownPeriodS', getI64Decoder()],
   ]);
 }
 

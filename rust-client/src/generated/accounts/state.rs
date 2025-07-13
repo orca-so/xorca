@@ -16,7 +16,7 @@ pub struct State {
     pub discriminator: AccountDiscriminator,
     pub padding1: [u8; 7],
     pub escrowed_orca_amount: u64,
-    pub cool_down_period_s: u64,
+    pub cool_down_period_s: i64,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
