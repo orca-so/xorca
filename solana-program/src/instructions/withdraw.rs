@@ -1,7 +1,8 @@
 use crate::{
     assertions::account::{
-        assert_account_address, assert_account_data_mut, assert_account_owner, assert_account_role,
-        assert_account_seeds, make_owner_token_account_assertions, AccountRole,
+        assert_account_address, assert_account_data, assert_account_data_mut, assert_account_owner,
+        assert_account_role, assert_account_seeds, make_owner_token_account_assertions,
+        AccountRole,
     },
     cpi::{system::get_current_unix_timestamp, token::ORCA_MINT_ID},
     error::ErrorCode,
@@ -35,21 +36,27 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     let mut state_seeds = State::seeds();
     let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
     state_seeds.push(Seed::from(&state_bump));
-    let mut state = assert_account_data_mut::<State>(state_account)?;
 
     // 3. Pending Withdraw Account Assertions
     assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
     assert_account_owner(pending_withdraw_account, &crate::ID)?;
     let withdraw_index_bytes = [*withdraw_index];
-    let pending_withdraw_seeds =
+    let mut pending_withdraw_seeds =
         PendingWithdraw::seeds(unstaker_account.key(), &withdraw_index_bytes);
-    assert_account_seeds(
+    let pending_withdraw_bump = assert_account_seeds(
         pending_withdraw_account,
         &crate::ID,
         &pending_withdraw_seeds,
     )?;
-    let pending_withdraw_data =
-        assert_account_data_mut::<PendingWithdraw>(pending_withdraw_account)?;
+    pending_withdraw_seeds.push(Seed::from(&pending_withdraw_bump));
+    let (withdrawable_orca_amount, withdrawable_timestamp) = {
+        let pending_withdraw_data =
+            assert_account_data::<PendingWithdraw>(pending_withdraw_account)?;
+        (
+            pending_withdraw_data.withdrawable_orca_amount,
+            pending_withdraw_data.withdrawable_timestamp,
+        )
+    };
 
     // 4. Unstaker Stake Token Account Assertions
     make_owner_token_account_assertions(unstaker_orca_ata, unstaker_account, orca_mint_account)?;
@@ -78,7 +85,7 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
 
     // Validate pending withdraw
     let current_unix_timestamp = get_current_unix_timestamp()?;
-    if current_unix_timestamp < pending_withdraw_data.withdrawable_timestamp {
+    if current_unix_timestamp < withdrawable_timestamp {
         return Err(ErrorCode::InvalidAccountData.into());
     }
 
@@ -87,13 +94,14 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
         from: vault_account,
         to: unstaker_orca_ata,
         authority: state_account,
-        amount: pending_withdraw_data.withdrawable_orca_amount,
+        amount: withdrawable_orca_amount,
     };
     transfer_instruction.invoke_signed(&[state_seeds.as_slice().into()])?;
 
-    // Remove tokens from escrow
-    state.escrowed_orca_amount -= pending_withdraw_data.withdrawable_orca_amount;
+    // TODO: Close the pending_withdraw account
 
-    // TODO: Close Pending Withdraw Account
+    // Remove tokens from escrow
+    let mut state = assert_account_data_mut::<State>(state_account)?;
+    state.escrowed_orca_amount -= withdrawable_orca_amount;
     Ok(())
 }

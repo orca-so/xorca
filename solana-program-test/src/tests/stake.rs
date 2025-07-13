@@ -5,7 +5,7 @@ use crate::{
 use solana_sdk::pubkey::Pubkey;
 use xorca::{
     find_state_address, Stake, StakeInstructionArgs, State, TokenAccount, TokenMint,
-    XorcaStakingProgramError, DEFAULT_ACCOUNT_LEN,
+    XorcaStakingProgramError,
 };
 
 /// Sets up the basic test context with correct PDAs and initial mint accounts.
@@ -22,7 +22,6 @@ fn setup_base_stake_context(ctx: &mut TestContext) -> (Pubkey, Pubkey, Pubkey, P
         ),
     )
     .unwrap();
-    ctx.pad_account(state_account, DEFAULT_ACCOUNT_LEN).unwrap();
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
@@ -134,7 +133,6 @@ fn set_balances_for_1_1_exchange(
         ),
     )
     .unwrap();
-    ctx.pad_account(state_account, DEFAULT_ACCOUNT_LEN).unwrap();
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
@@ -180,7 +178,6 @@ fn set_balances_for_more_than_1_1_exchange(
         ),
     )
     .unwrap();
-    ctx.pad_account(state_account, DEFAULT_ACCOUNT_LEN).unwrap();
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
@@ -239,7 +236,6 @@ fn make_state_account_invalid_owner(ctx: &mut TestContext, state_account: Pubkey
         ),
     )
     .unwrap();
-    ctx.pad_account(state_account, DEFAULT_ACCOUNT_LEN).unwrap();
 }
 
 fn make_state_account_invalid_seeds(ctx: &mut TestContext) -> Pubkey {
@@ -255,8 +251,6 @@ fn make_state_account_invalid_seeds(ctx: &mut TestContext) -> Pubkey {
         ),
     )
     .unwrap();
-    ctx.pad_account(invalid_state_account, DEFAULT_ACCOUNT_LEN)
-        .unwrap();
     invalid_state_account
 }
 

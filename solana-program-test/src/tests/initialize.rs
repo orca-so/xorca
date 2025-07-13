@@ -58,7 +58,6 @@ fn make_state_already_initialized(ctx: &mut TestContext, state_account: Pubkey) 
         ),
     )
     .unwrap();
-    ctx.pad_account(state_account, DEFAULT_ACCOUNT_LEN).unwrap();
 }
 
 fn make_xorca_mint_invalid_owner(ctx: &mut TestContext) {

@@ -93,20 +93,6 @@ impl TestContext {
         Ok(())
     }
 
-    pub fn pad_account(
-        &mut self,
-        address: Pubkey,
-        target_size: usize,
-    ) -> Result<(), Box<dyn Error>> {
-        let mut account = self.get_raw_account(address)?;
-        let current_len = account.data.len();
-        if current_len < target_size {
-            account.data.resize(target_size, 0);
-            self.svm.set_account(address, account)?;
-        }
-        Ok(())
-    }
-
     pub fn send(&mut self, ix: Instruction) -> TransactionResult {
         let result = self.sends(&[ix]);
 
