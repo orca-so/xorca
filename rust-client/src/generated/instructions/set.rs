@@ -5,9 +5,9 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
+use crate::generated::types::StateUpdateInstruction;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
-use solana_program::pubkey::Pubkey;
 
 /// Accounts.
 #[derive(Debug)]
@@ -74,8 +74,7 @@ impl Default for SetInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SetInstructionArgs {
-    pub new_cool_down_period: Option<i64>,
-    pub new_update_authority: Option<Pubkey>,
+    pub instruction_data: StateUpdateInstruction,
 }
 
 /// Instruction builder for `Set`.
@@ -88,8 +87,7 @@ pub struct SetInstructionArgs {
 pub struct SetBuilder {
     update_authority_account: Option<solana_program::pubkey::Pubkey>,
     state_account: Option<solana_program::pubkey::Pubkey>,
-    new_cool_down_period: Option<i64>,
-    new_update_authority: Option<Pubkey>,
+    instruction_data: Option<StateUpdateInstruction>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -110,16 +108,9 @@ impl SetBuilder {
         self.state_account = Some(state_account);
         self
     }
-    /// `[optional argument]`
     #[inline(always)]
-    pub fn new_cool_down_period(&mut self, new_cool_down_period: i64) -> &mut Self {
-        self.new_cool_down_period = Some(new_cool_down_period);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_update_authority(&mut self, new_update_authority: Pubkey) -> &mut Self {
-        self.new_update_authority = Some(new_update_authority);
+    pub fn instruction_data(&mut self, instruction_data: StateUpdateInstruction) -> &mut Self {
+        self.instruction_data = Some(instruction_data);
         self
     }
     /// Add an additional account to the instruction.
@@ -149,8 +140,10 @@ impl SetBuilder {
             state_account: self.state_account.expect("state_account is not set"),
         };
         let args = SetInstructionArgs {
-            new_cool_down_period: self.new_cool_down_period.clone(),
-            new_update_authority: self.new_update_authority.clone(),
+            instruction_data: self
+                .instruction_data
+                .clone()
+                .expect("instruction_data is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -281,8 +274,7 @@ impl<'a, 'b> SetCpiBuilder<'a, 'b> {
             __program: program,
             update_authority_account: None,
             state_account: None,
-            new_cool_down_period: None,
-            new_update_authority: None,
+            instruction_data: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -303,16 +295,9 @@ impl<'a, 'b> SetCpiBuilder<'a, 'b> {
         self.instruction.state_account = Some(state_account);
         self
     }
-    /// `[optional argument]`
     #[inline(always)]
-    pub fn new_cool_down_period(&mut self, new_cool_down_period: i64) -> &mut Self {
-        self.instruction.new_cool_down_period = Some(new_cool_down_period);
-        self
-    }
-    /// `[optional argument]`
-    #[inline(always)]
-    pub fn new_update_authority(&mut self, new_update_authority: Pubkey) -> &mut Self {
-        self.instruction.new_update_authority = Some(new_update_authority);
+    pub fn instruction_data(&mut self, instruction_data: StateUpdateInstruction) -> &mut Self {
+        self.instruction.instruction_data = Some(instruction_data);
         self
     }
     /// Add an additional account to the instruction.
@@ -357,8 +342,11 @@ impl<'a, 'b> SetCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = SetInstructionArgs {
-            new_cool_down_period: self.instruction.new_cool_down_period.clone(),
-            new_update_authority: self.instruction.new_update_authority.clone(),
+            instruction_data: self
+                .instruction
+                .instruction_data
+                .clone()
+                .expect("instruction_data is not set"),
         };
         let instruction = SetCpi {
             __program: self.instruction.__program,
@@ -386,8 +374,7 @@ struct SetCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_program::account_info::AccountInfo<'a>,
     update_authority_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     state_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    new_cool_down_period: Option<i64>,
-    new_update_authority: Option<Pubkey>,
+    instruction_data: Option<StateUpdateInstruction>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

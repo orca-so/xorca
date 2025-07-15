@@ -7,6 +7,7 @@
  */
 
 export * from './accountDiscriminator';
+export * from './stateUpdateInstruction';
 export * from './tokenAccount';
 export * from './tokenAccountState';
 export * from './tokenMint';

@@ -8,12 +8,6 @@
 
 import {
   combineCodec,
-  getAddressDecoder,
-  getAddressEncoder,
-  getI64Decoder,
-  getI64Encoder,
-  getOptionDecoder,
-  getOptionEncoder,
   getStructDecoder,
   getStructEncoder,
   getU8Decoder,
@@ -28,14 +22,18 @@ import {
   type IInstruction,
   type IInstructionWithAccounts,
   type IInstructionWithData,
-  type Option,
-  type OptionOrNullable,
   type TransactionSigner,
   type WritableAccount,
   type WritableSignerAccount,
 } from '@solana/kit';
 import { XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS } from '../programs';
 import { getAccountMetaFactory, type ResolvedAccount } from '../shared';
+import {
+  getStateUpdateInstructionDecoder,
+  getStateUpdateInstructionEncoder,
+  type StateUpdateInstruction,
+  type StateUpdateInstructionArgs,
+} from '../types';
 
 export const SET_DISCRIMINATOR = 4;
 
@@ -65,21 +63,18 @@ export type SetInstruction<
 
 export type SetInstructionData = {
   discriminator: number;
-  newCoolDownPeriod: Option<bigint>;
-  newUpdateAuthority: Option<Address>;
+  instructionData: StateUpdateInstruction;
 };
 
 export type SetInstructionDataArgs = {
-  newCoolDownPeriod: OptionOrNullable<number | bigint>;
-  newUpdateAuthority: OptionOrNullable<Address>;
+  instructionData: StateUpdateInstructionArgs;
 };
 
 export function getSetInstructionDataEncoder(): Encoder<SetInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['newCoolDownPeriod', getOptionEncoder(getI64Encoder())],
-      ['newUpdateAuthority', getOptionEncoder(getAddressEncoder())],
+      ['instructionData', getStateUpdateInstructionEncoder()],
     ]),
     (value) => ({ ...value, discriminator: SET_DISCRIMINATOR })
   );
@@ -88,8 +83,7 @@ export function getSetInstructionDataEncoder(): Encoder<SetInstructionDataArgs> 
 export function getSetInstructionDataDecoder(): Decoder<SetInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['newCoolDownPeriod', getOptionDecoder(getI64Decoder())],
-    ['newUpdateAuthority', getOptionDecoder(getAddressDecoder())],
+    ['instructionData', getStateUpdateInstructionDecoder()],
   ]);
 }
 
@@ -103,8 +97,7 @@ export type SetInput<
 > = {
   updateAuthorityAccount: TransactionSigner<TAccountUpdateAuthorityAccount>;
   stateAccount: Address<TAccountStateAccount>;
-  newCoolDownPeriod: SetInstructionDataArgs['newCoolDownPeriod'];
-  newUpdateAuthority: SetInstructionDataArgs['newUpdateAuthority'];
+  instructionData: SetInstructionDataArgs['instructionData'];
 };
 
 export function getSetInstruction<
