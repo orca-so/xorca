@@ -47,15 +47,8 @@ pub fn process_instruction(
         Instruction::Withdraw { withdraw_index } => {
             instructions::withdraw::process_instruction(accounts, withdraw_index)?;
         }
-        Instruction::Set {
-            new_cool_down_period,
-            new_update_authority,
-        } => {
-            instructions::set::process_instruction(
-                accounts,
-                new_cool_down_period,
-                new_update_authority,
-            )?;
+        Instruction::Set { instruction_data } => {
+            instructions::set::process_instruction(accounts, instruction_data)?;
         }
     }
     Ok(())

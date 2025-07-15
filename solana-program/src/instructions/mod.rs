@@ -66,8 +66,7 @@ pub enum Instruction {
     #[account(0, writable, signer, name = "update_authority_account")]
     #[account(1, writable, name = "state_account")]
     Set {
-        new_cool_down_period: Option<i64>,
-        new_update_authority: Option<Pubkey>,
+        instruction_data: StateUpdateInstruction,
     },
 }
 
@@ -75,4 +74,14 @@ impl InstructionDiscriminator {
     pub fn to_bytes(&self) -> &[u8; 1] {
         unsafe { &*(self as *const _ as *const [u8; 1]) }
     }
+}
+
+#[derive(Debug, Clone, BorshSerialize, BorshDeserialize, Display, EnumDiscriminants)]
+#[strum_discriminants(
+    name(StateUpdateInstructionDiscriminator),
+    derive(BorshSerialize, BorshDeserialize, FromRepr)
+)]
+pub enum StateUpdateInstruction {
+    UpdateCoolDownPeriod { new_period: i64 },
+    UpdateUpdateAuthority { new_authority: Pubkey },
 }
