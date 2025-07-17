@@ -25,23 +25,23 @@ import {
 } from '@solana/kit';
 
 export type StateUpdateInstruction =
-  | { __kind: 'UpdateCoolDownPeriod'; newPeriod: bigint }
+  | { __kind: 'UpdateCoolDownPeriod'; newCoolDownPeriodS: bigint }
   | { __kind: 'UpdateUpdateAuthority'; newAuthority: Address };
 
 export type StateUpdateInstructionArgs =
-  | { __kind: 'UpdateCoolDownPeriod'; newPeriod: number | bigint }
+  | { __kind: 'UpdateCoolDownPeriod'; newCoolDownPeriodS: number | bigint }
   | { __kind: 'UpdateUpdateAuthority'; newAuthority: Address };
 
 export function getStateUpdateInstructionEncoder(): Encoder<StateUpdateInstructionArgs> {
   return getDiscriminatedUnionEncoder([
-    ['UpdateCoolDownPeriod', getStructEncoder([['newPeriod', getI64Encoder()]])],
+    ['UpdateCoolDownPeriod', getStructEncoder([['newCoolDownPeriodS', getI64Encoder()]])],
     ['UpdateUpdateAuthority', getStructEncoder([['newAuthority', getAddressEncoder()]])],
   ]);
 }
 
 export function getStateUpdateInstructionDecoder(): Decoder<StateUpdateInstruction> {
   return getDiscriminatedUnionDecoder([
-    ['UpdateCoolDownPeriod', getStructDecoder([['newPeriod', getI64Decoder()]])],
+    ['UpdateCoolDownPeriod', getStructDecoder([['newCoolDownPeriodS', getI64Decoder()]])],
     ['UpdateUpdateAuthority', getStructDecoder([['newAuthority', getAddressDecoder()]])],
   ]);
 }

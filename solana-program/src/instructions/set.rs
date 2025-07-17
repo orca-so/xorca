@@ -32,8 +32,10 @@ pub fn process_instruction(
 
     // Apply updates based on the instruction_data enum
     match instruction_data {
-        StateUpdateInstruction::UpdateCoolDownPeriod { new_period } => {
-            state.cool_down_period_s = *new_period;
+        StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s,
+        } => {
+            state.cool_down_period_s = *new_cool_down_period_s;
         }
         StateUpdateInstruction::UpdateUpdateAuthority { new_authority } => {
             state.update_authority = *new_authority;

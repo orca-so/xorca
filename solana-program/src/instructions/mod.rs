@@ -82,6 +82,6 @@ impl InstructionDiscriminator {
     derive(BorshSerialize, BorshDeserialize, FromRepr)
 )]
 pub enum StateUpdateInstruction {
-    UpdateCoolDownPeriod { new_period: i64 },
+    UpdateCoolDownPeriod { new_cool_down_period_s: i64 },
     UpdateUpdateAuthority { new_authority: Pubkey },
 }

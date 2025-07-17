@@ -53,7 +53,7 @@ fn test_set_cool_down_period_success() {
     }
     .instruction(SetInstructionArgs {
         instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
-            new_period: new_cool_down_period,
+            new_cool_down_period_s: new_cool_down_period,
         },
     });
     let result = ctx.send(ix);
@@ -111,7 +111,9 @@ fn test_set_invalid_update_authority_mismatch() {
         state_account: state_account,
     }
     .instruction(SetInstructionArgs {
-        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod { new_period: 100 },
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: 100,
+        },
     });
     let result = ctx.send(ix);
     assert_program_error!(result, XorcaStakingProgramError::IncorrectAccountAddress);
@@ -129,7 +131,9 @@ fn test_set_invalid_state_account_owner() {
         state_account: state_account,
     }
     .instruction(SetInstructionArgs {
-        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod { new_period: 100 },
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: 100,
+        },
     });
     let result = ctx.send(ix);
     assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);
@@ -157,7 +161,9 @@ fn test_set_invalid_state_account_seeds() {
         state_account: Pubkey::new_unique(),
     }
     .instruction(SetInstructionArgs {
-        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod { new_period: 100 },
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: 100,
+        },
     });
     let result = ctx.send(ix);
     assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);

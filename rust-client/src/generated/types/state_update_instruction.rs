@@ -13,7 +13,7 @@ use solana_program::pubkey::Pubkey;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub enum StateUpdateInstruction {
     UpdateCoolDownPeriod {
-        new_period: i64,
+        new_cool_down_period_s: i64,
     },
     UpdateUpdateAuthority {
         #[cfg_attr(
