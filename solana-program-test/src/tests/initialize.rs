@@ -1,15 +1,13 @@
 use crate::{
     assert_program_error, assert_program_success, state_data, token_mint_data, TestContext,
-    ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
+    INITIAL_UPDATE_AUTHORITY_ID, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
 };
 use solana_sdk::pubkey::Pubkey;
 use solana_sdk::signer::Signer; // Used for ctx.signer()
 use xorca::{
     find_state_address, AccountDiscriminator, Initialize, InitializeInstructionArgs, State,
-    TokenMint, XorcaStakingProgramError, DEFAULT_ACCOUNT_LEN,
+    TokenMint, XorcaStakingProgramError,
 };
-
-const INITIAL_UPDATE_AUTHORITY_ID: Pubkey = solana_sdk::pubkey!("11111111111111111111111111111111");
 
 // Sets up the basic valid context for Initialize tests.
 fn setup_base_initialize_context(ctx: &mut TestContext) -> Pubkey {

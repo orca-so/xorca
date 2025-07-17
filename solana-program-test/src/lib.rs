@@ -34,6 +34,8 @@ pub const XORCA_PROGRAM_ID: Pubkey =
     solana_sdk::pubkey!("5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY");
 pub const ATA_PROGRAM_ID: Pubkey =
     solana_sdk::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
+pub const INITIAL_UPDATE_AUTHORITY_ID: Pubkey =
+    solana_sdk::pubkey!("11111111111111111111111111111111");
 
 struct TestContext {
     svm: LiteSVM,

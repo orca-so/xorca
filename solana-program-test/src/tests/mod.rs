@@ -1,3 +1,4 @@
+mod e2e;
 mod initialize;
 mod math;
 mod set;
