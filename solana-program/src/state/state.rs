@@ -1,7 +1,9 @@
-use super::{AccountDiscriminator, ProgramAccount, DEFAULT_ACCOUNT_LEN};
+use super::{AccountDiscriminator, ProgramAccount};
 use borsh::{BorshDeserialize, BorshSerialize};
 use pinocchio::{instruction::Seed, pubkey::Pubkey};
 use shank::ShankAccount;
+
+const STATE_ACCOUNT_LEN: usize = 2048;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, BorshSerialize, BorshDeserialize, ShankAccount)]
 #[repr(C)]
@@ -14,7 +16,7 @@ pub struct State {
     pub escrowed_orca_amount: u64, // 8 bytes
     pub cool_down_period_s: i64,   // 8 bytes
     pub update_authority: Pubkey,  // 32 bytes
-    // DEFAULT_ACCOUNT_LEN (2048 bytes) - 56 = 1992 bytes.
+    // STATE_ACCOUNT_LEN (2048 bytes) - 56 = 1992 bytes.
     pub padding2: [u8; 1992],
 }
 
@@ -38,7 +40,7 @@ impl State {
 }
 
 impl ProgramAccount for State {
-    const LEN: usize = DEFAULT_ACCOUNT_LEN;
+    const LEN: usize = STATE_ACCOUNT_LEN;
     const DISCRIMINATOR: AccountDiscriminator = AccountDiscriminator::State;
 }
 
@@ -122,8 +124,8 @@ mod tests {
         let total_calculated_struct_size =
             core_data_with_internal_padding_size + size_of::<[u8; 1992]>();
 
-        assert_eq!(total_calculated_struct_size, DEFAULT_ACCOUNT_LEN);
-        assert_eq!(size_of::<State>(), DEFAULT_ACCOUNT_LEN);
+        assert_eq!(total_calculated_struct_size, STATE_ACCOUNT_LEN);
+        assert_eq!(size_of::<State>(), STATE_ACCOUNT_LEN);
         assert_eq!(size_of::<State>(), total_calculated_struct_size);
     }
 }

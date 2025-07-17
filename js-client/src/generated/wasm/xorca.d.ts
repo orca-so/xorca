@@ -125,63 +125,17 @@ export interface InitOutput {
   readonly __wbg_message_free: (a: number, b: number) => void;
   readonly __wbg_get_message_recent_blockhash: (a: number) => number;
   readonly __wbg_set_message_recent_blockhash: (a: number, b: number) => void;
-  readonly systeminstruction_createAccount: (
-    a: number,
-    b: number,
-    c: bigint,
-    d: bigint,
-    e: number
-  ) => number;
-  readonly systeminstruction_createAccountWithSeed: (
-    a: number,
-    b: number,
-    c: number,
-    d: number,
-    e: number,
-    f: bigint,
-    g: bigint,
-    h: number
-  ) => number;
+  readonly systeminstruction_createAccount: (a: number, b: number, c: bigint, d: bigint, e: number) => number;
+  readonly systeminstruction_createAccountWithSeed: (a: number, b: number, c: number, d: number, e: number, f: bigint, g: bigint, h: number) => number;
   readonly systeminstruction_assign: (a: number, b: number) => number;
-  readonly systeminstruction_assignWithSeed: (
-    a: number,
-    b: number,
-    c: number,
-    d: number,
-    e: number
-  ) => number;
+  readonly systeminstruction_assignWithSeed: (a: number, b: number, c: number, d: number, e: number) => number;
   readonly systeminstruction_transfer: (a: number, b: number, c: bigint) => number;
-  readonly systeminstruction_transferWithSeed: (
-    a: number,
-    b: number,
-    c: number,
-    d: number,
-    e: number,
-    f: number,
-    g: bigint
-  ) => number;
+  readonly systeminstruction_transferWithSeed: (a: number, b: number, c: number, d: number, e: number, f: number, g: bigint) => number;
   readonly systeminstruction_allocate: (a: number, b: bigint) => number;
-  readonly systeminstruction_allocateWithSeed: (
-    a: number,
-    b: number,
-    c: number,
-    d: number,
-    e: bigint,
-    f: number
-  ) => number;
-  readonly systeminstruction_createNonceAccount: (
-    a: number,
-    b: number,
-    c: number,
-    d: bigint
-  ) => any;
+  readonly systeminstruction_allocateWithSeed: (a: number, b: number, c: number, d: number, e: bigint, f: number) => number;
+  readonly systeminstruction_createNonceAccount: (a: number, b: number, c: number, d: bigint) => any;
   readonly systeminstruction_advanceNonceAccount: (a: number, b: number) => number;
-  readonly systeminstruction_withdrawNonceAccount: (
-    a: number,
-    b: number,
-    c: number,
-    d: bigint
-  ) => number;
+  readonly systeminstruction_withdrawNonceAccount: (a: number, b: number, c: number, d: bigint) => number;
   readonly systeminstruction_authorizeNonceAccount: (a: number, b: number, c: number) => number;
   readonly __wbg_instructions_free: (a: number, b: number) => void;
   readonly instructions_constructor: () => number;
@@ -194,17 +148,8 @@ export interface InitOutput {
   readonly pubkey_isOnCurve: (a: number) => number;
   readonly pubkey_equals: (a: number, b: number) => number;
   readonly pubkey_toBytes: (a: number) => [number, number];
-  readonly pubkey_createWithSeed: (
-    a: number,
-    b: number,
-    c: number,
-    d: number
-  ) => [number, number, number];
-  readonly pubkey_createProgramAddress: (
-    a: number,
-    b: number,
-    c: number
-  ) => [number, number, number];
+  readonly pubkey_createWithSeed: (a: number, b: number, c: number, d: number) => [number, number, number];
+  readonly pubkey_createProgramAddress: (a: number, b: number, c: number) => [number, number, number];
   readonly pubkey_findProgramAddress: (a: number, b: number, c: number) => [number, number, number];
   readonly __wbg_hash_free: (a: number, b: number) => void;
   readonly hash_constructor: (a: any) => [number, number, number];
@@ -223,26 +168,21 @@ export interface InitOutput {
 
 export type SyncInitInput = BufferSource | WebAssembly.Module;
 /**
- * Instantiates the given `module`, which can either be bytes or
- * a precompiled `WebAssembly.Module`.
- *
- * @param {{ module: SyncInitInput }} module - Passing `SyncInitInput` directly is deprecated.
- *
- * @returns {InitOutput}
- */
+* Instantiates the given `module`, which can either be bytes or
+* a precompiled `WebAssembly.Module`.
+*
+* @param {{ module: SyncInitInput }} module - Passing `SyncInitInput` directly is deprecated.
+*
+* @returns {InitOutput}
+*/
 export function initSync(module: { module: SyncInitInput } | SyncInitInput): InitOutput;
 
 /**
- * If `module_or_path` is {RequestInfo} or {URL}, makes a request and
- * for everything else, calls `WebAssembly.instantiate` directly.
- *
- * @param {{ module_or_path: InitInput | Promise<InitInput> }} module_or_path - Passing `InitInput` directly is deprecated.
- *
- * @returns {Promise<InitOutput>}
- */
-export default function __wbg_init(
-  module_or_path?:
-    | { module_or_path: InitInput | Promise<InitInput> }
-    | InitInput
-    | Promise<InitInput>
-): Promise<InitOutput>;
+* If `module_or_path` is {RequestInfo} or {URL}, makes a request and
+* for everything else, calls `WebAssembly.instantiate` directly.
+*
+* @param {{ module_or_path: InitInput | Promise<InitInput> }} module_or_path - Passing `InitInput` directly is deprecated.
+*
+* @returns {Promise<InitOutput>}
+*/
+export default function __wbg_init (module_or_path?: { module_or_path: InitInput | Promise<InitInput> } | InitInput | Promise<InitInput>): Promise<InitOutput>;

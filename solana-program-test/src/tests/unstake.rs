@@ -321,7 +321,7 @@ fn make_pending_withdraw_invalid_owner(ctx: &mut TestContext, pending_withdraw_a
             withdrawable_orca_amount => 0,
             withdrawable_timestamp => 0,
             padding1 => [0; 7],
-            padding2 => [0; 2024],
+            padding2 => [0; 1000],
         ),
     )
     .unwrap();
@@ -339,7 +339,7 @@ fn make_pending_withdraw_invalid_seeds(ctx: &mut TestContext, unstaker_signer: P
             withdrawable_orca_amount => 0,
             withdrawable_timestamp => 0,
             padding1 => [0; 7],
-            padding2 => [0; 2024],
+            padding2 => [0; 1000],
         ),
     )
     .unwrap();
@@ -417,7 +417,7 @@ fn test_unstake_success_1_1_exchange() {
         "Pending withdraw timestamp should be 7 days from now"
     );
     assert_eq!(pending_withdraw_after.data.padding1, [0; 7]);
-    assert_eq!(pending_withdraw_after.data.padding2, [0; 2024]);
+    assert_eq!(pending_withdraw_after.data.padding2, [0; 1000]);
 }
 
 #[test]
@@ -494,7 +494,7 @@ fn test_unstake_success_more_than_1_1_exchange() {
         "Pending withdraw timestamp should be 30 days from now"
     );
     assert_eq!(pending_withdraw_after.data.padding1, [0; 7]);
-    assert_eq!(pending_withdraw_after.data.padding2, [0; 2024]);
+    assert_eq!(pending_withdraw_after.data.padding2, [0; 1000]);
 }
 
 /// --- Unstake Invalid Account Tests ---

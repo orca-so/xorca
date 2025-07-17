@@ -2,7 +2,9 @@ use borsh::{BorshDeserialize, BorshSerialize};
 use pinocchio::{instruction::Seed, pubkey::Pubkey};
 use shank::ShankAccount;
 
-use super::{AccountDiscriminator, ProgramAccount, DEFAULT_ACCOUNT_LEN};
+use super::{AccountDiscriminator, ProgramAccount};
+
+const PENDING_WITHDRAW_LEN: usize = 1024;
 
 #[derive(Debug, Clone, Copy, Eq, PartialEq, BorshSerialize, BorshDeserialize, ShankAccount)]
 #[repr(C)]
@@ -14,9 +16,9 @@ pub struct PendingWithdraw {
     pub padding1: [u8; 7],
     pub withdrawable_orca_amount: u64, // 8 bytes
     pub withdrawable_timestamp: i64,   // 8 bytes
-    // Remaining bytes to fill DEFAULT_ACCOUNT_LEN
-    // Calculation: DEFAULT_ACCOUNT_LEN - (1 + 7 + 8 + 8) = 2048 - 24 = 2024 bytes.
-    pub padding2: [u8; 2024],
+    // Remaining bytes to fill PENDING_WITHDRAW_LEN
+    // Calculation: PENDING_WITHDRAW_LEN - (1 + 7 + 8 + 8) = 1024 - 24 = 1000 bytes.
+    pub padding2: [u8; 1000],
 }
 
 impl Default for PendingWithdraw {
@@ -26,7 +28,7 @@ impl Default for PendingWithdraw {
             padding1: [0; 7],
             withdrawable_orca_amount: 0,
             withdrawable_timestamp: 0,
-            padding2: [0; 2024],
+            padding2: [0; 1000],
         }
     }
 }
@@ -42,7 +44,7 @@ impl PendingWithdraw {
 }
 
 impl ProgramAccount for PendingWithdraw {
-    const LEN: usize = DEFAULT_ACCOUNT_LEN;
+    const LEN: usize = PENDING_WITHDRAW_LEN;
     const DISCRIMINATOR: AccountDiscriminator = AccountDiscriminator::PendingWithdraw;
 }
 #[cfg(test)]
@@ -61,7 +63,7 @@ mod tests {
             withdrawable_orca_amount: 0x1122334455667788,
             // Corrected: Use a valid i64 hexadecimal literal
             withdrawable_timestamp: 0x0123456789ABCDEF, // Fits within i64
-            padding2: [0xCC; 2024],
+            padding2: [0xCC; 1000],
         };
 
         // 1. Serialize the struct using Borsh.
@@ -122,9 +124,9 @@ mod tests {
             + size_of::<i64>(); // 8 bytes
         assert_eq!(core_data_with_internal_padding_size, 24);
         let total_calculated_struct_size =
-            core_data_with_internal_padding_size + size_of::<[u8; 2024]>();
-        assert_eq!(total_calculated_struct_size, DEFAULT_ACCOUNT_LEN);
-        assert_eq!(size_of::<PendingWithdraw>(), DEFAULT_ACCOUNT_LEN);
+            core_data_with_internal_padding_size + size_of::<[u8; 1000]>();
+        assert_eq!(total_calculated_struct_size, PENDING_WITHDRAW_LEN);
+        assert_eq!(size_of::<PendingWithdraw>(), PENDING_WITHDRAW_LEN);
         assert_eq!(size_of::<PendingWithdraw>(), total_calculated_struct_size);
     }
 }
