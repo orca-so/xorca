@@ -46,6 +46,9 @@ pub enum XorcaStakingProgramError {
     /// 6011 - Cool down period still active
     #[error("Cool down period still active")]
     CoolDownPeriodStillActive = 0x177B,
+    /// 6012 - Event serialization failed
+    #[error("Event serialization failed")]
+    EmitEventError = 0x177C,
 }
 
 impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {

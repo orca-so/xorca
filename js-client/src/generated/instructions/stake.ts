@@ -83,16 +83,16 @@ export type StakeInstruction<
 
 export type StakeInstructionData = {
   discriminator: number;
-  stakeAmount: bigint;
+  orcaStakeAmount: bigint;
 };
 
-export type StakeInstructionDataArgs = { stakeAmount: number | bigint };
+export type StakeInstructionDataArgs = { orcaStakeAmount: number | bigint };
 
 export function getStakeInstructionDataEncoder(): Encoder<StakeInstructionDataArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['stakeAmount', getU64Encoder()],
+      ['orcaStakeAmount', getU64Encoder()],
     ]),
     (value) => ({ ...value, discriminator: STAKE_DISCRIMINATOR })
   );
@@ -101,7 +101,7 @@ export function getStakeInstructionDataEncoder(): Encoder<StakeInstructionDataAr
 export function getStakeInstructionDataDecoder(): Decoder<StakeInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['stakeAmount', getU64Decoder()],
+    ['orcaStakeAmount', getU64Decoder()],
   ]);
 }
 
@@ -130,7 +130,7 @@ export type StakeInput<
   stateAccount: Address<TAccountStateAccount>;
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   tokenProgramAccount: Address<TAccountTokenProgramAccount>;
-  stakeAmount: StakeInstructionDataArgs['stakeAmount'];
+  orcaStakeAmount: StakeInstructionDataArgs['orcaStakeAmount'];
 };
 
 export function getStakeInstruction<

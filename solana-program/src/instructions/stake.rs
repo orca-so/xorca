@@ -6,6 +6,7 @@ use crate::{
     },
     cpi::token::{TokenMint, ORCA_MINT_ID, XORCA_MINT_ID},
     error::ErrorCode,
+    event::Event,
     state::state::State,
     util::{account::get_account_info, math::convert_orca_to_xorca},
 };
@@ -16,7 +17,7 @@ use pinocchio_token::{
     ID as SPL_TOKEN_PROGRAM_ID,
 };
 
-pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> ProgramResult {
+pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) -> ProgramResult {
     let staker_account = get_account_info(accounts, 0)?;
     let vault_account = get_account_info(accounts, 1)?;
     let staker_orca_ata = get_account_info(accounts, 2)?;
@@ -49,7 +50,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     // 3. Staker Orca ATA Assertions
     let staker_orca_ata_data =
         make_owner_token_account_assertions(staker_orca_ata, staker_account, orca_mint_account)?;
-    if staker_orca_ata_data.amount < *stake_amount {
+    if staker_orca_ata_data.amount < *orca_stake_amount {
         return Err(ErrorCode::InsufficientFunds.into());
     }
 
@@ -80,7 +81,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
     let non_escrowed_orca_amount = vault_account_data.amount - state.escrowed_orca_amount;
 
     let xorca_to_mint = convert_orca_to_xorca(
-        *stake_amount,
+        *orca_stake_amount,
         non_escrowed_orca_amount,
         xorca_mint_data.supply,
     )?;
@@ -90,7 +91,7 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
         from: staker_orca_ata,
         to: vault_account,
         authority: staker_account,
-        amount: *stake_amount,
+        amount: *orca_stake_amount,
     };
     transfer_instruction.invoke()?;
 
@@ -102,6 +103,15 @@ pub fn process_instruction(accounts: &[AccountInfo], stake_amount: &u64) -> Prog
         amount: xorca_to_mint,
     };
     mint_to_instruction.invoke_signed(&[state_seeds.as_slice().into()])?;
+
+    Event::Stake {
+        orca_stake_amount: orca_stake_amount,
+        vault_orca_amount: &vault_account_data.amount,
+        vault_escrowed_orca_amount: &state.escrowed_orca_amount,
+        xorca_mint_supply: &xorca_mint_data.supply,
+        xorca_to_mint: &xorca_to_mint,
+    }
+    .emit()?;
 
     Ok(())
 }

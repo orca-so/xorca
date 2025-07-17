@@ -9,6 +9,7 @@ use crate::{
         token::{TokenAccount, TokenMint, ORCA_MINT_ID, XORCA_MINT_ID},
     },
     error::ErrorCode,
+    event::Event,
     state::{pending_withdraw::PendingWithdraw, state::State},
     util::{
         account::{create_program_account, get_account_info},
@@ -22,7 +23,7 @@ use pinocchio_token::{instructions::Burn, ID as SPL_TOKEN_PROGRAM_ID};
 
 pub fn process_instruction(
     accounts: &[AccountInfo],
-    unstake_amount: &u64,
+    xorca_unstake_amount: &u64,
     withdraw_index: &u8,
 ) -> ProgramResult {
     let unstaker_account = get_account_info(accounts, 0)?;
@@ -86,7 +87,7 @@ pub fn process_instruction(
         unstaker_account,
         xorca_mint_account,
     )?;
-    if unstaker_xorca_ata_data.amount < *unstake_amount {
+    if unstaker_xorca_ata_data.amount < *xorca_unstake_amount {
         return Err(ErrorCode::InsufficientFunds.into());
     }
 
@@ -110,7 +111,7 @@ pub fn process_instruction(
     // Calculate withdrawable ORCA amount
     let non_escrowed_orca_amount = vault_account_data.amount - initial_escrowed_orca_amount;
     let withdrawable_orca_amount = convert_xorca_to_orca(
-        *unstake_amount,
+        *xorca_unstake_amount,
         non_escrowed_orca_amount,
         xorca_mint_data.supply,
     )?;
@@ -120,7 +121,7 @@ pub fn process_instruction(
         mint: xorca_mint_account,
         account: unstaker_xorca_ata,
         authority: unstaker_account,
-        amount: *unstake_amount,
+        amount: *xorca_unstake_amount,
     };
     burn_instruction.invoke()?;
 
@@ -143,6 +144,17 @@ pub fn process_instruction(
         .checked_add(state.cool_down_period_s)
         .ok_or(ErrorCode::ArithmeticError)?;
     pending_withdraw_data.withdrawable_timestamp = withdrawable_timestamp;
+
+    Event::Unstake {
+        xorca_unstake_amount: xorca_unstake_amount,
+        vault_xorca_amount: &vault_account_data.amount,
+        vault_escrowed_orca_amount: &state.escrowed_orca_amount,
+        xorca_mint_supply: &xorca_mint_data.supply,
+        withdrawable_orca_amount: &withdrawable_orca_amount,
+        cool_down_period_s: &state.cool_down_period_s,
+        withdraw_index: withdraw_index,
+    }
+    .emit()?;
 
     Ok(())
 }

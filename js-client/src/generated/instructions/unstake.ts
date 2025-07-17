@@ -88,12 +88,12 @@ export type UnstakeInstruction<
 
 export type UnstakeInstructionData = {
   discriminator: number;
-  unstakeAmount: bigint;
+  xorcaUnstakeAmount: bigint;
   withdrawIndex: number;
 };
 
 export type UnstakeInstructionDataArgs = {
-  unstakeAmount: number | bigint;
+  xorcaUnstakeAmount: number | bigint;
   withdrawIndex: number;
 };
 
@@ -101,7 +101,7 @@ export function getUnstakeInstructionDataEncoder(): Encoder<UnstakeInstructionDa
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getU8Encoder()],
-      ['unstakeAmount', getU64Encoder()],
+      ['xorcaUnstakeAmount', getU64Encoder()],
       ['withdrawIndex', getU8Encoder()],
     ]),
     (value) => ({ ...value, discriminator: UNSTAKE_DISCRIMINATOR })
@@ -111,7 +111,7 @@ export function getUnstakeInstructionDataEncoder(): Encoder<UnstakeInstructionDa
 export function getUnstakeInstructionDataDecoder(): Decoder<UnstakeInstructionData> {
   return getStructDecoder([
     ['discriminator', getU8Decoder()],
-    ['unstakeAmount', getU64Decoder()],
+    ['xorcaUnstakeAmount', getU64Decoder()],
     ['withdrawIndex', getU8Decoder()],
   ]);
 }
@@ -143,7 +143,7 @@ export type UnstakeInput<
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
   tokenProgramAccount: Address<TAccountTokenProgramAccount>;
-  unstakeAmount: UnstakeInstructionDataArgs['unstakeAmount'];
+  xorcaUnstakeAmount: UnstakeInstructionDataArgs['xorcaUnstakeAmount'];
   withdrawIndex: UnstakeInstructionDataArgs['withdrawIndex'];
 };
 

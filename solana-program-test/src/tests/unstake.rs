@@ -359,7 +359,7 @@ fn test_unstake_success_1_1_exchange() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000; // 10 xORCA
+    let xorca_unstake_amount = 10_000_000_000; // 10 xORCA
     let ix = Unstake {
         unstaker_account: unstaker_signer,
         state_account,
@@ -372,7 +372,7 @@ fn test_unstake_success_1_1_exchange() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -438,7 +438,7 @@ fn test_unstake_success_more_than_1_1_exchange() {
         unstaker_xorca_ata,
         unstaker_signer,
     );
-    let unstake_amount = 58_238_823_121; // 58.238823121 xORCA
+    let xorca_unstake_amount = 58_238_823_121; // 58.238823121 xORCA
     let mut initial_clock = ctx.svm.get_sysvar::<Clock>();
     let current_timestamp = 1752397740;
     initial_clock.unix_timestamp = current_timestamp;
@@ -455,7 +455,7 @@ fn test_unstake_success_more_than_1_1_exchange() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -512,7 +512,7 @@ fn test_unstake_invalid_state_account_owner() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
 
     make_state_account_invalid_owner(&mut ctx, state_account); // Make state account have wrong owner
 
@@ -528,7 +528,7 @@ fn test_unstake_invalid_state_account_owner() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -541,7 +541,7 @@ fn test_unstake_invalid_state_account_seeds() {
     let withdraw_index = 0;
     let (_, vault_account, unstaker_xorca_ata, unstaker_signer, pending_withdraw_account) =
         setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
     let invalid_state_account = make_state_account_invalid_seeds(&mut ctx);
     let ix = Unstake {
         unstaker_account: unstaker_signer,
@@ -555,7 +555,7 @@ fn test_unstake_invalid_state_account_seeds() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -575,7 +575,7 @@ fn test_unstake_invalid_vault_account_owner() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
     make_vault_account_invalid_owner(&mut ctx, vault_account);
     let ix = Unstake {
         unstaker_account: unstaker_signer,
@@ -589,7 +589,7 @@ fn test_unstake_invalid_vault_account_owner() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -607,7 +607,7 @@ fn test_unstake_invalid_vault_account_mint_in_data() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
     make_vault_account_invalid_mint_in_data(&mut ctx, vault_account);
     let ix = Unstake {
         unstaker_account: unstaker_signer,
@@ -621,7 +621,7 @@ fn test_unstake_invalid_vault_account_mint_in_data() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -639,7 +639,7 @@ fn test_unstake_invalid_vault_account_owner_in_data() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
     make_vault_account_invalid_owner_in_data(&mut ctx, vault_account); // Make vault account have wrong owner in data
     let ix = Unstake {
         unstaker_account: unstaker_signer,
@@ -653,7 +653,7 @@ fn test_unstake_invalid_vault_account_owner_in_data() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -673,7 +673,7 @@ fn test_unstake_invalid_xorca_mint_owner() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
     make_xorca_mint_invalid_owner(&mut ctx); // Make xORCA mint have wrong owner
     let ix = Unstake {
         unstaker_account: unstaker_signer,
@@ -687,7 +687,7 @@ fn test_unstake_invalid_xorca_mint_owner() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -706,7 +706,7 @@ fn test_unstake_invalid_orca_mint_owner() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
     make_orca_mint_invalid_owner(&mut ctx); // Make ORCA mint have wrong owner
     let ix = Unstake {
         unstaker_account: unstaker_signer,
@@ -720,7 +720,7 @@ fn test_unstake_invalid_orca_mint_owner() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -739,7 +739,7 @@ fn test_unstake_invalid_unstaker_xorca_ata_program_owner() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
     make_unstaker_xorca_ata_invalid_program_owner(&mut ctx, unstaker_xorca_ata); // Make unstaker xORCA ATA have wrong program owner
     let ix = Unstake {
         unstaker_account: unstaker_signer,
@@ -753,7 +753,7 @@ fn test_unstake_invalid_unstaker_xorca_ata_program_owner() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -771,7 +771,7 @@ fn test_unstake_invalid_unstaker_xorca_ata_mint_in_data() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
 
     make_unstaker_xorca_ata_invalid_mint_in_data(&mut ctx, unstaker_xorca_ata); // Make unstaker xORCA ATA have wrong mint in data
 
@@ -787,7 +787,7 @@ fn test_unstake_invalid_unstaker_xorca_ata_mint_in_data() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -805,7 +805,7 @@ fn test_unstake_invalid_unstaker_xorca_ata_owner_in_data() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
     make_unstaker_xorca_ata_invalid_owner_in_data(&mut ctx, unstaker_xorca_ata); // Make unstaker xORCA ATA have wrong owner in data
     let ix = Unstake {
         unstaker_account: unstaker_signer,
@@ -819,7 +819,7 @@ fn test_unstake_invalid_unstaker_xorca_ata_owner_in_data() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -838,7 +838,7 @@ fn test_unstake_invalid_pending_withdraw_account_owner() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
     make_pending_withdraw_invalid_owner(&mut ctx, pending_withdraw_account); // Make pending withdraw account have wrong owner
     let ix = Unstake {
         unstaker_account: unstaker_signer,
@@ -852,7 +852,7 @@ fn test_unstake_invalid_pending_withdraw_account_owner() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -865,7 +865,7 @@ fn test_unstake_invalid_pending_withdraw_account_seeds() {
     let withdraw_index = 0;
     let (state_account, vault_account, unstaker_xorca_ata, unstaker_signer, _) =
         setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
     let invalid_pending_withdraw_account =
         make_pending_withdraw_invalid_seeds(&mut ctx, unstaker_signer);
     let ix = Unstake {
@@ -880,7 +880,7 @@ fn test_unstake_invalid_pending_withdraw_account_seeds() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -899,7 +899,7 @@ fn test_unstake_invalid_system_program_id() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
 
     let invalid_system_program_id = Pubkey::new_unique();
     let ix = Unstake {
@@ -914,7 +914,7 @@ fn test_unstake_invalid_system_program_id() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);
@@ -932,7 +932,7 @@ fn test_unstake_invalid_token_program_id() {
         unstaker_signer,
         pending_withdraw_account,
     ) = setup_base_unstake_context(&mut ctx, withdraw_index);
-    let unstake_amount = 10_000_000_000;
+    let xorca_unstake_amount = 10_000_000_000;
 
     let invalid_token_program_id = Pubkey::new_unique();
     let ix = Unstake {
@@ -947,7 +947,7 @@ fn test_unstake_invalid_token_program_id() {
         token_program_account: invalid_token_program_id, // Pass the invalid token program ID
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     let result = ctx.send(ix);

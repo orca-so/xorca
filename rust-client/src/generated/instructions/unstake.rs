@@ -115,7 +115,7 @@ impl Default for UnstakeInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct UnstakeInstructionArgs {
-    pub unstake_amount: u64,
+    pub xorca_unstake_amount: u64,
     pub withdraw_index: u8,
 }
 
@@ -143,7 +143,7 @@ pub struct UnstakeBuilder {
     orca_mint_account: Option<solana_program::pubkey::Pubkey>,
     system_program_account: Option<solana_program::pubkey::Pubkey>,
     token_program_account: Option<solana_program::pubkey::Pubkey>,
-    unstake_amount: Option<u64>,
+    xorca_unstake_amount: Option<u64>,
     withdraw_index: Option<u8>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -219,8 +219,8 @@ impl UnstakeBuilder {
         self
     }
     #[inline(always)]
-    pub fn unstake_amount(&mut self, unstake_amount: u64) -> &mut Self {
-        self.unstake_amount = Some(unstake_amount);
+    pub fn xorca_unstake_amount(&mut self, xorca_unstake_amount: u64) -> &mut Self {
+        self.xorca_unstake_amount = Some(xorca_unstake_amount);
         self
     }
     #[inline(always)]
@@ -272,10 +272,10 @@ impl UnstakeBuilder {
                 .expect("token_program_account is not set"),
         };
         let args = UnstakeInstructionArgs {
-            unstake_amount: self
-                .unstake_amount
+            xorca_unstake_amount: self
+                .xorca_unstake_amount
                 .clone()
-                .expect("unstake_amount is not set"),
+                .expect("xorca_unstake_amount is not set"),
             withdraw_index: self
                 .withdraw_index
                 .clone()
@@ -494,7 +494,7 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
             orca_mint_account: None,
             system_program_account: None,
             token_program_account: None,
-            unstake_amount: None,
+            xorca_unstake_amount: None,
             withdraw_index: None,
             __remaining_accounts: Vec::new(),
         });
@@ -573,8 +573,8 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn unstake_amount(&mut self, unstake_amount: u64) -> &mut Self {
-        self.instruction.unstake_amount = Some(unstake_amount);
+    pub fn xorca_unstake_amount(&mut self, xorca_unstake_amount: u64) -> &mut Self {
+        self.instruction.xorca_unstake_amount = Some(xorca_unstake_amount);
         self
     }
     #[inline(always)]
@@ -624,11 +624,11 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = UnstakeInstructionArgs {
-            unstake_amount: self
+            xorca_unstake_amount: self
                 .instruction
-                .unstake_amount
+                .xorca_unstake_amount
                 .clone()
-                .expect("unstake_amount is not set"),
+                .expect("xorca_unstake_amount is not set"),
             withdraw_index: self
                 .instruction
                 .withdraw_index
@@ -703,7 +703,7 @@ struct UnstakeCpiBuilderInstruction<'a, 'b> {
     orca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    unstake_amount: Option<u64>,
+    xorca_unstake_amount: Option<u64>,
     withdraw_index: Option<u8>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

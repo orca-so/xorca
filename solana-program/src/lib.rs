@@ -2,6 +2,7 @@ pub mod assertions;
 pub mod cpi;
 pub mod entrypoint;
 pub mod error;
+pub mod event;
 pub mod instructions;
 pub mod state;
 pub mod util;

@@ -7,6 +7,7 @@
  */
 
 export * from './accountDiscriminator';
+export * from './event';
 export * from './stateUpdateInstruction';
 export * from './tokenAccount';
 export * from './tokenAccountState';

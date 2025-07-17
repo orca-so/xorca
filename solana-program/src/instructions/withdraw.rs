@@ -6,6 +6,7 @@ use crate::{
     },
     cpi::{system::get_current_unix_timestamp, token::ORCA_MINT_ID},
     error::ErrorCode,
+    event::Event,
     state::{pending_withdraw::PendingWithdraw, state::State},
     util::account::get_account_info,
 };
@@ -104,5 +105,14 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     // Remove tokens from escrow
     let mut state = assert_account_data_mut::<State>(state_account)?;
     state.escrowed_orca_amount -= withdrawable_orca_amount;
+
+    Event::Withdraw {
+        vault_escrowed_orca_amount: &state.escrowed_orca_amount,
+        withdrawable_orca_amount: &withdrawable_orca_amount,
+        cool_down_period_s: &state.cool_down_period_s,
+        withdraw_index: withdraw_index,
+    }
+    .emit()?;
+
     Ok(())
 }

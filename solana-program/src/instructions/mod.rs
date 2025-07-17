@@ -29,7 +29,7 @@ pub enum Instruction {
     #[account(5, name = "state_account")]
     #[account(6, name = "orca_mint_account")]
     #[account(7, name = "token_program_account")]
-    Stake { stake_amount: u64 },
+    Stake { orca_stake_amount: u64 },
 
     #[account(0, writable, signer, name = "unstaker_account")]
     #[account(1, writable, name = "state_account")]
@@ -41,7 +41,7 @@ pub enum Instruction {
     #[account(7, name = "system_program_account")]
     #[account(8, name = "token_program_account")]
     Unstake {
-        unstake_amount: u64,
+        xorca_unstake_amount: u64,
         withdraw_index: u8,
     },
 

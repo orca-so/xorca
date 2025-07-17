@@ -37,6 +37,9 @@ pub enum ErrorCode {
 
     #[error("Cool down period still active")]
     CoolDownPeriodStillActive = 6011, // 0x177B
+
+    #[error("Event serialization failed")]
+    EmitEventError = 6012, // 0x177C
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {

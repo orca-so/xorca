@@ -35,14 +35,18 @@ pub fn process_instruction(
         Instruction::Initialize { cool_down_period_s } => {
             instructions::initialize::process_instruction(accounts, cool_down_period_s)?;
         }
-        Instruction::Stake { stake_amount } => {
-            instructions::stake::process_instruction(accounts, stake_amount)?;
+        Instruction::Stake { orca_stake_amount } => {
+            instructions::stake::process_instruction(accounts, orca_stake_amount)?;
         }
         Instruction::Unstake {
-            unstake_amount,
+            xorca_unstake_amount,
             withdraw_index,
         } => {
-            instructions::unstake::process_instruction(accounts, unstake_amount, withdraw_index)?;
+            instructions::unstake::process_instruction(
+                accounts,
+                xorca_unstake_amount,
+                withdraw_index,
+            )?;
         }
         Instruction::Withdraw { withdraw_index } => {
             instructions::withdraw::process_instruction(accounts, withdraw_index)?;

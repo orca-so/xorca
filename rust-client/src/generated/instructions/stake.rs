@@ -109,7 +109,7 @@ impl Default for StakeInstructionData {
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct StakeInstructionArgs {
-    pub stake_amount: u64,
+    pub orca_stake_amount: u64,
 }
 
 /// Instruction builder for `Stake`.
@@ -134,7 +134,7 @@ pub struct StakeBuilder {
     state_account: Option<solana_program::pubkey::Pubkey>,
     orca_mint_account: Option<solana_program::pubkey::Pubkey>,
     token_program_account: Option<solana_program::pubkey::Pubkey>,
-    stake_amount: Option<u64>,
+    orca_stake_amount: Option<u64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
 
@@ -198,8 +198,8 @@ impl StakeBuilder {
         self
     }
     #[inline(always)]
-    pub fn stake_amount(&mut self, stake_amount: u64) -> &mut Self {
-        self.stake_amount = Some(stake_amount);
+    pub fn orca_stake_amount(&mut self, orca_stake_amount: u64) -> &mut Self {
+        self.orca_stake_amount = Some(orca_stake_amount);
         self
     }
     /// Add an additional account to the instruction.
@@ -239,7 +239,10 @@ impl StakeBuilder {
                 .expect("token_program_account is not set"),
         };
         let args = StakeInstructionArgs {
-            stake_amount: self.stake_amount.clone().expect("stake_amount is not set"),
+            orca_stake_amount: self
+                .orca_stake_amount
+                .clone()
+                .expect("orca_stake_amount is not set"),
         };
 
         accounts.instruction_with_remaining_accounts(args, &self.__remaining_accounts)
@@ -442,7 +445,7 @@ impl<'a, 'b> StakeCpiBuilder<'a, 'b> {
             state_account: None,
             orca_mint_account: None,
             token_program_account: None,
-            stake_amount: None,
+            orca_stake_amount: None,
             __remaining_accounts: Vec::new(),
         });
         Self { instruction }
@@ -512,8 +515,8 @@ impl<'a, 'b> StakeCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn stake_amount(&mut self, stake_amount: u64) -> &mut Self {
-        self.instruction.stake_amount = Some(stake_amount);
+    pub fn orca_stake_amount(&mut self, orca_stake_amount: u64) -> &mut Self {
+        self.instruction.orca_stake_amount = Some(orca_stake_amount);
         self
     }
     /// Add an additional account to the instruction.
@@ -558,11 +561,11 @@ impl<'a, 'b> StakeCpiBuilder<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
     ) -> solana_program::entrypoint::ProgramResult {
         let args = StakeInstructionArgs {
-            stake_amount: self
+            orca_stake_amount: self
                 .instruction
-                .stake_amount
+                .orca_stake_amount
                 .clone()
-                .expect("stake_amount is not set"),
+                .expect("orca_stake_amount is not set"),
         };
         let instruction = StakeCpi {
             __program: self.instruction.__program,
@@ -626,7 +629,7 @@ struct StakeCpiBuilderInstruction<'a, 'b> {
     state_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     orca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     token_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    stake_amount: Option<u64>,
+    orca_stake_amount: Option<u64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(
         &'b solana_program::account_info::AccountInfo<'a>,

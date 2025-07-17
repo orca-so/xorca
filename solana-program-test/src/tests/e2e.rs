@@ -143,7 +143,7 @@ fn deposit_orca_to_vault(ctx: &mut TestContext, deposit_amount: u64) -> Result<(
     Ok(())
 }
 
-fn stake_orca(ctx: &mut TestContext, stake_amount: u64) -> Result<(), Box<dyn Error>> {
+fn stake_orca(ctx: &mut TestContext, orca_stake_amount: u64) -> Result<(), Box<dyn Error>> {
     let state_account = find_state_address().unwrap().0;
     let vault_account = get_ata(state_account, ORCA_ID)?;
     let staker_orca_ata = get_ata(ctx.signer(), ORCA_ID)?;
@@ -158,14 +158,14 @@ fn stake_orca(ctx: &mut TestContext, stake_amount: u64) -> Result<(), Box<dyn Er
         orca_mint_account: ORCA_ID,
         token_program_account: TOKEN_PROGRAM_ID,
     }
-    .instruction(StakeInstructionArgs { stake_amount });
+    .instruction(StakeInstructionArgs { orca_stake_amount });
     ctx.send(ix).map_err(|e| format!("{:?}", e))?;
     Ok(())
 }
 
 fn unstake_xorca(
     ctx: &mut TestContext,
-    unstake_amount: u64,
+    xorca_unstake_amount: u64,
     withdraw_index: u8,
 ) -> Result<(), Box<dyn Error>> {
     let state_account = find_state_address().unwrap().0;
@@ -184,7 +184,7 @@ fn unstake_xorca(
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
-        unstake_amount,
+        xorca_unstake_amount,
         withdraw_index,
     });
     ctx.send(ix).map_err(|e| format!("{:?}", e))?;
