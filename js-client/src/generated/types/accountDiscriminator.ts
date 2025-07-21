@@ -18,6 +18,7 @@ import {
 export enum AccountDiscriminator {
   State,
   PendingWithdraw,
+  Closed,
 }
 
 export type AccountDiscriminatorArgs = AccountDiscriminator;

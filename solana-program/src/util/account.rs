@@ -1,4 +1,8 @@
-use crate::{cpi::system::CreateAccount, error::ErrorCode, state::ProgramAccount};
+use crate::{
+    cpi::system::CreateAccount,
+    error::ErrorCode,
+    state::{AccountDiscriminator, ProgramAccount},
+};
 use borsh::BorshSerialize;
 use pinocchio::{
     account_info::{AccountInfo, RefMut},
@@ -92,5 +96,18 @@ pub fn create_program_account_borsh<T: ProgramAccount + BorshSerialize + Default
     }
     data[..serialized_data.len()].copy_from_slice(&serialized_data);
 
+    Ok(())
+}
+
+/// Closes an account and transfers the lamports to the receiver.
+/// This function does not perform any assertions.
+pub fn close_program_account(
+    account_to_close: &AccountInfo,
+    receiver: &AccountInfo,
+) -> ProgramResult {
+    let mut account_to_close_data = account_to_close.try_borrow_mut_data()?;
+    account_to_close_data[0] = AccountDiscriminator::Closed as u8;
+    *receiver.try_borrow_mut_lamports()? += account_to_close.lamports();
+    *account_to_close.try_borrow_mut_lamports()? = 0;
     Ok(())
 }

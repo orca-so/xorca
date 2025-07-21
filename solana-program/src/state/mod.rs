@@ -13,6 +13,7 @@ pub mod state;
 pub enum AccountDiscriminator {
     State,           // 0
     PendingWithdraw, // 1
+    Closed,          // 2
 }
 
 // Program accounts must be bytemuck <> borsh interoperable. If repr(C) is used, the struct

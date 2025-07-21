@@ -25,4 +25,5 @@ use num_derive::FromPrimitive;
 pub enum AccountDiscriminator {
     State,
     PendingWithdraw,
+    Closed,
 }

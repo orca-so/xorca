@@ -8,7 +8,7 @@ use crate::{
     error::ErrorCode,
     event::Event,
     state::{pending_withdraw::PendingWithdraw, state::State},
-    util::account::get_account_info,
+    util::account::{close_program_account, get_account_info},
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
@@ -100,7 +100,8 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     };
     transfer_instruction.invoke_signed(&[state_seeds.as_slice().into()])?;
 
-    // TODO: Close the pending_withdraw account
+    // Close the pending_withdraw account and refund lamports to unstaker
+    close_program_account(pending_withdraw_account, unstaker_account)?;
 
     // Remove tokens from escrow
     let mut state = assert_account_data_mut::<State>(state_account)?;
