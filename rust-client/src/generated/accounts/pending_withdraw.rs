@@ -8,16 +8,22 @@
 use crate::generated::types::AccountDiscriminator;
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
+use solana_program::pubkey::Pubkey;
 
 #[derive(BorshSerialize, BorshDeserialize, Clone, Debug, Eq, PartialEq)]
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PendingWithdraw {
     pub discriminator: AccountDiscriminator,
     pub padding1: [u8; 7],
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "serde_with::As::<serde_with::DisplayFromStr>")
+    )]
+    pub unstaker: Pubkey,
     pub withdrawable_orca_amount: u64,
     pub withdrawable_timestamp: i64,
     #[cfg_attr(feature = "serde", serde(with = "serde_with::As::<serde_with::Bytes>"))]
-    pub padding2: [u8; 1000],
+    pub padding2: [u8; 968],
 }
 
 impl PendingWithdraw {

@@ -14,11 +14,12 @@ pub struct PendingWithdraw {
     // in memory when #[repr(C)] is used.
     // Calculation: 8 (desired alignment) - 1 (discriminator size) = 7 bytes.
     pub padding1: [u8; 7],
+    pub unstaker: Pubkey,              // 32 bytes
     pub withdrawable_orca_amount: u64, // 8 bytes
     pub withdrawable_timestamp: i64,   // 8 bytes
     // Remaining bytes to fill PENDING_WITHDRAW_LEN
-    // Calculation: PENDING_WITHDRAW_LEN - (1 + 7 + 8 + 8) = 1024 - 24 = 1000 bytes.
-    pub padding2: [u8; 1000],
+    // Calculation: PENDING_WITHDRAW_LEN - (1 + 7 + 32 + 8 + 8) = 1024 - 56 = 968 bytes.
+    pub padding2: [u8; 968],
 }
 
 impl Default for PendingWithdraw {
@@ -26,9 +27,10 @@ impl Default for PendingWithdraw {
         Self {
             discriminator: AccountDiscriminator::PendingWithdraw,
             padding1: [0; 7],
+            unstaker: [0; 32],
             withdrawable_orca_amount: 0,
             withdrawable_timestamp: 0,
-            padding2: [0; 1000],
+            padding2: [0; 968],
         }
     }
 }
@@ -60,10 +62,10 @@ mod tests {
         let expected = PendingWithdraw {
             discriminator: AccountDiscriminator::PendingWithdraw,
             padding1: [0xAA; 7],
+            unstaker: Pubkey::default(),
             withdrawable_orca_amount: 0x1122334455667788,
-            // Corrected: Use a valid i64 hexadecimal literal
-            withdrawable_timestamp: 0x0123456789ABCDEF, // Fits within i64
-            padding2: [0xCC; 1000],
+            withdrawable_timestamp: 0x0123456789ABCDEF,
+            padding2: [0xCC; 968],
         };
 
         // 1. Serialize the struct using Borsh.

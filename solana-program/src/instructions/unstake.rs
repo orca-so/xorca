@@ -138,6 +138,7 @@ pub fn process_instruction(
     )?;
 
     // Populate pending withdraw account data
+    pending_withdraw_data.unstaker = *unstaker_account.key();
     pending_withdraw_data.withdrawable_orca_amount = withdrawable_orca_amount;
     let current_unix_timestamp = get_current_unix_timestamp()?;
     let withdrawable_timestamp = current_unix_timestamp

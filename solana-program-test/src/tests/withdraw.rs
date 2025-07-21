@@ -158,7 +158,7 @@ fn make_pending_withdraw_invalid_owner(ctx: &mut TestContext, pending_withdraw_a
             withdrawable_orca_amount => 0,
             withdrawable_timestamp => 0,
             padding1 => [0; 7],
-            padding2 => [0; 1000],
+            padding2 => [0; 968],
         ),
     )
     .unwrap();
@@ -176,7 +176,7 @@ fn make_pending_withdraw_invalid_seeds(ctx: &mut TestContext, unstaker_signer: P
             withdrawable_orca_amount => 0,
             withdrawable_timestamp => 0,
             padding1 => [0; 7],
-            padding2 => [0; 1000],
+            padding2 => [0; 968],
         ),
     )
     .unwrap();

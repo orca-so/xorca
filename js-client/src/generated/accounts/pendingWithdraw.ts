@@ -15,6 +15,8 @@ import {
   fetchEncodedAccounts,
   fixDecoderSize,
   fixEncoderSize,
+  getAddressDecoder,
+  getAddressEncoder,
   getBytesDecoder,
   getBytesEncoder,
   getI64Decoder,
@@ -51,6 +53,7 @@ export function getPendingWithdrawDiscriminatorBytes() {
 export type PendingWithdraw = {
   discriminator: AccountDiscriminator;
   padding1: ReadonlyUint8Array;
+  unstaker: Address;
   withdrawableOrcaAmount: bigint;
   withdrawableTimestamp: bigint;
   padding2: ReadonlyUint8Array;
@@ -58,6 +61,7 @@ export type PendingWithdraw = {
 
 export type PendingWithdrawArgs = {
   padding1?: ReadonlyUint8Array;
+  unstaker: Address;
   withdrawableOrcaAmount: number | bigint;
   withdrawableTimestamp: number | bigint;
   padding2?: ReadonlyUint8Array;
@@ -68,9 +72,10 @@ export function getPendingWithdrawEncoder(): Encoder<PendingWithdrawArgs> {
     getStructEncoder([
       ['discriminator', getAccountDiscriminatorEncoder()],
       ['padding1', fixEncoderSize(getBytesEncoder(), 7)],
+      ['unstaker', getAddressEncoder()],
       ['withdrawableOrcaAmount', getU64Encoder()],
       ['withdrawableTimestamp', getI64Encoder()],
-      ['padding2', fixEncoderSize(getBytesEncoder(), 1000)],
+      ['padding2', fixEncoderSize(getBytesEncoder(), 968)],
     ]),
     (value) => ({
       ...value,
@@ -111,8 +116,7 @@ export function getPendingWithdrawEncoder(): Encoder<PendingWithdrawArgs> {
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
           0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
-          0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+          0, 0, 0, 0, 0, 0, 0, 0,
         ]),
     })
   );
@@ -122,9 +126,10 @@ export function getPendingWithdrawDecoder(): Decoder<PendingWithdraw> {
   return getStructDecoder([
     ['discriminator', getAccountDiscriminatorDecoder()],
     ['padding1', fixDecoderSize(getBytesDecoder(), 7)],
+    ['unstaker', getAddressDecoder()],
     ['withdrawableOrcaAmount', getU64Decoder()],
     ['withdrawableTimestamp', getI64Decoder()],
-    ['padding2', fixDecoderSize(getBytesDecoder(), 1000)],
+    ['padding2', fixDecoderSize(getBytesDecoder(), 968)],
   ]);
 }
 
