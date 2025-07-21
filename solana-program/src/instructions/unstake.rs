@@ -6,7 +6,7 @@ use crate::{
     },
     cpi::{
         system::get_current_unix_timestamp,
-        token::{TokenAccount, TokenMint, ORCA_MINT_ID, XORCA_MINT_ID},
+        token::{TokenMint, ORCA_MINT_ID, XORCA_MINT_ID},
     },
     error::ErrorCode,
     event::Event,

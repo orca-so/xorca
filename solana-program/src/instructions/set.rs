@@ -3,7 +3,6 @@ use crate::{
         assert_account_address, assert_account_data_mut, assert_account_owner, assert_account_role,
         assert_account_seeds, AccountRole,
     },
-    event::Event,
     instructions::StateUpdateInstruction,
     state::state::State,
     util::account::get_account_info,
@@ -32,21 +31,14 @@ pub fn process_instruction(
     assert_account_address(update_authority_account, &state.update_authority)?;
 
     // Apply updates based on the instruction_data enum
-    let (
-        new_cool_down_period_flag,
-        new_cool_down_period_s,
-        new_update_authority_flag,
-        new_update_authority,
-    ) = match instruction_data {
+    match instruction_data {
         StateUpdateInstruction::UpdateCoolDownPeriod {
             new_cool_down_period_s,
         } => {
             state.cool_down_period_s = *new_cool_down_period_s;
-            (true, new_cool_down_period_s, false, &state.update_authority)
         }
         StateUpdateInstruction::UpdateUpdateAuthority { new_authority } => {
             state.update_authority = *new_authority;
-            (false, &state.cool_down_period_s, true, new_authority)
         }
     };
 
