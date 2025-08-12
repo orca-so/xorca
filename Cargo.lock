@@ -6271,6 +6271,7 @@ dependencies = [
 name = "xorca_staking_test"
 version = "0.0.0"
 dependencies = [
+ "base64 0.22.1",
  "bincode",
  "borsh 0.10.4",
  "litesvm",
