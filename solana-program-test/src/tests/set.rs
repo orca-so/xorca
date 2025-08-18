@@ -242,10 +242,9 @@ fn set_update_authority_idempotent_noop_succeeds() {
     assert_eq!(state_account.data.update_authority, ctx.signer());
 }
 
-// Boundary values: accepts large and negative cooldown values (current program does not restrict sign)
+// Test setting cooldown to large positive value (i64::MAX)
 #[test]
-#[ignore = "Pending program change: cooldown must be non-negative"]
-fn set_updates_cooldown_boundary_values() {
+fn set_updates_cooldown_to_max_success() {
     let mut ctx = TestContext::new();
     let (state, _) = find_state_address().unwrap();
     ctx.write_account(
@@ -258,7 +257,6 @@ fn set_updates_cooldown_boundary_values() {
         ),
     )
     .unwrap();
-    // Large positive
     let ix_max = Set {
         update_authority_account: ctx.signer(),
         state_account: state,
@@ -271,8 +269,52 @@ fn set_updates_cooldown_boundary_values() {
     assert!(ctx.send(ix_max).is_ok());
     let st_max = ctx.get_account::<State>(state).unwrap();
     assert_eq!(st_max.data.cool_down_period_s, i64::MAX);
+}
 
-    // Negative should fail (once program enforces it)
+// Test setting cooldown to zero succeeds
+#[test]
+fn set_updates_cooldown_to_zero_success() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_account(
+        state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 1, // Start with non-zero to test setting to zero
+        ),
+    )
+    .unwrap();
+    let ix_zero = Set {
+        update_authority_account: ctx.signer(),
+        state_account: state,
+    }
+    .instruction(SetInstructionArgs {
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: 0,
+        },
+    });
+    assert!(ctx.send(ix_zero).is_ok());
+    let st_zero = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(st_zero.data.cool_down_period_s, 0);
+}
+
+// Test setting negative cooldown fails
+#[test]
+fn set_fails_on_negative_cooldown_fails() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_account(
+        state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 0,
+        ),
+    )
+    .unwrap();
     let ix_neg = Set {
         update_authority_account: ctx.signer(),
         state_account: state,
@@ -283,5 +325,5 @@ fn set_updates_cooldown_boundary_values() {
         },
     });
     let res = ctx.send(ix_neg);
-    assert!(res.is_err());
+    assert_program_error!(res, XorcaStakingProgramError::InvalidCoolDownPeriod);
 }

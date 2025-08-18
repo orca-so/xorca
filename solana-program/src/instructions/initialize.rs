@@ -70,6 +70,9 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
 
     // Create the State struct
     let mut state_data = State::default();
+    if *cool_down_period_s < 0 {
+        return Err(ErrorCode::InvalidCoolDownPeriod.into());
+    }
     state_data.cool_down_period_s = *cool_down_period_s;
     state_data.update_authority = *update_authority_account.key();
 
