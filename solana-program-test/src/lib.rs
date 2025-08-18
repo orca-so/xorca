@@ -21,7 +21,6 @@ use xorca::DecodedAccount;
 
 mod assertions;
 mod tests;
-mod tests_new;
 mod utils;
 
 pub const SYSTEM_PROGRAM_ID: Pubkey = system_program::ID;
