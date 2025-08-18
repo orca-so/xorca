@@ -21,6 +21,7 @@ use xorca::DecodedAccount;
 
 mod assertions;
 mod tests;
+mod tests_new;
 mod utils;
 
 pub const SYSTEM_PROGRAM_ID: Pubkey = system_program::ID;
@@ -98,9 +99,10 @@ impl TestContext {
     pub fn send(&mut self, ix: Instruction) -> TransactionResult {
         let result = self.sends(&[ix]);
 
-        // Print logs from the result
+        // Only print logs on failure by default. To enable verbose success logs, set env XORCA_TEST_VERBOSE=1
+        let verbose_success = std::env::var("XORCA_TEST_VERBOSE").ok().as_deref() == Some("1");
         match &result {
-            Ok(meta) => {
+            Ok(meta) if verbose_success => {
                 println!("Transaction succeeded!");
                 println!("Transaction logs:");
                 for log in &meta.logs {
@@ -108,9 +110,9 @@ impl TestContext {
                 }
                 println!("Compute units consumed: {}", meta.compute_units_consumed);
             }
+            Ok(_) => {}
             Err(e) => {
                 println!("Transaction failed with error: {:?}", e);
-                // Access metadata directly from the error
                 println!("Transaction logs:");
                 for log in &e.meta.logs {
                     println!("  {}", log);
@@ -170,24 +172,5 @@ impl TestContext {
             .get_account(&address)
             .ok_or(format!("Account not found: {}", address))?;
         Ok(account)
-    }
-
-    pub fn print_transaction_logs(&self, result: &TransactionResult) {
-        match result {
-            Ok(_) => {
-                println!("Transaction succeeded!");
-                // Note: For successful transactions, logs might not be directly accessible
-                // You may need to check the transaction result structure for your specific LiteSVM version
-            }
-            Err(e) => {
-                println!("Transaction failed with error: {:?}", e);
-                // Access metadata directly from the error
-                println!("Transaction logs:");
-                for log in &e.meta.logs {
-                    println!("  {}", log);
-                }
-                println!("Compute units consumed: {}", e.meta.compute_units_consumed);
-            }
-        }
     }
 }

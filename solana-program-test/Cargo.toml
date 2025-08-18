@@ -17,3 +17,4 @@ borsh = { version = "^0.10" }
 litesvm = { version = "^0.5" }
 solana-sdk = { version = "~2.1.11" }
 rstest = { version = "^0.25" }
+base64 = { version = "^0.22" }

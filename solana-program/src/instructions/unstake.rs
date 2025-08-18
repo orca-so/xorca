@@ -96,6 +96,15 @@ pub fn process_instruction(
     assert_account_role(xorca_mint_account, &[AccountRole::Writable])?;
     assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
     let xorca_mint_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
+    // Enforce xORCA mint authority must be the state and freeze authority must be None
+    if xorca_mint_data.mint_authority_flag == 0
+        || xorca_mint_data.mint_authority != *state_account.key()
+    {
+        return Err(ErrorCode::InvalidAccountData.into());
+    }
+    if xorca_mint_data.freeze_authority_flag != 0 {
+        return Err(ErrorCode::InvalidAccountData.into());
+    }
 
     // 7. Orca Mint Account Assertions
     assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
@@ -126,6 +135,13 @@ pub fn process_instruction(
     burn_instruction.invoke()?;
 
     // Add the unstake ORCA amount to escrowed ORCA amount
+    // Ensure state wasn't manipulated since initial read
+    {
+        let current_state_view = assert_account_data::<State>(state_account)?;
+        if current_state_view.escrowed_orca_amount != initial_escrowed_orca_amount {
+            return Err(ErrorCode::InvalidAccountData.into());
+        }
+    }
     let mut state = assert_account_data_mut::<State>(state_account)?;
     state.escrowed_orca_amount += withdrawable_orca_amount;
 
