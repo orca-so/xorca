@@ -542,7 +542,7 @@ fn stake_rounding_many_small_vs_one_large() {
         .amount;
 
     // With this configuration, small path mints 0 each time, while the one-shot mints > 0.
-    assert!(xorca_small <= xorca_large);
+    assert!(xorca_small < xorca_large);
     // And vault balances reflect staked totals
     let vault_small = env_small
         .ctx

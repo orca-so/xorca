@@ -1151,7 +1151,7 @@ fn test_unstake_rounding_many_small_vs_one_large() {
         .unwrap()
         .data
         .withdrawable_orca_amount;
-    assert!(total_small <= large);
+    assert!(total_small < large);
 }
 
 // Concurrency: two unstakes in one tx should both succeed and total escrow equals sum of pending amounts.

@@ -760,7 +760,7 @@ fn yield_many_small_vs_one_large_full_cycle() {
     );
 
     // Assert: withdrawable from one large flow is at least as much
-    assert!(withdrawable_orca_small <= withdrawable_orca_large);
+    assert!(withdrawable_orca_small < withdrawable_orca_large);
 }
 
 // Long deterministic sequence with invariants after each step
