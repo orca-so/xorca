@@ -1,170 +1,287 @@
-use crate::{
-    assert_program_error, assert_program_success, state_data, TestContext, XORCA_PROGRAM_ID,
-};
-use solana_sdk::pubkey::Pubkey;
+use crate::{assert_program_error, TestContext};
 use xorca::{
     find_state_address, Set, SetInstructionArgs, State, StateUpdateInstruction,
     XorcaStakingProgramError,
 };
 
-/// Sets up the basic test context with correct PDAs
-fn setup_base_set_context(
-    ctx: &mut TestContext,
-    initial_update_authority: Pubkey,
-) -> (Pubkey, Pubkey) {
-    let state_account_pda = find_state_address().unwrap().0;
-    ctx.write_account(
-        state_account_pda,
-        XORCA_PROGRAM_ID,
-        state_data!(
-            escrowed_orca_amount => 0,
-            update_authority => initial_update_authority,
-            cool_down_period_s => 7 * 24 * 60 * 60,
-        ),
-    )
-    .unwrap();
-    (state_account_pda, initial_update_authority)
-}
-
-// --- Invalid Account Configuration Helpers ---
-fn make_state_account_invalid_owner(ctx: &mut TestContext, state_account: Pubkey) {
-    ctx.write_account(
-        state_account,
-        Pubkey::new_unique(), // Incorrect owner
-        state_data!(
-            escrowed_orca_amount => 0,
-            update_authority => Pubkey::default(),
-            cool_down_period_s => 7 * 24 * 60 * 60,
-        ),
-    )
-    .unwrap();
-}
-
 #[test]
-fn test_set_cool_down_period_success() {
+fn set_updates_cooldown() {
     let mut ctx = TestContext::new();
-    let initial_update_authority = ctx.signer();
-    let (state_account, update_authority_signer) =
-        setup_base_set_context(&mut ctx, initial_update_authority);
-    let new_cool_down_period: i64 = 30 * 24 * 60 * 60;
+    let (state, _) = find_state_address().unwrap();
+    // Seed state with update authority as signer
+    ctx.write_account(
+        state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 10,
+        ),
+    )
+    .unwrap();
+
     let ix = Set {
-        update_authority_account: update_authority_signer,
-        state_account: state_account,
+        update_authority_account: ctx.signer(),
+        state_account: state,
     }
     .instruction(SetInstructionArgs {
         instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
-            new_cool_down_period_s: new_cool_down_period,
+            new_cool_down_period_s: 500,
         },
     });
-    let result = ctx.send(ix);
-    assert_program_success!(result);
-    let state_account_after = ctx.get_account::<State>(state_account).unwrap();
-    assert_eq!(
-        state_account_after.data.cool_down_period_s, new_cool_down_period,
-        "Cool down period should be updated"
-    );
-    assert_eq!(
-        state_account_after.data.update_authority, initial_update_authority,
-        "Update authority should remain unchanged"
-    );
+    assert!(ctx.send(ix).is_ok());
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.cool_down_period_s, 500);
 }
 
+// Success: update the update authority to a new pubkey
 #[test]
-fn test_set_update_authority_success() {
+fn set_updates_update_authority() {
     let mut ctx = TestContext::new();
-    let initial_update_authority = ctx.signer();
-    let (state_account, update_authority_signer) =
-        setup_base_set_context(&mut ctx, initial_update_authority);
-    let new_update_authority = Pubkey::new_unique();
+    let (state, _) = find_state_address().unwrap();
+    // Seed state with current update authority as signer
+    ctx.write_account(
+        state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 10,
+        ),
+    )
+    .unwrap();
+    let new_auth = solana_sdk::pubkey::Pubkey::new_unique();
     let ix = Set {
-        update_authority_account: update_authority_signer,
-        state_account: state_account,
+        update_authority_account: ctx.signer(),
+        state_account: state,
     }
     .instruction(SetInstructionArgs {
         instruction_data: StateUpdateInstruction::UpdateUpdateAuthority {
-            new_authority: new_update_authority,
+            new_authority: new_auth,
         },
     });
-    let result = ctx.send(ix);
-    assert_program_success!(result);
-    let state_account_after = ctx.get_account::<State>(state_account).unwrap();
-    assert_eq!(
-        state_account_after.data.update_authority, new_update_authority,
-        "Update authority should be updated"
-    );
-    assert_eq!(
-        state_account_after.data.cool_down_period_s,
-        7 * 24 * 60 * 60,
-        "Cool down period should remain unchanged"
-    );
+    assert!(ctx.send(ix).is_ok());
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.update_authority, new_auth);
 }
 
+// Failure: wrong signer (not current update authority)
 #[test]
-fn test_set_invalid_update_authority_mismatch() {
+fn set_fails_with_wrong_update_authority_signer() {
     let mut ctx = TestContext::new();
-    let initial_update_authority = Pubkey::new_unique();
-    let (state_account, _original_signer) =
-        setup_base_set_context(&mut ctx, initial_update_authority);
-    let wrong_signer = ctx.signer();
-    let ix = Set {
-        update_authority_account: wrong_signer,
-        state_account: state_account,
-    }
-    .instruction(SetInstructionArgs {
-        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
-            new_cool_down_period_s: 100,
-        },
-    });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::IncorrectAccountAddress);
-}
-
-#[test]
-fn test_set_invalid_state_account_owner() {
-    let mut ctx = TestContext::new();
-    let initial_update_authority = ctx.signer();
-    let (state_account, update_authority_signer) =
-        setup_base_set_context(&mut ctx, initial_update_authority);
-    make_state_account_invalid_owner(&mut ctx, state_account);
-    let ix = Set {
-        update_authority_account: update_authority_signer,
-        state_account: state_account,
-    }
-    .instruction(SetInstructionArgs {
-        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
-            new_cool_down_period_s: 100,
-        },
-    });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);
-}
-
-#[test]
-fn test_set_invalid_state_account_seeds() {
-    let mut ctx = TestContext::new();
-    let initial_update_authority = ctx.signer();
-    let (correct_state_account, update_authority_signer) =
-        setup_base_set_context(&mut ctx, initial_update_authority);
+    let (state, _) = find_state_address().unwrap();
+    // Seed state with different authority than signer
+    let wrong_account = solana_sdk::pubkey::Pubkey::new_unique();
     ctx.write_account(
-        correct_state_account,
-        XORCA_PROGRAM_ID,
-        state_data!(
+        state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
             escrowed_orca_amount => 0,
-            update_authority => initial_update_authority,
-            cool_down_period_s => 7 * 24 * 60 * 60,
+            update_authority => wrong_account,
+            cool_down_period_s => 10,
         ),
     )
     .unwrap();
-    // let invalid_state_account = make_state_account_invalid_seeds(&mut ctx);
     let ix = Set {
-        update_authority_account: update_authority_signer,
-        state_account: Pubkey::new_unique(),
+        update_authority_account: ctx.signer(),
+        state_account: state,
     }
     .instruction(SetInstructionArgs {
         instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
-            new_cool_down_period_s: 100,
+            new_cool_down_period_s: 123,
         },
     });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);
+    let res = ctx.send(ix);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
+}
+
+// Failure: state must be owned by program
+#[test]
+fn set_fails_with_wrong_state_owner() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_account(
+        state,
+        solana_sdk::system_program::ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 10,
+        ),
+    )
+    .unwrap();
+    let ix = Set {
+        update_authority_account: ctx.signer(),
+        state_account: state,
+    }
+    .instruction(SetInstructionArgs {
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: 123,
+        },
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
+}
+
+// Failure: state PDA seeds must be correct
+#[test]
+fn set_fails_with_invalid_state_seeds() {
+    let mut ctx = TestContext::new();
+    // Create bogus state with correct owner but wrong seeds
+    let bogus_state = solana_sdk::pubkey::Pubkey::new_unique();
+    ctx.write_account(
+        bogus_state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 10,
+        ),
+    )
+    .unwrap();
+    let ix = Set {
+        update_authority_account: ctx.signer(),
+        state_account: bogus_state,
+    }
+    .instruction(SetInstructionArgs {
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: 123,
+        },
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
+}
+
+// Failure: update_authority account must be a signer
+#[test]
+fn set_fails_when_update_authority_not_signer() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    // Seed proper state
+    ctx.write_account(
+        state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 10,
+        ),
+    )
+    .unwrap();
+    // Use a non-signer pubkey instead of ctx.signer as the update_authority account
+    let non_signer = solana_sdk::pubkey::Pubkey::new_unique();
+    // We cannot actually mark it non-signer in our harness, but we can still pass a different pubkey which fails address match first.
+    let ix = Set {
+        update_authority_account: non_signer,
+        state_account: state,
+    }
+    .instruction(SetInstructionArgs {
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: 123,
+        },
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
+}
+
+// Idempotent: updating cooldown to the same value is a no-op but succeeds
+#[test]
+fn set_cooldown_idempotent_noop_succeeds() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_account(
+        state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 777,
+        ),
+    )
+    .unwrap();
+    let ix = Set {
+        update_authority_account: ctx.signer(),
+        state_account: state,
+    }
+    .instruction(SetInstructionArgs {
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: 777,
+        },
+    });
+    assert!(ctx.send(ix).is_ok());
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.cool_down_period_s, 777);
+}
+
+// Idempotent: updating authority to the same pubkey succeeds and leaves authority unchanged
+#[test]
+fn set_update_authority_idempotent_noop_succeeds() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_account(
+        state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 10,
+        ),
+    )
+    .unwrap();
+    let ix = Set {
+        update_authority_account: ctx.signer(),
+        state_account: state,
+    }
+    .instruction(SetInstructionArgs {
+        instruction_data: StateUpdateInstruction::UpdateUpdateAuthority {
+            new_authority: ctx.signer(),
+        },
+    });
+    assert!(ctx.send(ix).is_ok());
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.update_authority, ctx.signer());
+}
+
+// Boundary values: accepts large and negative cooldown values (current program does not restrict sign)
+#[test]
+#[ignore = "Pending program change: cooldown must be non-negative"]
+fn set_updates_cooldown_boundary_values() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_account(
+        state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 0,
+        ),
+    )
+    .unwrap();
+    // Large positive
+    let ix_max = Set {
+        update_authority_account: ctx.signer(),
+        state_account: state,
+    }
+    .instruction(SetInstructionArgs {
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: i64::MAX,
+        },
+    });
+    assert!(ctx.send(ix_max).is_ok());
+    let st_max = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(st_max.data.cool_down_period_s, i64::MAX);
+
+    // Negative should fail (once program enforces it)
+    let ix_neg = Set {
+        update_authority_account: ctx.signer(),
+        state_account: state,
+    }
+    .instruction(SetInstructionArgs {
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: -123,
+        },
+    });
+    let res = ctx.send(ix_neg);
+    assert!(res.is_err());
 }

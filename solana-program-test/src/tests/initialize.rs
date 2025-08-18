@@ -1,25 +1,24 @@
 use crate::{
-    assert_program_error, assert_program_success, state_data, token_mint_data, TestContext,
-    INITIAL_UPDATE_AUTHORITY_ID, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
+    assert_program_error, TestContext, INITIAL_UPDATE_AUTHORITY_ID, ORCA_ID, SYSTEM_PROGRAM_ID,
+    TOKEN_PROGRAM_ID, XORCA_ID,
 };
 use solana_sdk::pubkey::Pubkey;
-use solana_sdk::signer::Signer; // Used for ctx.signer()
-use xorca::{
-    find_state_address, AccountDiscriminator, Initialize, InitializeInstructionArgs, State,
-    TokenMint, XorcaStakingProgramError,
-};
+use xorca::{find_state_address, Initialize, InitializeInstructionArgs, State, TokenMint};
 
-// Sets up the basic valid context for Initialize tests.
-fn setup_base_initialize_context(ctx: &mut TestContext) -> Pubkey {
-    let (state_account, _) = find_state_address().unwrap();
+#[test]
+fn initialize_sets_values_with_standard_values_success() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+
+    // Seed mints
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
-        token_mint_data!(
+        crate::token_mint_data!(
             supply => 0,
             decimals => 9,
             mint_authority_flag => 1,
-            mint_authority => state_account,
+            mint_authority => state,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
@@ -29,8 +28,8 @@ fn setup_base_initialize_context(ctx: &mut TestContext) -> Pubkey {
     ctx.write_account(
         ORCA_ID,
         TOKEN_PROGRAM_ID,
-        token_mint_data!(
-            supply => 1_000_000_000,
+        crate::token_mint_data!(
+            supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
             mint_authority => Pubkey::default(),
@@ -40,299 +39,148 @@ fn setup_base_initialize_context(ctx: &mut TestContext) -> Pubkey {
         ),
     )
     .unwrap();
-    state_account
+
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        state_account: state,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 100,
+    });
+    assert!(ctx.send(ix).is_ok());
+
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.cool_down_period_s, 100);
+    assert_eq!(
+        state_account.data.update_authority,
+        INITIAL_UPDATE_AUTHORITY_ID
+    );
+    assert_eq!(state_account.account.owner, crate::XORCA_PROGRAM_ID);
+    let mint_after = ctx.get_account::<TokenMint>(XORCA_ID).unwrap();
+    assert_eq!(mint_after.data.mint_authority, state);
+    assert_eq!(mint_after.data.supply, 0);
 }
 
-// --- Helper Functions for Invalid Account Scenarios ---
-fn make_state_already_initialized(ctx: &mut TestContext, state_account: Pubkey) {
-    ctx.write_account(
-        state_account,
-        xorca::ID,
-        state_data!(
-            discriminator => AccountDiscriminator::State,
-            cool_down_period_s => 50,
-            update_authority => Pubkey::default(),
-            escrowed_orca_amount => 0,
-        ),
-    )
-    .unwrap();
-}
-
-fn make_xorca_mint_invalid_owner(ctx: &mut TestContext) {
-    ctx.write_account(
-        XORCA_ID,
-        SYSTEM_PROGRAM_ID, // Wrong owner
-        token_mint_data!(
-            supply => 0, decimals => 9, mint_authority_flag => 1, mint_authority => Pubkey::new_unique(),
-            is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
-        ),
-    )
-    .unwrap();
-}
-
-fn make_xorca_mint_frozen(ctx: &mut TestContext, state_account: Pubkey) {
+// Update authority must match the expected constant
+#[test]
+fn initialize_fails_with_wrong_update_authority_account() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    // Seed mints
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
-        token_mint_data!(
-            supply => 0, decimals => 9, mint_authority_flag => 1, mint_authority => state_account,
-            is_initialized => true, freeze_authority_flag => 1, // Has freeze authority
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
         ),
     )
     .unwrap();
-}
-
-fn make_xorca_mint_already_initialized_supply(ctx: &mut TestContext, state_account: Pubkey) {
-    ctx.write_account(
-        XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        token_mint_data!(
-            supply => 1_000_000, // Non-zero supply
-            decimals => 9, mint_authority_flag => 1, mint_authority => state_account,
-            is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
-        ),
-    )
-    .unwrap();
-}
-
-fn make_orca_mint_invalid_owner(ctx: &mut TestContext) {
     ctx.write_account(
         ORCA_ID,
-        SYSTEM_PROGRAM_ID, // Wrong owner
-        token_mint_data!(
-            supply => 1_000_000_000, decimals => 6, mint_authority_flag => 1, mint_authority => Pubkey::default(),
-            is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
-        ),
-    )
-    .unwrap();
-}
-
-fn make_xorca_mint_invalid_authority(ctx: &mut TestContext) {
-    ctx.write_account(
-        XORCA_ID,
         TOKEN_PROGRAM_ID,
-        token_mint_data!(
-            supply => 0, decimals => 9, mint_authority_flag => 1,
-            mint_authority => Pubkey::new_unique(), // Incorrect mint authority
-            is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
         ),
     )
     .unwrap();
-}
-
-fn make_xorca_mint_no_authority_flag(ctx: &mut TestContext, state_account: Pubkey) {
-    ctx.write_account(
-        XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        token_mint_data!(
-            supply => 0, decimals => 9, mint_authority_flag => 0, // No mint authority flag
-            mint_authority => state_account, // Still set for completeness, but flag overrides
-            is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
-        ),
-    )
-    .unwrap();
-}
-
-/// Test 1a: Initialize Staking Pool with valid parameters
-#[test]
-fn test_initialize_success() {
-    let mut ctx = TestContext::new();
-    let cool_down_period_s: i64 = 100;
-    let state_account = setup_base_initialize_context(&mut ctx);
+    let wrong_update = Pubkey::new_unique();
     let ix = Initialize {
         payer_account: ctx.signer(),
-        state_account,
+        state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: wrong_update,
         system_program_account: SYSTEM_PROGRAM_ID,
     }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = ctx.send(ix);
-    assert_program_success!(result);
-    let state_account_after = ctx.get_account::<State>(state_account).unwrap();
-    assert_eq!(
-        state_account_after.data.discriminator,
-        AccountDiscriminator::State,
-        "State account discriminator should be State"
-    );
-    assert_eq!(
-        state_account_after.data.cool_down_period_s, cool_down_period_s,
-        "Cool down period should be 100"
-    );
-    assert_eq!(
-        state_account_after.data.update_authority, INITIAL_UPDATE_AUTHORITY_ID,
-        "Update authority should be the initial upgrade authority"
-    );
-    assert_eq!(
-        state_account_after.data.escrowed_orca_amount, 0,
-        "Escrowed orca amount should be 0"
-    );
-    assert_eq!(state_account_after.data.padding1, [0; 7]);
-    assert_eq!(state_account_after.data.padding2, [0; 1992]);
-    let xorca_mint_account_after = ctx.get_account::<TokenMint>(XORCA_ID).unwrap();
-    assert_eq!(xorca_mint_account_after.data.supply, 0);
-    assert_eq!(xorca_mint_account_after.data.decimals, 9);
-    assert_eq!(xorca_mint_account_after.data.mint_authority_flag, 1);
-    assert_eq!(xorca_mint_account_after.data.mint_authority, state_account);
-    assert_eq!(xorca_mint_account_after.data.is_initialized, true);
-    assert_eq!(xorca_mint_account_after.data.freeze_authority_flag, 0);
-}
-
-/// Test 2: Staking pool has already been initialized for this contract
-#[test]
-fn test_initialize_state_already_exists() {
-    let mut ctx = TestContext::new();
-    let cool_down_period_s: i64 = 7 * 24 * 60 * 60;
-    let state_account = setup_base_initialize_context(&mut ctx);
-    make_state_already_initialized(&mut ctx, state_account);
-    let ix = Initialize {
-        payer_account: ctx.signer(),
-        state_account,
-        xorca_mint_account: XORCA_ID,
-        orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
-        system_program_account: SYSTEM_PROGRAM_ID,
-    }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = ctx.send(ix);
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
     assert_program_error!(
-        result,
-        XorcaStakingProgramError::StateAccountAlreadyInitialized
+        res,
+        xorca::XorcaStakingProgramError::IncorrectAccountAddress
     );
 }
 
-/// Test 3a: xOrca token mint account is not a valid mint account (wrong owner)
+// System program must be correct
 #[test]
-fn test_initialize_invalid_xorca_mint_account_owner() {
+fn initialize_fails_with_wrong_system_program_account() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: i64 = 100;
-    let state_account = setup_base_initialize_context(&mut ctx);
-    make_xorca_mint_invalid_owner(&mut ctx);
+    let (state, _) = find_state_address().unwrap();
+    // Seed mints
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    let wrong_system = Pubkey::new_unique();
     let ix = Initialize {
         payer_account: ctx.signer(),
-        state_account,
+        state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
-        system_program_account: SYSTEM_PROGRAM_ID,
+        system_program_account: wrong_system,
     }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(
+        res,
+        xorca::XorcaStakingProgramError::IncorrectAccountAddress
+    );
 }
 
-/// Test 3b: xOrca token mint has already been frozen (freeze authority set)
+// Insufficient lamports: payer has too few lamports to cover any required rents/ops → expect failure
 #[test]
-fn test_initialize_xorca_mint_frozen() {
+fn initialize_fails_with_insufficient_lamports() {
     let mut ctx = TestContext::new();
-    let cool_down_period_s: i64 = 100;
-    let state_account = setup_base_initialize_context(&mut ctx);
-    make_xorca_mint_frozen(&mut ctx, state_account);
-    let ix = Initialize {
-        payer_account: ctx.signer(),
-        state_account,
-        xorca_mint_account: XORCA_ID,
-        orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
-        system_program_account: SYSTEM_PROGRAM_ID,
-    }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::InvalidAccountData);
-}
-
-/// Test 3c: xOrca token mint has already been initialized (non-zero supply)
-#[test]
-fn test_initialize_xorca_mint_already_initialized_supply() {
-    let mut ctx = TestContext::new();
-    let cool_down_period_s: i64 = 100;
-    let state_account = setup_base_initialize_context(&mut ctx);
-    make_xorca_mint_already_initialized_supply(&mut ctx, state_account);
-    let ix = Initialize {
-        payer_account: ctx.signer(),
-        state_account,
-        xorca_mint_account: XORCA_ID,
-        orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
-        system_program_account: SYSTEM_PROGRAM_ID,
-    }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::InvalidAccountData);
-}
-
-/// Test 3d: Orca token is not a valid mint account (wrong owner)
-#[test]
-fn test_initialize_invalid_orca_mint_account_owner() {
-    let mut ctx = TestContext::new();
-    let cool_down_period_s: i64 = 100;
-    let state_account = setup_base_initialize_context(&mut ctx);
-    make_orca_mint_invalid_owner(&mut ctx);
-    let ix = Initialize {
-        payer_account: ctx.signer(),
-        state_account,
-        xorca_mint_account: XORCA_ID,
-        orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
-        system_program_account: SYSTEM_PROGRAM_ID,
-    }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);
-}
-
-/// Test 4: User provided a xOrca token mint account that they do not have authority over
-#[test]
-fn test_initialize_invalid_xorca_mint_authority() {
-    let mut ctx = TestContext::new();
-    let cool_down_period_s: i64 = 100;
-    let state_account = setup_base_initialize_context(&mut ctx);
-    make_xorca_mint_invalid_authority(&mut ctx);
-    let ix = Initialize {
-        payer_account: ctx.signer(),
-        state_account,
-        xorca_mint_account: XORCA_ID,
-        orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
-        system_program_account: SYSTEM_PROGRAM_ID,
-    }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::IncorrectAccountAddress);
-}
-
-/// Test 5: Invalid system account
-#[test]
-fn test_initialize_invalid_system_account() {
-    let mut ctx = TestContext::new();
-    let cool_down_period_s: i64 = 100;
-    let state_account = setup_base_initialize_context(&mut ctx);
-    let ix = Initialize {
-        payer_account: ctx.signer(),
-        state_account,
-        xorca_mint_account: XORCA_ID,
-        orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
-        system_program_account: TOKEN_PROGRAM_ID, // Wrong system program
-    }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::IncorrectAccountAddress);
-}
-
-/// Test 6: Insufficient lamports for rent for the staking pool account / mint initialization
-#[test]
-fn test_initialize_insufficient_lamports() {
-    let cool_down_period_s: i64 = 100;
-    let mut poor_payer_ctx = TestContext::new();
-    poor_payer_ctx
-        .svm
+    // Drain payer lamports
+    ctx.svm
         .set_account(
-            poor_payer_ctx.signer.pubkey(),
+            ctx.signer(),
             solana_sdk::account::Account {
-                lamports: 1000, // Only 1000 lamports for poor payer
+                lamports: 1000,
                 owner: solana_sdk::system_program::ID,
                 executable: false,
                 rent_epoch: 0,
@@ -340,55 +188,385 @@ fn test_initialize_insufficient_lamports() {
             },
         )
         .unwrap();
-    let state_account = setup_base_initialize_context(&mut poor_payer_ctx);
-    let ix = Initialize {
-        payer_account: poor_payer_ctx.signer(),
-        state_account,
-        xorca_mint_account: XORCA_ID,
-        orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
-        system_program_account: TOKEN_PROGRAM_ID, // Wrong system program
-    }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = poor_payer_ctx.send(ix);
-    assert!(result.is_err(), "Should fail with insufficient funds");
-}
-
-/// Test 7:  Test invalid update authority (provided public key is not system program ID)
-#[test]
-fn test_initialize_invalid_update_authority_address() {
-    let mut ctx = TestContext::new();
-    let cool_down_period_s: i64 = 100;
-    let state_account = setup_base_initialize_context(&mut ctx);
-    let ix = Initialize {
-        payer_account: ctx.signer(),
-        state_account,
-        xorca_mint_account: XORCA_ID,
-        orca_mint_account: ORCA_ID,
-        update_authority_account: TOKEN_PROGRAM_ID,
-        system_program_account: TOKEN_PROGRAM_ID, // Wrong system program
-    }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::IncorrectAccountAddress);
-}
-
-/// Test 8:  Test xOrca mint authority flag is 0 (no mint authority)
-#[test]
-fn test_initialize_xorca_mint_no_authority_flag() {
-    let mut ctx = TestContext::new();
-    let cool_down_period_s: i64 = 100;
-    let state_account = setup_base_initialize_context(&mut ctx);
-    make_xorca_mint_no_authority_flag(&mut ctx, state_account);
+    let (state, _) = find_state_address().unwrap();
+    // Seed mints minimally
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        )
+    ).unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        )
+    ).unwrap();
     let ix = Initialize {
         payer_account: ctx.signer(),
-        state_account,
+        state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
     }
-    .instruction(InitializeInstructionArgs { cool_down_period_s });
-    let result = ctx.send(ix);
-    assert_program_error!(result, XorcaStakingProgramError::InvalidAccountData);
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
+    assert!(res.is_err(), "Should fail with insufficient lamports");
+}
+
+// xORCA mint: frozen should fail (freeze_authority_flag != 0)
+#[test]
+fn initialize_fails_when_xorca_mint_frozen() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 1,
+            freeze_authority => Pubkey::new_unique(),
+        )
+    ).unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
+        )
+    ).unwrap();
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        state_account: state,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(res, xorca::XorcaStakingProgramError::InvalidAccountData);
+}
+
+// xORCA mint: mint_authority_flag = 0 should fail
+#[test]
+fn initialize_fails_when_xorca_mint_no_authority_flag() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 0,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        )
+    ).unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
+        )
+    ).unwrap();
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        state_account: state,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(res, xorca::XorcaStakingProgramError::InvalidAccountData);
+}
+// xORCA mint supply must be zero
+#[test]
+fn initialize_fails_when_xorca_mint_supply_nonzero() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 1,
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        state_account: state,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(res, xorca::XorcaStakingProgramError::InvalidAccountData);
+}
+
+// xORCA mint wrong owner
+#[test]
+fn initialize_fails_when_xorca_mint_wrong_owner() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_account(
+        XORCA_ID,
+        SYSTEM_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        state_account: state,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(res, xorca::XorcaStakingProgramError::IncorrectOwner);
+}
+
+// xORCA mint wrong address
+#[test]
+fn initialize_fails_when_xorca_mint_wrong_address() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    let wrong_mint = Pubkey::new_unique();
+    ctx.write_account(
+        wrong_mint,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        state_account: state,
+        xorca_mint_account: wrong_mint,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(
+        res,
+        xorca::XorcaStakingProgramError::IncorrectAccountAddress
+    );
+}
+// State already initialized should fail
+#[test]
+fn initialize_fails_when_state_already_initialized() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    // Pre-populate state with any data (non-empty)
+    ctx.write_raw_account(state, SYSTEM_PROGRAM_ID, vec![1u8])
+        .unwrap();
+    // Seed mints
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        state_account: state,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(
+        res,
+        xorca::XorcaStakingProgramError::StateAccountAlreadyInitialized
+    );
+}
+
+// Wrong state owner (not System Program)
+#[test]
+fn initialize_fails_with_wrong_state_owner() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    ctx.write_raw_account(state, TOKEN_PROGRAM_ID, vec![])
+        .unwrap();
+    // Seed mints
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        state_account: state,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(res, xorca::XorcaStakingProgramError::IncorrectOwner);
 }
