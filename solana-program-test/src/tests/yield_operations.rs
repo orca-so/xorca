@@ -657,6 +657,10 @@ fn yield_many_small_vs_one_large_full_cycle() {
     let mut env_small = Env::new(ctx_small, &pool, &user_small);
     let mut env_large = Env::new(ctx_large, &pool, &user_large);
 
+    // Add small yield to cause rounding differences
+    deposit_yield_into_vault(&mut env_small, 1, "yield for rounding in small");
+    deposit_yield_into_vault(&mut env_large, 1, "yield for rounding in large");
+
     // Act: many small stakes vs one large stake
     for _ in 0..100 {
         stake_orca(&mut env_small, 1_000, "many-small loop stake");
