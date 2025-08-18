@@ -53,10 +53,13 @@ fn initialize_sets_values_with_standard_values_success() {
     });
     assert!(ctx.send(ix).is_ok());
 
-    let st = ctx.get_account::<State>(state).unwrap();
-    assert_eq!(st.data.cool_down_period_s, 100);
-    assert_eq!(st.data.update_authority, INITIAL_UPDATE_AUTHORITY_ID);
-    assert_eq!(st.account.owner, crate::XORCA_PROGRAM_ID);
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.cool_down_period_s, 100);
+    assert_eq!(
+        state_account.data.update_authority,
+        INITIAL_UPDATE_AUTHORITY_ID
+    );
+    assert_eq!(state_account.account.owner, crate::XORCA_PROGRAM_ID);
     let mint_after = ctx.get_account::<TokenMint>(XORCA_ID).unwrap();
     assert_eq!(mint_after.data.mint_authority, state);
     assert_eq!(mint_after.data.supply, 0);
@@ -190,12 +193,28 @@ fn initialize_fails_with_insufficient_lamports() {
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(supply => 0, decimals => 9, mint_authority_flag => 1, mint_authority => state, is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        )
     ).unwrap();
     ctx.write_account(
         ORCA_ID,
         TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(supply => 0, decimals => 6, mint_authority_flag => 1, mint_authority => Pubkey::default(), is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        )
     ).unwrap();
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -220,12 +239,26 @@ fn initialize_fails_when_xorca_mint_frozen() {
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(supply => 0, decimals => 9, mint_authority_flag => 1, mint_authority => state, is_initialized => true, freeze_authority_flag => 1, freeze_authority => Pubkey::new_unique())
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 1,
+            freeze_authority => Pubkey::new_unique(),
+        )
     ).unwrap();
     ctx.write_account(
         ORCA_ID,
         TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(supply => 0, decimals => 6, mint_authority_flag => 1, mint_authority => Pubkey::default(), is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
+        )
     ).unwrap();
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -250,12 +283,26 @@ fn initialize_fails_when_xorca_mint_no_authority_flag() {
     ctx.write_account(
         XORCA_ID,
         TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(supply => 0, decimals => 9, mint_authority_flag => 0, mint_authority => state, is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 0,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        )
     ).unwrap();
     ctx.write_account(
         ORCA_ID,
         TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(supply => 0, decimals => 6, mint_authority_flag => 1, mint_authority => Pubkey::default(), is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
+        )
     ).unwrap();
     let ix = Initialize {
         payer_account: ctx.signer(),

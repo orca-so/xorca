@@ -30,8 +30,8 @@ fn set_updates_cooldown() {
         },
     });
     assert!(ctx.send(ix).is_ok());
-    let st = ctx.get_account::<State>(state).unwrap();
-    assert_eq!(st.data.cool_down_period_s, 500);
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.cool_down_period_s, 500);
 }
 
 // Success: update the update authority to a new pubkey
@@ -61,8 +61,8 @@ fn set_updates_update_authority() {
         },
     });
     assert!(ctx.send(ix).is_ok());
-    let st = ctx.get_account::<State>(state).unwrap();
-    assert_eq!(st.data.update_authority, new_auth);
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.update_authority, new_auth);
 }
 
 // Failure: wrong signer (not current update authority)
@@ -209,8 +209,8 @@ fn set_cooldown_idempotent_noop_succeeds() {
         },
     });
     assert!(ctx.send(ix).is_ok());
-    let st = ctx.get_account::<State>(state).unwrap();
-    assert_eq!(st.data.cool_down_period_s, 777);
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.cool_down_period_s, 777);
 }
 
 // Idempotent: updating authority to the same pubkey succeeds and leaves authority unchanged
@@ -238,8 +238,8 @@ fn set_update_authority_idempotent_noop_succeeds() {
         },
     });
     assert!(ctx.send(ix).is_ok());
-    let st = ctx.get_account::<State>(state).unwrap();
-    assert_eq!(st.data.update_authority, ctx.signer());
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.update_authority, ctx.signer());
 }
 
 // Boundary values: accepts large and negative cooldown values (current program does not restrict sign)

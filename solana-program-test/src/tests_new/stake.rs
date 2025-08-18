@@ -973,7 +973,19 @@ fn stake_wrong_xorca_mint_address() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let wrong_mint = Pubkey::new_unique();
-    env.ctx.write_account(wrong_mint, TOKEN_PROGRAM_ID, crate::token_mint_data!(supply => 0, decimals => 9, mint_authority_flag => 1, mint_authority => env.state, is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())).unwrap();
+    env.ctx.write_account(
+        wrong_mint,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9,
+            mint_authority_flag => 1,
+            mint_authority => env.state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    ).unwrap();
     let ix = Stake {
         staker_account: env.staker,
         state_account: env.state,
@@ -1003,7 +1015,19 @@ fn stake_wrong_orca_mint_address() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let wrong_orca_mint = Pubkey::new_unique();
-    env.ctx.write_account(wrong_orca_mint, TOKEN_PROGRAM_ID, crate::token_mint_data!(supply => 0, decimals => 6, mint_authority_flag => 1, mint_authority => Pubkey::default(), is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())).unwrap();
+    env.ctx.write_account(
+        wrong_orca_mint,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    ).unwrap();
     let ix = Stake {
         staker_account: env.staker,
         state_account: env.state,

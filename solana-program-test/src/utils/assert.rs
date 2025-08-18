@@ -63,13 +63,13 @@ pub fn assert_mint(ctx: &TestContext, address: Pubkey, expected: ExpectedMint) {
 }
 
 pub fn assert_state(ctx: &TestContext, address: Pubkey, expected: ExpectedState) {
-    let st = ctx.get_account::<State>(address).unwrap();
+    let state_account = ctx.get_account::<State>(address).unwrap();
     assert_eq!(
-        st.data.escrowed_orca_amount, expected.escrowed_orca_amount,
+        state_account.data.escrowed_orca_amount, expected.escrowed_orca_amount,
         "state: escrowed ORCA amount"
     );
     assert_eq!(
-        st.data.cool_down_period_s, expected.cool_down_period_s,
+        state_account.data.cool_down_period_s, expected.cool_down_period_s,
         "state: cooldown period seconds"
     );
 }

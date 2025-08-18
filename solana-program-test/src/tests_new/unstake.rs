@@ -738,7 +738,15 @@ fn test_unstake_invalid_state_account_owner() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Wrong owner for state
-    env.ctx.write_account(env.state, TOKEN_PROGRAM_ID, crate::state_data!(escrowed_orca_amount => 0, update_authority => Pubkey::default(), cool_down_period_s => 7*24*60*60)).unwrap();
+    env.ctx.write_account(
+        env.state,
+        TOKEN_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => Pubkey::default(),
+            cool_down_period_s => 7 * 24 * 60 * 60,
+        ),
+    ).unwrap();
     let res = do_unstake(&mut env, withdraw_index, 10_000_000_000);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
@@ -761,7 +769,15 @@ fn test_unstake_invalid_vault_account_mint_in_data() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Wrong mint in vault data
-    env.ctx.write_account(env.vault, TOKEN_PROGRAM_ID, crate::token_account_data!(mint => XORCA_ID, owner => env.state, amount => 1_000_000_000)).unwrap();
+    env.ctx.write_account(
+        env.vault,
+        TOKEN_PROGRAM_ID,
+        crate::token_account_data!(
+            mint => XORCA_ID,
+            owner => env.state,
+            amount => 1_000_000_000,
+        ),
+    ).unwrap();
     let res = do_unstake(&mut env, withdraw_index, 10_000_000_000);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }
@@ -968,7 +984,19 @@ fn test_unstake_invalid_xorca_mint_address() {
     let idx = 4u8;
     let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
     let wrong_mint = Pubkey::new_unique();
-    env.ctx.write_account(wrong_mint, TOKEN_PROGRAM_ID, crate::token_mint_data!(supply => 0, decimals => 9, mint_authority_flag => 1, mint_authority => env.state, is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())).unwrap();
+    env.ctx.write_account(
+        wrong_mint,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 9, 
+            mint_authority_flag => 1,
+            mint_authority => env.state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    ).unwrap();
     let res = {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
@@ -1003,7 +1031,14 @@ fn test_unstake_invalid_orca_mint_address() {
     let idx = 5u8;
     let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
     let wrong_orca = Pubkey::new_unique();
-    env.ctx.write_account(wrong_orca, TOKEN_PROGRAM_ID, crate::token_mint_data!(supply => 0, decimals => 6, mint_authority_flag => 1, mint_authority => Pubkey::default(), is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())).unwrap();
+    env.ctx.write_account(
+        wrong_orca,
+        TOKEN_PROGRAM_ID, crate::token_mint_data!(supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(), is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
+        ),
+    ).unwrap();
     let res = {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
@@ -1255,7 +1290,14 @@ fn test_unstake_pending_withdraw_already_exists() {
     let idx = 12u8;
     let p = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
     // Pre-create program-owned pending account with minimal valid data
-    env.ctx.write_account(p, xorca::ID, crate::pending_withdraw_data!(unstaker => env.staker, withdrawable_orca_amount => 0, withdrawable_timestamp => 0)).unwrap();
+    env.ctx.write_account(
+        p,
+        xorca::ID,
+        crate::pending_withdraw_data!(
+            unstaker => env.staker,
+            withdrawable_orca_amount => 0, withdrawable_timestamp => 0,
+        ),
+    ).unwrap();
     let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
@@ -1423,7 +1465,13 @@ fn test_unstake_invalid_unstaker_xorca_ata_owner_in_data() {
         staker_xorca: 1_000_000,
     };
     let mut env = Env::new(ctx, &pool, &user);
-    env.ctx.write_account(env.staker_xorca_ata, TOKEN_PROGRAM_ID, crate::token_account_data!(mint => XORCA_ID, owner => Pubkey::new_unique(), amount => 1_000_000)).unwrap();
+    env.ctx.write_account(
+        env.staker_xorca_ata,
+        TOKEN_PROGRAM_ID,
+        crate::token_account_data!(
+            mint => XORCA_ID, owner => Pubkey::new_unique(), amount => 1_000_000,
+        ),
+    ).unwrap();
     let idx = 18u8;
     let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);

@@ -1367,7 +1367,13 @@ fn withdraw_invalid_vault_account_owner_in_data() {
     let idx = 16u8;
     let pending_withdraw_account = unstake_and_advance(&mut env, idx, 1_000_000, 2);
     // Corrupt vault token account data: set wrong owner field
-    env.ctx.write_account(env.vault, TOKEN_PROGRAM_ID, crate::token_account_data!(mint => ORCA_ID, owner => Pubkey::new_unique(), amount => 1_000_000_000)).unwrap();
+    env.ctx.write_account(
+        env.vault,
+        TOKEN_PROGRAM_ID,
+        crate::token_account_data!(
+            mint => ORCA_ID, owner => Pubkey::new_unique(), amount => 1_000_000_000,
+        ),
+    ).unwrap();
     // Try withdraw via helper
     let res = do_withdraw(&mut env, pending_withdraw_account, idx);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
@@ -1391,7 +1397,13 @@ fn withdraw_invalid_vault_account_program_owner() {
     let idx = 18u8;
     let pending_withdraw_account = unstake_and_advance(&mut env, idx, 1_000_000, 2);
     // Set wrong program owner for vault account
-    env.ctx.write_account(env.vault, crate::ATA_PROGRAM_ID, crate::token_account_data!(mint => ORCA_ID, owner => env.state, amount => 1_000_000_000)).unwrap();
+    env.ctx.write_account(
+        env.vault,
+        crate::ATA_PROGRAM_ID,
+        crate::token_account_data!(
+            mint => ORCA_ID, owner => env.state, amount => 1_000_000_000,
+        ),
+    ).unwrap();
     let res = do_withdraw(&mut env, pending_withdraw_account, idx);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
@@ -1501,7 +1513,19 @@ fn withdraw_invalid_orca_mint_owner() {
     let idx = 22u8;
     let pending_withdraw_account = unstake_and_advance(&mut env, idx, 1_000_000, 2);
     // ORCA mint account with wrong owner
-    env.ctx.write_account(ORCA_ID, SYSTEM_PROGRAM_ID, crate::token_mint_data!(supply => 0, decimals => 6, mint_authority_flag => 1, mint_authority => Pubkey::default(), is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())).unwrap();
+    env.ctx.write_account(
+        ORCA_ID,
+        SYSTEM_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    ).unwrap();
     let res = do_withdraw(&mut env, pending_withdraw_account, idx);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
@@ -1524,7 +1548,13 @@ fn withdraw_invalid_vault_account_mint_in_data() {
     let idx = 17u8;
     let pending_withdraw_account = unstake_and_advance(&mut env, idx, 1_000_000, 2);
     // Corrupt vault token account data: set wrong mint field
-    env.ctx.write_account(env.vault, TOKEN_PROGRAM_ID, crate::token_account_data!(mint => XORCA_ID, owner => env.state, amount => 1_000_000_000)).unwrap();
+    env.ctx.write_account(
+        env.vault,
+        TOKEN_PROGRAM_ID,
+        crate::token_account_data!(
+            mint => XORCA_ID, owner => env.state, amount => 1_000_000_000,
+        ),
+    ).unwrap();
     // Try withdraw via helper
     let res = do_withdraw(&mut env, pending_withdraw_account, idx);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
@@ -1552,7 +1582,14 @@ fn withdraw_escrow_underflow_attempt() {
     // Create pending via flow and advance past cooldown
     let pending_withdraw_account = unstake_and_advance(&mut env, idx, 1_000_000, 2);
     // Manipulate: set state escrow artificially small (zero) while pending amount remains
-    env.ctx.write_account(env.state, xorca::ID, crate::state_data!(escrowed_orca_amount => 0, update_authority => Pubkey::default(), cool_down_period_s => pool.cool_down_period_s)).unwrap();
+    env.ctx.write_account(
+        env.state,
+        xorca::ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => Pubkey::default(), cool_down_period_s => pool.cool_down_period_s,
+        ),
+    ).unwrap();
     // Attempt withdraw; expected to panic (ignored until math is hardened)
     let _ = do_withdraw(&mut env, pending_withdraw_account, idx).unwrap();
 }
