@@ -25,7 +25,7 @@ macro_rules! token_mint_data {
     ($($name:ident => $value:expr),* $(,)?) => {{
         let mut data = crate::zeroed_type!(xorca::TokenMint);
         data.is_initialized = true;
-        data.decimals = 9;
+        data.decimals = 6;
         $(
             data.$name = $value;
         )*

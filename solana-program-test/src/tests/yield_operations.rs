@@ -58,7 +58,7 @@ fn yield_fresh_deploy_stake_unstake_withdraw_flow() {
         ExpectedTokenAccount {
             owner: &env.staker,
             mint: &XORCA_ID,
-            amount: 1_000_000_000,
+            amount: 1_000_000,
             label: "user xORCA after initial stake",
         },
     );
@@ -66,8 +66,8 @@ fn yield_fresh_deploy_stake_unstake_withdraw_flow() {
         &env.ctx,
         XORCA_ID,
         ExpectedMint {
-            decimals: 9,
-            supply: 1_000_000_000,
+            decimals: 6,
+            supply: 1_000_000,
             mint_authority: &env.state,
             label: "xORCA mint after initial stake",
         },
@@ -195,9 +195,9 @@ fn yield_operational_multi_user_mixed_flow() {
     assert_mint(
         &env.ctx,
         XORCA_ID,
-        // supply grows by minted xORCA; with 9 decimals and parity rate, supply increases by ORCA staked
+        // supply grows by minted xORCA; with 6 decimals and parity rate, supply increases by ORCA staked
         ExpectedMint {
-            decimals: 9,
+            decimals: 6,
             supply: 10_000_000 + 5_000_000,
             mint_authority: &env.state,
             label: "xORCA supply after stakes",

@@ -255,7 +255,7 @@ pub fn assert_stake_effects(
     );
     let xorca_mint_after = ctx.get_account::<TokenMint>(xorca_mint).unwrap();
     assert_eq!(
-        xorca_mint_after.data.decimals, 9,
+        xorca_mint_after.data.decimals, 6,
         "{}: xORCA mint decimals",
         label
     );

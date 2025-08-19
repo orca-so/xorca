@@ -52,6 +52,9 @@ pub enum XorcaStakingProgramError {
     /// 6013 - Invalid cooldown period: must be non-negative
     #[error("Invalid cooldown period: must be non-negative")]
     InvalidCoolDownPeriod = 0x177D,
+    /// 6014 - Stake amount too small to mint any xORCA
+    #[error("Stake amount too small to mint any xORCA")]
+    InsufficientStakeAmount = 0x177E,
 }
 
 impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {

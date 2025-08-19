@@ -57,7 +57,7 @@ fn stake_success_on_fresh_deployment() {
         XORCA_ID,
         &snap,
         1_000_000,
-        1_000_000_000,
+        1_000_000,
         pool.cool_down_period_s,
         "fresh deploy stake",
     );
@@ -66,7 +66,7 @@ fn stake_success_on_fresh_deployment() {
 // Tests staking when exchange rate is active (after initial deployment)
 // At higher rates, each xORCA represents more ORCA, so you get fewer xORCA per ORCA staked
 #[test]
-fn stake_success_on_active_exchange_rate() {
+fn stake_success_at_exchange_rate_1_to_2_success() {
     let ctx = TestContext::new();
     let pool = PoolSetup {
         xorca_supply: 1_000_000_000,
@@ -101,7 +101,65 @@ fn stake_success_on_active_exchange_rate() {
         XORCA_ID,
     );
     assert!(env.ctx.send(ix).is_ok());
-    let expected_minted = 1_000_000u64 / 2; // 500,000
+    // Exchange rate r = xorca_supply / non_escrowed = 1_000_000_000 / 2_000_000_000 = 0.5
+    // Minted = stake * r = 1_000_000 * 0.5 = 500,000
+    let expected_minted = 500_000u64;
+    assert_stake_effects(
+        &env.ctx,
+        env.state,
+        env.vault,
+        env.staker_orca_ata,
+        env.staker_xorca_ata,
+        XORCA_ID,
+        &snap,
+        1_000_000,
+        expected_minted,
+        pool.cool_down_period_s,
+        "active exchange rate stake",
+    );
+}
+
+// Tests staking when exchange rate is active (after initial deployment)
+// At higher rates, each xORCA represents more ORCA, so you get fewer xORCA per ORCA staked
+#[test]
+fn stake_success_at_exchange_rate_with_decimals() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_234_356_434,
+        vault_orca: 2_323_324_233,
+        escrowed_orca: 0,
+        cool_down_period_s: 7 * 24 * 60 * 60,
+    };
+    let user = UserSetup {
+        staker_orca: 1_000_000,
+        staker_xorca: 0,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let ix = Stake {
+        staker_account: env.staker,
+        state_account: env.state,
+        vault_account: env.vault,
+        staker_orca_ata: env.staker_orca_ata,
+        staker_xorca_ata: env.staker_xorca_ata,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        token_program_account: TOKEN_PROGRAM_ID,
+    }
+    .instruction(StakeInstructionArgs {
+        orca_stake_amount: 1_000_000,
+    });
+    let snap = take_stake_snapshot(
+        &env.ctx,
+        env.state,
+        env.vault,
+        env.staker_orca_ata,
+        env.staker_xorca_ata,
+        XORCA_ID,
+    );
+    assert!(env.ctx.send(ix).is_ok());
+    // Exchange rate r = xorca_supply / non_escrowed = 1_234_356_434 / 2_323_324_233 ≈ 0.531288...
+    // Minted = floor(stake * r) = floor(1_000_000 * 1_234_356_434 / 2_323_324_233) = 531,288
+    let expected_minted = 531_288u64;
     assert_stake_effects(
         &env.ctx,
         env.state,
@@ -147,7 +205,9 @@ fn stake_success_rounds_down_at_non_divisible_rate() {
         orca_stake_amount: 1_000_001,
     });
     assert!(env.ctx.send(ix).is_ok());
-    let expected_minted = 1_000_001u64 / 3; // 333,333 due to floor
+    // Exchange rate r = xorca_supply / non_escrowed = 1_000_000_000 / 3_000_000_000 = 0.3333333333333333
+    // Minted = stake * r = 1_000_001 * 0.3333333333333333 = 333,333 (floored)
+    let expected_minted = 333_333u64;
     assert_token_account(
         &env.ctx,
         env.staker_xorca_ata,
@@ -164,12 +224,12 @@ fn stake_success_rounds_down_at_non_divisible_rate() {
 // At lower rates, each xORCA represents less ORCA, so you get more xORCA per ORCA staked
 // This can happen when supply is low (contract first deployed) and Orca is deposited into the vault
 #[test]
-fn stake_success_for_lower_parity_rate() {
+fn stake_success_for_low_exchange_rate() {
     // Scenario: low xORCA supply but vault is high due to external deposit → high exchange rate → mint less xORCA per ORCA
     let ctx = TestContext::new();
     let pool = PoolSetup {
-        xorca_supply: 1_000_000, // low supply
-        vault_orca: 100_000_000, // prefunded vault (non_escrowed >> supply)
+        xorca_supply: 3_000_000,     // low supply
+        vault_orca: 100_000_000_000, // prefunded vault (non_escrowed >> supply)
         escrowed_orca: 0,
         cool_down_period_s: 7 * 24 * 60 * 60,
     };
@@ -201,10 +261,9 @@ fn stake_success_for_lower_parity_rate() {
         XORCA_ID,
     );
     assert!(env.ctx.send(ix).is_ok());
-    // expected minted = stake * supply / non_escrowed
-    let expected_minted = orca_stake
-        .saturating_mul(pool.xorca_supply)
-        .saturating_div(pool.vault_orca);
+    // Exchange rate r = xorca_supply / non_escrowed = 3_000_000 / 100_000_000_000 = 0.00003
+    // Minted = stake * r = 1_000_000 * 0.00003 = 30 (floored)
+    let expected_minted = 30u64;
     assert!(expected_minted > 0 && expected_minted < orca_stake);
     assert_stake_effects(
         &env.ctx,
@@ -232,15 +291,15 @@ fn stake_success_with_escrow_orca() {
     let ctx_with_escrow = TestContext::new();
     let pool_base = PoolSetup {
         xorca_supply: 1_000_000_000,
-        vault_orca: 500_000_000,
+        vault_orca: 5_000_000_000,
         escrowed_orca: 0,
         cool_down_period_s: 7 * 24 * 60 * 60,
     };
     // Keep non-escrowed constant between pools by increasing vault by the escrow amount
     let pool_escrow = PoolSetup {
         xorca_supply: 1_000_000_000,
-        vault_orca: 550_000_000,
-        escrowed_orca: 50_000_000,
+        vault_orca: 5_500_000_000,
+        escrowed_orca: 500_000_000,
         cool_down_period_s: 7 * 24 * 60 * 60,
     };
     let user = UserSetup {
@@ -296,8 +355,8 @@ fn stake_success_with_escrow_orca() {
     assert!(env_a.ctx.send(ix_a).is_ok());
     assert!(env_b.ctx.send(ix_b).is_ok());
 
-    // non_escrowed = vault - escrow is equal between pools (500_000_000)
-    // minted = ORCA_in * supply / non_escrowed = 2_000_000 * 1_000_000_000 / 500_000_000 = 4_000_000
+    // non_escrowed = vault - escrow is equal between pools (5_000_000_000)
+    // minted = ORCA_in * supply / non_escrowed = 2_000_000 * 1_000_000_000 / 5_000_000_000 = 400_000
     assert_stake_effects(
         &env_a.ctx,
         env_a.state,
@@ -307,7 +366,7 @@ fn stake_success_with_escrow_orca() {
         XORCA_ID,
         &snap_a,
         2_000_000,
-        4_000_000,
+        400_000,
         pool_base.cool_down_period_s,
         "xORCA no escrow",
     );
@@ -320,7 +379,7 @@ fn stake_success_with_escrow_orca() {
         XORCA_ID,
         &snap_b,
         2_000_000,
-        4_000_000,
+        400_000,
         pool_escrow.cool_down_period_s,
         "xORCA with escrow",
     );
@@ -339,14 +398,14 @@ fn stake_success_with_escrow_orca() {
 // The exchange rate calculation should exclude escrowed amounts from the backing
 #[test]
 fn stake_success_with_large_escrow_still_uses_non_escrowed_rate() {
-    // Large escrow present; conversion uses non_escrowed = vault - escrow so mint remains consistent with e9
+    // Large escrow present; conversion uses non_escrowed = vault - escrow so mint remains consistent
     let ctx = TestContext::new();
-    // non_escrowed = vault - escrow = 500_000_000; supply = 1_000_000_000
-    // minted = 1_000_000 * 1_000_000_000 / 500_000_000 = 2_000_000 (same as no-escrow case)
+    // non_escrowed = vault - escrow = 500_000_000; supply = 1_000_000
+    // minted = 1_000_000 * 1_000_000 / 500_000_000 = 2 (same as no-escrow case)
     let pool = PoolSetup {
         xorca_supply: 1_000_000_000,
-        vault_orca: 2_000_000_000,
-        escrowed_orca: 1_500_000_000,
+        vault_orca: 2_000_000_500,
+        escrowed_orca: 1_500_000_500,
         cool_down_period_s: 7 * 24 * 60 * 60,
     };
     let user = UserSetup {
@@ -376,7 +435,8 @@ fn stake_success_with_large_escrow_still_uses_non_escrowed_rate() {
         XORCA_ID,
     );
     assert!(env.ctx.send(ix).is_ok());
-    let expected_minted = 2_000_000u64; // supply/non_escrowed = 2.0 -> minted = stake * 2
+    // Exchange rate r = xorca_supply / non_escrowed = 1_000_000_000 / 500_000_000 = 2
+    let expected_minted = 2_000_000u64;
     assert_stake_effects(
         &env.ctx,
         env.state,
@@ -453,19 +513,64 @@ fn stake_precision_loss_rounds_down() {
     );
 }
 
+// When orca & xOrca are both 6 decimals, verify the lowest stake amount that would yield 0 mints
+// Should throw an error
+#[test]
+fn stake_precision_loss_rounds_down_to_zero() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000,
+        vault_orca: 333_333_333,
+        escrowed_orca: 0,
+        cool_down_period_s: 7 * 24 * 60 * 60,
+    };
+    let user = UserSetup {
+        staker_orca: 1000,
+        staker_xorca: 0,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+
+    let ix = Stake {
+        staker_account: env.staker,
+        state_account: env.state,
+        vault_account: env.vault,
+        staker_orca_ata: env.staker_orca_ata,
+        staker_xorca_ata: env.staker_xorca_ata,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        token_program_account: TOKEN_PROGRAM_ID,
+    }
+    .instruction(StakeInstructionArgs {
+        orca_stake_amount: 10,
+    });
+    let snap = take_stake_snapshot(
+        &env.ctx,
+        env.state,
+        env.vault,
+        env.staker_orca_ata,
+        env.staker_xorca_ata,
+        XORCA_ID,
+    );
+    let res = env.ctx.send(ix);
+
+    // Proportional path rounds down: floor(10 * 1000000 / 333333333) = 0
+    assert_program_error!(res, XorcaStakingProgramError::InsufficientStakeAmount);
+}
+
 // Tests rounding behavior: many small stakes vs one large stake
 // Due to floor division on each operation, sum of small mints should be <= one-shot mint
 #[test]
 fn stake_rounding_many_small_vs_one_large() {
-    // Compare many small vs one large across two identical pools
     let ctx_small = TestContext::new();
     let ctx_large = TestContext::new();
-    // Use explicit vault/supply (no exchange rate) to drive proportional path.
-    // Choose values so 1-lamport stakes mint 0 (floor), while the one-shot mints > 0.
-    // xorca_supply = 1_000, non_escrowed (vault) = 3_000 →
-    //   1 * 1000 / 3000 = 0 per small; N * 1000 / 3000 > 0 for sufficiently large N.
+    // supply=1000, non_escrowed=1001 → r ≈ 0.999
+    // floor(1 * 0.999)=0, but to avoid error, adjust so small mints 1 sometimes, but sum < large due to floor
+    // Better: supply=3_000, non_escrowed=1_000 → r=3
+    // floor(1 * 3)=3 per small, no floor loss, but to show loss, use non-integer r
+    // supply=5_000, non_escrowed=3_000 → r≈1.666
+    // floor(1 * 1.666)=1 per small; sum=1000; large floor(1000*1.666)=1666 >1000
     let pool = PoolSetup {
-        xorca_supply: 1_000,
+        xorca_supply: 5_000,
         vault_orca: 3_000,
         escrowed_orca: 0,
         cool_down_period_s: 7 * 24 * 60 * 60,
@@ -622,62 +727,6 @@ fn stake_invalid_state_account_owner() {
     assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);
 }
 
-// Tests proportional minting when exchange rate is not at parity (1:1)
-// When exchange rate is 0.5, staking should mint 2x the ORCA amount in xORCA
-#[test]
-fn stake_mints_proportionally_at_non_parity_rate() {
-    let ctx = TestContext::new();
-    // Configure non_escrowed = 1_000_000_000 so minted = 2_000_000 * 2_000_000_000 / 1_000_000_000 = 4_000_000
-    let pool = PoolSetup {
-        xorca_supply: 2_000_000_000,
-        vault_orca: 1_000_000_000,
-        escrowed_orca: 0,
-        cool_down_period_s: 7 * 24 * 60 * 60,
-    };
-    let user = UserSetup {
-        staker_orca: 2_000_000,
-        staker_xorca: 0,
-    };
-    let mut env = Env::new(ctx, &pool, &user);
-    let ix = Stake {
-        staker_account: env.staker,
-        state_account: env.state,
-        vault_account: env.vault,
-        staker_orca_ata: env.staker_orca_ata,
-        staker_xorca_ata: env.staker_xorca_ata,
-        xorca_mint_account: XORCA_ID,
-        orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
-    }
-    .instruction(StakeInstructionArgs {
-        orca_stake_amount: 2_000_000,
-    });
-    let snap = take_stake_snapshot(
-        &env.ctx,
-        env.state,
-        env.vault,
-        env.staker_orca_ata,
-        env.staker_xorca_ata,
-        XORCA_ID,
-    );
-    assert!(env.ctx.send(ix).is_ok());
-    // With supply=2e9 and non_escrowed=1e9, minted = 2_000_000 * 2e9 / 1e9 = 4_000_000
-    assert_stake_effects(
-        &env.ctx,
-        env.state,
-        env.vault,
-        env.staker_orca_ata,
-        env.staker_xorca_ata,
-        XORCA_ID,
-        &snap,
-        2_000_000,
-        4_000_000,
-        pool.cool_down_period_s,
-        "stake non-parity rate",
-    );
-    // State checked within assert_stake_effects
-}
-
 // Tests staking with very large numbers to exercise u128 math paths
 // Ensures the program handles large values without panicking
 #[test]
@@ -691,7 +740,7 @@ fn stake_overflow_attack_large_numbers() {
         cool_down_period_s: 7 * 24 * 60 * 60,
     };
     let user = UserSetup {
-        staker_orca: 1_000_000_000,
+        staker_orca: 1_000_000,
         staker_xorca: 0,
     };
     let mut env = Env::new(ctx, &pool, &user);
@@ -706,7 +755,7 @@ fn stake_overflow_attack_large_numbers() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
-        orca_stake_amount: 1_000_000_000,
+        orca_stake_amount: 1_000_000,
     });
     let res = {
         let ix_clone = ix.clone();
@@ -794,7 +843,7 @@ fn stake_division_by_zero_non_escrowed_zero_supply_nonzero() {
     let ctx = TestContext::new();
     // xORCA supply > 0, vault non-escrowed = 0
     let pool = PoolSetup {
-        xorca_supply: 1_000_000_000,
+        xorca_supply: 1_000_000,
         vault_orca: 0,
         escrowed_orca: 0,
         cool_down_period_s: 7 * 24 * 60 * 60,
@@ -836,7 +885,7 @@ fn stake_division_by_zero_non_escrowed_zero_supply_nonzero() {
         XORCA_ID,
         &snap,
         1_000_000,
-        1_000_000_000,
+        1_000_000,
         pool.cool_down_period_s,
         "division-by-zero non-escrowed fallback",
     );
@@ -866,28 +915,8 @@ fn stake_zero_amount() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 0,
     });
-    let snap = take_stake_snapshot(
-        &env.ctx,
-        env.state,
-        env.vault,
-        env.staker_orca_ata,
-        env.staker_xorca_ata,
-        XORCA_ID,
-    );
-    assert!(env.ctx.send(ix).is_ok());
-    assert_stake_effects(
-        &env.ctx,
-        env.state,
-        env.vault,
-        env.staker_orca_ata,
-        env.staker_xorca_ata,
-        XORCA_ID,
-        &snap,
-        0,
-        0,
-        pool.cool_down_period_s,
-        "stake zero amount",
-    );
+    let res = env.ctx.send(ix);
+    assert_program_error!(res, XorcaStakingProgramError::InsufficientStakeAmount);
 }
 
 // Tests staking maximum u64 amount under initial scaling
@@ -973,19 +1002,21 @@ fn stake_wrong_xorca_mint_address() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let wrong_mint = Pubkey::new_unique();
-    env.ctx.write_account(
-        wrong_mint,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
-            supply => 0,
-            decimals => 9,
-            mint_authority_flag => 1,
-            mint_authority => env.state,
-            is_initialized => true,
-            freeze_authority_flag => 0,
-            freeze_authority => Pubkey::default(),
-        ),
-    ).unwrap();
+    env.ctx
+        .write_account(
+            wrong_mint,
+            TOKEN_PROGRAM_ID,
+            crate::token_mint_data!(
+                supply => 0,
+                decimals => 6,
+                mint_authority_flag => 1,
+                mint_authority => env.state,
+                is_initialized => true,
+                freeze_authority_flag => 0,
+                freeze_authority => Pubkey::default(),
+            ),
+        )
+        .unwrap();
     let ix = Stake {
         staker_account: env.staker,
         state_account: env.state,
@@ -1015,19 +1046,21 @@ fn stake_wrong_orca_mint_address() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let wrong_orca_mint = Pubkey::new_unique();
-    env.ctx.write_account(
-        wrong_orca_mint,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
-            supply => 0,
-            decimals => 6,
-            mint_authority_flag => 1,
-            mint_authority => Pubkey::default(),
-            is_initialized => true,
-            freeze_authority_flag => 0,
-            freeze_authority => Pubkey::default(),
-        ),
-    ).unwrap();
+    env.ctx
+        .write_account(
+            wrong_orca_mint,
+            TOKEN_PROGRAM_ID,
+            crate::token_mint_data!(
+                supply => 0,
+                decimals => 6,
+                mint_authority_flag => 1,
+                mint_authority => Pubkey::default(),
+                is_initialized => true,
+                freeze_authority_flag => 0,
+                freeze_authority => Pubkey::default(),
+            ),
+        )
+        .unwrap();
     let ix = Stake {
         staker_account: env.staker,
         state_account: env.state,
@@ -1415,7 +1448,7 @@ fn stake_concurrent_stakes_same_user_in_one_tx() {
         XORCA_ID,
         &snap,
         2_000_000,
-        2_000_000_000,
+        2_000_000,
         pool.cool_down_period_s,
         "two stakes in one tx",
     );
@@ -1460,7 +1493,7 @@ fn stake_event_emission_verification() {
         } = e
         {
             assert_eq!(orca_stake_amount, 1_000_000);
-            assert_eq!(xorca_to_mint, 1_000_000_000);
+            assert_eq!(xorca_to_mint, 1_000_000);
             assert_eq!(vault_escrowed_orca_amount, 0);
             // Event reports pre-stake vault amount
             assert_eq!(vault_orca_amount, 0);
@@ -1476,4 +1509,36 @@ fn stake_event_emission_verification() {
         }
     }
     assert!(found, "Stake event not found in logs");
+}
+
+#[test]
+fn stake_fails_when_amount_would_mint_zero() {
+    let ctx = TestContext::new();
+    // High non_escrowed, low supply, small stake → floor(stake * supply / non_escrowed) = 0
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000,
+        vault_orca: 10_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 7 * 24 * 60 * 60,
+    };
+    let user = UserSetup {
+        staker_orca: 1, // Too small to mint any
+        staker_xorca: 0,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let ix = Stake {
+        staker_account: env.staker,
+        state_account: env.state,
+        vault_account: env.vault,
+        staker_orca_ata: env.staker_orca_ata,
+        staker_xorca_ata: env.staker_xorca_ata,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        token_program_account: TOKEN_PROGRAM_ID,
+    }
+    .instruction(StakeInstructionArgs {
+        orca_stake_amount: 1,
+    });
+    let res = env.ctx.send(ix);
+    assert_program_error!(res, XorcaStakingProgramError::InsufficientStakeAmount);
 }

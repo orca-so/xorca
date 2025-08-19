@@ -86,6 +86,10 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
         xorca_mint_data.supply,
     )?;
 
+    if xorca_to_mint == 0 {
+        return Err(ErrorCode::InsufficientStakeAmount.into());
+    }
+
     // Transfer Orca from staker ATA to vault
     let transfer_instruction = Transfer {
         from: staker_orca_ata,

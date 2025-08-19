@@ -1,17 +1,13 @@
 use crate::error::ErrorCode;
 use pinocchio::program_error::ProgramError;
 
-// ORCA has 6 decimals
-// xORCA has 9 decimals
-const ORCA_TO_XORCA_SCALING_FACTOR: u64 = 1_000; // 1e9 - 1e6
-
 pub fn convert_orca_to_xorca(
     orca_amount_to_convert: u64,
     non_escrowed_orca_amount: u64,
     xorca_supply: u64,
 ) -> Result<u64, ProgramError> {
     if (xorca_supply == 0) || (non_escrowed_orca_amount == 0) {
-        return Ok(orca_amount_to_convert * ORCA_TO_XORCA_SCALING_FACTOR); // Exchange rate is 1:1
+        return Ok(orca_amount_to_convert);
     }
 
     // Perform calculations using u128 to prevent overflow for intermediate products.

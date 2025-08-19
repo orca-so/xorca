@@ -16,7 +16,7 @@ fn initialize_sets_values_with_standard_values_success() {
         TOKEN_PROGRAM_ID,
         crate::token_mint_data!(
             supply => 0,
-            decimals => 9,
+            decimals => 6,
             mint_authority_flag => 1,
             mint_authority => state,
             is_initialized => true,
@@ -76,7 +76,7 @@ fn initialize_fails_with_wrong_update_authority_account() {
         TOKEN_PROGRAM_ID,
         crate::token_mint_data!(
             supply => 0,
-            decimals => 9,
+            decimals => 6,
             mint_authority_flag => 1,
             mint_authority => state,
             is_initialized => true,
@@ -129,7 +129,7 @@ fn initialize_fails_with_wrong_system_program_account() {
         TOKEN_PROGRAM_ID,
         crate::token_mint_data!(
             supply => 0,
-            decimals => 9,
+            decimals => 6,
             mint_authority_flag => 1,
             mint_authority => state,
             is_initialized => true,
@@ -195,14 +195,15 @@ fn initialize_fails_with_insufficient_lamports() {
         TOKEN_PROGRAM_ID,
         crate::token_mint_data!(
             supply => 0,
-            decimals => 9,
+            decimals => 6,
             mint_authority_flag => 1,
             mint_authority => state,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
-        )
-    ).unwrap();
+        ),
+    )
+    .unwrap();
     ctx.write_account(
         ORCA_ID,
         TOKEN_PROGRAM_ID,
@@ -214,8 +215,9 @@ fn initialize_fails_with_insufficient_lamports() {
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
-        )
-    ).unwrap();
+        ),
+    )
+    .unwrap();
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -241,14 +243,15 @@ fn initialize_fails_when_xorca_mint_frozen() {
         TOKEN_PROGRAM_ID,
         crate::token_mint_data!(
             supply => 0,
-            decimals => 9,
+            decimals => 6,
             mint_authority_flag => 1,
             mint_authority => state,
             is_initialized => true,
             freeze_authority_flag => 1,
             freeze_authority => Pubkey::new_unique(),
-        )
-    ).unwrap();
+        ),
+    )
+    .unwrap();
     ctx.write_account(
         ORCA_ID,
         TOKEN_PROGRAM_ID,
@@ -285,14 +288,15 @@ fn initialize_fails_when_xorca_mint_no_authority_flag() {
         TOKEN_PROGRAM_ID,
         crate::token_mint_data!(
             supply => 0,
-            decimals => 9,
+            decimals => 6,
             mint_authority_flag => 0,
             mint_authority => state,
             is_initialized => true,
             freeze_authority_flag => 0,
             freeze_authority => Pubkey::default(),
-        )
-    ).unwrap();
+        ),
+    )
+    .unwrap();
     ctx.write_account(
         ORCA_ID,
         TOKEN_PROGRAM_ID,
@@ -328,7 +332,7 @@ fn initialize_fails_when_xorca_mint_supply_nonzero() {
         TOKEN_PROGRAM_ID,
         crate::token_mint_data!(
             supply => 1,
-            decimals => 9,
+            decimals => 6,
             mint_authority_flag => 1,
             mint_authority => state,
             is_initialized => true,
@@ -376,7 +380,7 @@ fn initialize_fails_when_xorca_mint_wrong_owner() {
         SYSTEM_PROGRAM_ID,
         crate::token_mint_data!(
             supply => 0,
-            decimals => 9,
+            decimals => 6,
             mint_authority_flag => 1,
             mint_authority => state,
             is_initialized => true,
@@ -425,7 +429,7 @@ fn initialize_fails_when_xorca_mint_wrong_address() {
         TOKEN_PROGRAM_ID,
         crate::token_mint_data!(
             supply => 0,
-            decimals => 9,
+            decimals => 6,
             mint_authority_flag => 1,
             mint_authority => state,
             is_initialized => true,

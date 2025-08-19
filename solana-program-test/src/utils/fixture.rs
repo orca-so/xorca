@@ -94,13 +94,13 @@ impl Env {
         )
         .unwrap();
 
-        // xORCA mint (9 decimals)
+        // xORCA mint (6 decimals)
         ctx.write_account(
             XORCA_ID,
             TOKEN_PROGRAM_ID,
             token_mint_data!(
                 supply => pool.xorca_supply,
-                decimals => 9,
+                decimals => 6,
                 mint_authority_flag => 1,
                 mint_authority => state,
                 is_initialized => true,

@@ -42,6 +42,9 @@ pub enum ErrorCode {
     EmitEventError = 6012, // 0x177C
     #[error("Invalid cooldown period: must be non-negative")]
     InvalidCoolDownPeriod = 6013, // 0x177D
+
+    #[error("Stake amount too small to mint any xORCA")]
+    InsufficientStakeAmount = 6014, // 0x177E
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {
