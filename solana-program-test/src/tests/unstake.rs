@@ -884,38 +884,8 @@ fn test_unstake_zero_amount() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 1u8;
-    let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
-    let snap = take_withdraw_snapshot(
-        &env.ctx,
-        env.state,
-        env.vault,
-        env.staker_orca_ata,
-        env.staker_xorca_ata,
-        XORCA_ID,
-    );
-    assert!(do_unstake(&mut env, idx, 0).is_ok());
-    let now = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
-    assert_pending_withdraw(
-        &env.ctx,
-        pending_withdraw_account,
-        env.staker,
-        0,
-        now,
-        "zero amount pending",
-    );
-    // Effects: escrow unchanged, xORCA supply/user unchanged, vault/user ORCA unchanged
-    assert_unstake_effects(
-        &env.ctx,
-        env.state,
-        env.vault,
-        env.staker_orca_ata,
-        env.staker_xorca_ata,
-        XORCA_ID,
-        &snap,
-        0,
-        0,
-        "zero amount unstake",
-    );
+    let res = do_unstake(&mut env, idx, 0);
+    assert_program_error!(res, XorcaStakingProgramError::InsufficientUnstakeAmount);
 }
 
 // Insufficient funds: unstake more xORCA than the user has should fail with InsufficientFunds.
@@ -1758,4 +1728,27 @@ fn test_unstake_withdraw_index_over_limit_behaviour() {
     // Any additional attempt must reuse an existing index; since the pending exists, it should fail with IncorrectOwner
     let res = do_unstake(&mut env, 0u8, 1_000);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
+}
+
+#[test]
+// This shows that we can get into scenarios where xOrca dust cannot be redeemed.
+// In which case they can go swap to unstake.
+fn test_unstake_precision_loss_rounds_down_to_zero() {
+    let ctx = TestContext::new();
+    // Choose values that cause flooring to zero: non_esc < supply, unstake small
+    // non_esc=999_999_999, supply=1_000_000_000, unstake=1 → floor(1 * 999999999 / 1000000000)=0
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000_000,
+        vault_orca: 999_999_999,
+        escrowed_orca: 0,
+        cool_down_period_s: 60,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let idx = 42u8; // arbitrary
+    let res = do_unstake(&mut env, idx, 1);
+    assert_program_error!(res, XorcaStakingProgramError::InsufficientUnstakeAmount);
 }

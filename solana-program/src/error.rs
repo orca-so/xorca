@@ -45,6 +45,9 @@ pub enum ErrorCode {
 
     #[error("Stake amount too small to mint any xORCA")]
     InsufficientStakeAmount = 6014, // 0x177E
+
+    #[error("Unstake amount too small to receive any ORCA")]
+    InsufficientUnstakeAmount = 6015, // 0x177F
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {

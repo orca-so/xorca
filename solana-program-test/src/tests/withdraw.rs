@@ -1087,7 +1087,7 @@ fn withdraw_overflow_attack_large_numbers_probe() {
     let ctx = TestContext::new();
     let pool = PoolSetup {
         xorca_supply: u64::MAX / 2,
-        vault_orca: 1_000_000,
+        vault_orca: u64::MAX / 2 + 1,
         escrowed_orca: 0,
         cool_down_period_s: 1,
     };
@@ -1097,7 +1097,7 @@ fn withdraw_overflow_attack_large_numbers_probe() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 12u8;
-    let xorca_unstake_amount = (u64::MAX / 2).min(10_000_000_000);
+    let xorca_unstake_amount = u64::MAX / 2;
     let pending_withdraw_account = unstake_and_advance(&mut env, idx, xorca_unstake_amount, 2);
     // Take snapshot and pending amount
     let snap = take_withdraw_snapshot(

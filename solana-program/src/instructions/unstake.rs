@@ -125,6 +125,10 @@ pub fn process_instruction(
         xorca_mint_data.supply,
     )?;
 
+    if withdrawable_orca_amount == 0 {
+        return Err(ErrorCode::InsufficientUnstakeAmount.into());
+    }
+
     // Burn unstaker's LST tokens
     let burn_instruction = Burn {
         mint: xorca_mint_account,

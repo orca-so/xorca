@@ -55,6 +55,9 @@ pub enum XorcaStakingProgramError {
     /// 6014 - Stake amount too small to mint any xORCA
     #[error("Stake amount too small to mint any xORCA")]
     InsufficientStakeAmount = 0x177E,
+    /// 6015 - Unstake amount too small to receive any ORCA
+    #[error("Unstake amount too small to receive any ORCA")]
+    InsufficientUnstakeAmount = 0x177F,
 }
 
 impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {
