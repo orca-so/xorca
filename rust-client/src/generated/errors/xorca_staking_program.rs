@@ -49,6 +49,9 @@ pub enum XorcaStakingProgramError {
     /// 6012 - Event serialization failed
     #[error("Event serialization failed")]
     EmitEventError = 0x177C,
+    /// 6013 - Invalid cooldown period: must be non-negative
+    #[error("Invalid cooldown period: must be non-negative")]
+    InvalidCoolDownPeriod = 0x177D,
 }
 
 impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {

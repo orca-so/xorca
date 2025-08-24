@@ -3,6 +3,7 @@ use crate::{
         assert_account_address, assert_account_data_mut, assert_account_owner, assert_account_role,
         assert_account_seeds, AccountRole,
     },
+    error::ErrorCode,
     instructions::StateUpdateInstruction,
     state::state::State,
     util::account::get_account_info,
@@ -35,6 +36,9 @@ pub fn process_instruction(
         StateUpdateInstruction::UpdateCoolDownPeriod {
             new_cool_down_period_s,
         } => {
+            if *new_cool_down_period_s < 0 {
+                return Err(ErrorCode::InvalidCoolDownPeriod.into());
+            }
             state.cool_down_period_s = *new_cool_down_period_s;
         }
         StateUpdateInstruction::UpdateUpdateAuthority { new_authority } => {

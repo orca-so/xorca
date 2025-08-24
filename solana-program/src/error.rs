@@ -40,6 +40,8 @@ pub enum ErrorCode {
 
     #[error("Event serialization failed")]
     EmitEventError = 6012, // 0x177C
+    #[error("Invalid cooldown period: must be non-negative")]
+    InvalidCoolDownPeriod = 6013, // 0x177D
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {
