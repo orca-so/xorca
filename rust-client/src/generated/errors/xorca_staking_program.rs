@@ -58,6 +58,9 @@ pub enum XorcaStakingProgramError {
     /// 6015 - Unstake amount too small to receive any ORCA
     #[error("Unstake amount too small to receive any ORCA")]
     InsufficientUnstakeAmount = 0x177F,
+    /// 6016 - Insufficient escrow to cover withdraw amount
+    #[error("Insufficient escrow to cover withdraw amount")]
+    InsufficientEscrow = 0x1780,
 }
 
 impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {

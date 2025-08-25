@@ -48,6 +48,9 @@ pub enum ErrorCode {
 
     #[error("Unstake amount too small to receive any ORCA")]
     InsufficientUnstakeAmount = 6015, // 0x177F
+
+    #[error("Insufficient escrow to cover withdraw amount")]
+    InsufficientEscrow = 6016, // 0x1780
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {

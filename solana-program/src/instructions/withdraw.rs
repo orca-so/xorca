@@ -91,6 +91,14 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
         return Err(ErrorCode::CoolDownPeriodStillActive.into());
     }
 
+    // Pre-check escrow underflow before CPI
+    {
+        let state_data = assert_account_data::<State>(state_account)?;
+        if state_data.escrowed_orca_amount < withdrawable_orca_amount {
+            return Err(ErrorCode::InsufficientEscrow.into());
+        }
+    }
+
     // Transfer withdrawable stake tokens from xOrca state ATA to unstaker ATA
     let transfer_instruction = Transfer {
         from: vault_account,
@@ -105,7 +113,10 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
 
     // Remove tokens from escrow
     let mut state = assert_account_data_mut::<State>(state_account)?;
-    state.escrowed_orca_amount -= withdrawable_orca_amount;
+    state.escrowed_orca_amount = state
+        .escrowed_orca_amount
+        .checked_sub(withdrawable_orca_amount)
+        .ok_or(ErrorCode::InsufficientEscrow)?;
 
     Event::Withdraw {
         vault_escrowed_orca_amount: &state.escrowed_orca_amount,

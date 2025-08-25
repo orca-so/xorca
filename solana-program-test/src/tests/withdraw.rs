@@ -1,5 +1,6 @@
 use crate::utils::assert::{
-    assert_withdraw_effects, decode_events_from_result, take_withdraw_snapshot,
+    assert_account_closed, assert_withdraw_effects, decode_events_from_result,
+    take_withdraw_snapshot,
 };
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
 use crate::utils::flows::{do_unstake, do_withdraw, unstake_and_advance};
@@ -482,10 +483,9 @@ fn withdraw_increases_staker_orca_balance_from_nonzero() {
     );
 }
 
-// Probe: extreme large numbers for escrow and withdrawable; expect no panic (may error)
+// Probe: extreme large numbers for escrow and withdrawable
 #[test]
-#[ignore = "TODO: harden math with checked ops; enable once fixed"]
-fn withdraw_extreme_large_values_probe() {
+fn withdraw_extreme_large_values() {
     let ctx = TestContext::new();
     let pool = PoolSetup {
         xorca_supply: u64::MAX - 1_000,
@@ -499,9 +499,48 @@ fn withdraw_extreme_large_values_probe() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 7u8;
+
     let pending_withdraw_account =
         unstake_and_advance(&mut env, idx, (u64::MAX / 8).min(10_000_000_000), 2);
-    let _ = do_withdraw(&mut env, pending_withdraw_account, idx);
+
+    // Snapshot before withdraw and capture pending amount
+    let snap = take_withdraw_snapshot(
+        &env.ctx,
+        env.state,
+        env.vault,
+        env.staker_orca_ata,
+        env.staker_xorca_ata,
+        XORCA_ID,
+    );
+    let withdrawable_orca_before = env
+        .ctx
+        .get_account::<PendingWithdraw>(pending_withdraw_account)
+        .unwrap()
+        .data
+        .withdrawable_orca_amount;
+
+    // Act
+    let res = do_withdraw(&mut env, pending_withdraw_account, idx);
+    assert!(res.is_ok(), "withdraw failed: {:?}", res);
+    assert_account_closed(
+        &env.ctx,
+        pending_withdraw_account,
+        "pending closed on large-numbers withdraw",
+    );
+
+    // Assert effects
+    assert_withdraw_effects(
+        &env.ctx,
+        env.state,
+        env.vault,
+        env.staker_orca_ata,
+        env.staker_xorca_ata,
+        XORCA_ID,
+        &snap,
+        withdrawable_orca_before,
+        (u64::MAX / 8).min(10_000_000_000),
+        "extreme large withdraw",
+    );
 }
 
 // === 3) Account validation ===
@@ -1583,40 +1622,54 @@ fn withdraw_invalid_vault_account_mint_in_data() {
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }
 
-// Overflow/underflow probe: set escrow less than pending amount and attempt withdraw (should panic)
+// Escrow insufficient: program should return InsufficientEscrow if escrow < withdrawable
 #[test]
-#[ignore = "TODO: use checked subtraction for escrow updates; enable when fixed"]
-#[should_panic]
-fn withdraw_escrow_underflow_attempt() {
+fn test_withdraw_insufficient_escrow_error() {
     let ctx = TestContext::new();
     let pool = PoolSetup {
         xorca_supply: 1_000_000_000,
         vault_orca: 1_000_000_000,
-        escrowed_orca: 0,
+        escrowed_orca: 100, // Start with small escrow
         cool_down_period_s: 1,
     };
     let user = UserSetup {
-        staker_orca: 100,
+        staker_orca: 0,
         staker_xorca: 1_000_000,
     };
     let mut env = Env::new(ctx, &pool, &user);
-    let idx = 12u8;
-
-    // Create pending via flow and advance past cooldown
+    let idx = 23u8;
     let pending_withdraw_account = unstake_and_advance(&mut env, idx, 1_000_000, 2);
-    // Manipulate: set state escrow artificially small (zero) while pending amount remains
-    env.ctx.write_account(
-        env.state,
-        xorca::ID,
-        crate::state_data!(
-            escrowed_orca_amount => 0,
-            update_authority => Pubkey::default(), cool_down_period_s => pool.cool_down_period_s,
-        ),
-    ).unwrap();
-    // Attempt withdraw; expected to panic (ignored until math is hardened)
-    let _ = do_withdraw(&mut env, pending_withdraw_account, idx).unwrap();
-}
 
+    // Get the withdrawable amount from the pending account
+    let withdrawable_amount = env
+        .ctx
+        .get_account::<PendingWithdraw>(pending_withdraw_account)
+        .unwrap()
+        .data
+        .withdrawable_orca_amount;
+
+    // Only proceed if withdrawable amount is greater than 0
+    if withdrawable_amount == 0 {
+        panic!("Withdrawable amount is 0, cannot test arithmetic underflow");
+    }
+    // Manipulate state to have escrow much less than withdrawable amount
+    // This should cause arithmetic error when trying to subtract
+    env.ctx
+        .write_account(
+            env.state,
+            xorca::ID,
+            crate::state_data!(
+                escrowed_orca_amount => 0, // Zero escrow, but withdrawable amount is much larger
+                update_authority => Pubkey::default(),
+                cool_down_period_s => pool.cool_down_period_s,
+            ),
+        )
+        .unwrap();
+
+    // Expect InsufficientEscrow returned by instruction due to pre-check
+    let res = do_withdraw(&mut env, pending_withdraw_account, idx);
+    assert_program_error!(res, XorcaStakingProgramError::InsufficientEscrow);
+}
 
 // Timestamp overflow: test with very large timestamps that could cause overflow
 #[test]
