@@ -78,7 +78,11 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     // Calculate xOrca to mint
-    let non_escrowed_orca_amount = vault_account_data.amount - state.escrowed_orca_amount;
+    // Use checked math to guard against vault < escrow (should not happen, but defensive)
+    let non_escrowed_orca_amount = vault_account_data
+        .amount
+        .checked_sub(state.escrowed_orca_amount)
+        .ok_or(ErrorCode::InsufficientVaultBacking)?;
 
     let xorca_to_mint = convert_orca_to_xorca(
         *orca_stake_amount,

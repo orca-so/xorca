@@ -764,62 +764,35 @@ fn stake_overflow_attack_large_numbers() {
     assert!(res.is_ok() || res.is_err(), "tx should not panic");
 }
 
-// Tests overflow in initial scaling path when supply=0
-// Attempts to stake an amount that would overflow when multiplied by 1000
+// Verify that underflow in non_escrowed amount causes an error
 #[test]
-#[ignore = "TODO: harden initial-scaling math (use checked mul, clamp, or reject inputs); enable when fixed"]
-#[should_panic]
-fn stake_initial_scaling_overflow_attempt() {
+fn stake_underflow_non_escrowed_error() {
     let ctx = TestContext::new();
+    // Configure vault < escrow to force non_escrowed underflow in stake (defensive check)
     let pool = PoolSetup {
-        xorca_supply: 0,
-        vault_orca: 1_000_000_000,
-        escrowed_orca: 0,
+        xorca_supply: 1_000_000,
+        vault_orca: 100,
+        escrowed_orca: 200,
         cool_down_period_s: 7 * 24 * 60 * 60,
     };
-    // Choose amount near u64::MAX / 1000 to push multiplication overflow
-    let stake_amount = u64::MAX / 900; // deliberately high
     let user = UserSetup {
-        staker_orca: stake_amount,
+        staker_orca: 1_000,
         staker_xorca: 0,
     };
     let mut env = Env::new(ctx, &pool, &user);
-    let ix = Stake {
-        staker_account: env.staker,
-        state_account: env.state,
-        vault_account: env.vault,
-        staker_orca_ata: env.staker_orca_ata,
-        staker_xorca_ata: env.staker_xorca_ata,
-        xorca_mint_account: XORCA_ID,
-        orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
-    }
-    .instruction(StakeInstructionArgs {
-        orca_stake_amount: stake_amount,
-    });
-    // Expect panic or failure due to overflow along the path
-    let _ = env.ctx.send(ix).unwrap();
-}
+    // Ensure state escrow is strictly greater than vault to force underflow
+    env.ctx
+        .write_account(
+            env.state,
+            xorca::ID,
+            crate::state_data!(
+                escrowed_orca_amount => u64::MAX,
+                update_authority => Pubkey::default(),
+                cool_down_period_s => pool.cool_down_period_s,
+            ),
+        )
+        .unwrap();
 
-// Tests overflow in proportional path when calculating (orca * supply) before division
-// Attempts to use maximum values to stress the u128 intermediate calculations
-#[test]
-#[ignore = "TODO: harden proportional path math (checked u128 conversions and bounds); enable when fixed"]
-#[should_panic]
-fn stake_proportional_path_overflow_attempt() {
-    let ctx = TestContext::new();
-    // Make supply and ORCA vault enormous and escrow zero so non_escrowed is also enormous.
-    let pool = PoolSetup {
-        xorca_supply: u64::MAX,
-        vault_orca: 1_000_000_000,
-        escrowed_orca: 0,
-        cool_down_period_s: 1,
-    };
-    let user = UserSetup {
-        staker_orca: u64::MAX,
-        staker_xorca: 0,
-    };
-    let mut env = Env::new(ctx, &pool, &user);
     let ix = Stake {
         staker_account: env.staker,
         state_account: env.state,
@@ -831,9 +804,10 @@ fn stake_proportional_path_overflow_attempt() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
-        orca_stake_amount: u64::MAX,
+        orca_stake_amount: 1,
     });
-    let _ = env.ctx.send(ix).unwrap();
+    let res = env.ctx.send(ix);
+    assert_program_error!(res, XorcaStakingProgramError::InsufficientVaultBacking);
 }
 
 // Tests division by zero scenario when supply > 0 but non-escrowed = 0

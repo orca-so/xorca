@@ -64,6 +64,9 @@ pub enum XorcaStakingProgramError {
     /// 6017 - Cooldown timestamp overflowed
     #[error("Cooldown timestamp overflowed")]
     CoolDownOverflow = 0x1781,
+    /// 6018 - Insufficient vault backing (vault < escrow)
+    #[error("Insufficient vault backing (vault < escrow)")]
+    InsufficientVaultBacking = 0x1782,
 }
 
 impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {

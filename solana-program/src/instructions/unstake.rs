@@ -117,8 +117,11 @@ pub fn process_instruction(
     // 9. Token Account Assertions
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
-    // Calculate withdrawable ORCA amount
-    let non_escrowed_orca_amount = vault_account_data.amount - initial_escrowed_orca_amount;
+    // Calculate withdrawable ORCA amount using checked math
+    let non_escrowed_orca_amount = vault_account_data
+        .amount
+        .checked_sub(initial_escrowed_orca_amount)
+        .ok_or(ErrorCode::InsufficientVaultBacking)?;
     let withdrawable_orca_amount = convert_xorca_to_orca(
         *xorca_unstake_amount,
         non_escrowed_orca_amount,
@@ -147,7 +150,10 @@ pub fn process_instruction(
         }
     }
     let mut state = assert_account_data_mut::<State>(state_account)?;
-    state.escrowed_orca_amount += withdrawable_orca_amount;
+    state.escrowed_orca_amount = state
+        .escrowed_orca_amount
+        .checked_add(withdrawable_orca_amount)
+        .ok_or(ErrorCode::ArithmeticError)?;
 
     // Create new pending withdraw account
     let mut pending_withdraw_data = create_program_account::<PendingWithdraw>(

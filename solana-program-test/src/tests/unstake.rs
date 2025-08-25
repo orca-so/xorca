@@ -662,6 +662,60 @@ fn test_unstake_partial_all_but_one_then_last() {
     );
 }
 
+// Ensures the program rejects inconsistent backing: when `escrowed_orca_amount` exceeds the
+// vault balance, computing non-escrowed (vault - escrow) would underflow. 
+#[test]
+fn test_unstake_insufficient_vault_backing_error() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000,
+        vault_orca: 100,
+        escrowed_orca: 200,
+        cool_down_period_s: 60,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    // Force state escrow >> vault to guarantee non_escrowed underflow
+    env.ctx
+        .write_account(
+            env.state,
+            xorca::ID,
+            crate::state_data!(
+                escrowed_orca_amount => u64::MAX,
+                update_authority => Pubkey::default(),
+                cool_down_period_s => pool.cool_down_period_s,
+            ),
+        )
+        .unwrap();
+    let idx = 90u8;
+    let res = do_unstake(&mut env, idx, 1);
+    assert_program_error!(res, XorcaStakingProgramError::InsufficientVaultBacking);
+}
+
+// If all of Orca's supply is escrowed (impossible) and we somehow manage to unstake more, make sure we fail with ArithmeticError.
+#[test]
+fn test_unstake_escrow_overflow_error() {
+    let ctx = TestContext::new();
+    // Configure near-max escrow and a nonzero withdrawable to trigger checked_add overflow
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000,
+        vault_orca: u64::MAX,
+        escrowed_orca: u64::MAX,
+        cool_down_period_s: 60,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let idx = 91u8;
+    let res = do_unstake(&mut env, idx, 1);
+    assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
+}
+
 // Cool down period overflow: test with very large cool_down_period_s that could cause timestamp overflow
 #[test]
 fn test_unstake_cool_down_period_overflow() {

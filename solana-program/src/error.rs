@@ -54,6 +54,9 @@ pub enum ErrorCode {
 
     #[error("Cooldown timestamp overflowed")]
     CoolDownOverflow = 6017, // 0x1781
+
+    #[error("Insufficient vault backing (vault < escrow)")]
+    InsufficientVaultBacking = 6018, // 0x1782
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {
