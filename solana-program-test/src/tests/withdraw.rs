@@ -2,10 +2,11 @@ use crate::utils::assert::{
     assert_withdraw_effects, decode_events_from_result, take_withdraw_snapshot,
 };
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
-use crate::utils::flows::{do_withdraw, unstake_and_advance};
+use crate::utils::flows::{do_unstake, do_withdraw, unstake_and_advance};
 use crate::{
     assert_program_error, TestContext, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
 };
+use solana_sdk::clock::Clock;
 use solana_sdk::pubkey::Pubkey;
 use xorca::{
     find_pending_withdraw_pda, Event, PendingWithdraw, State, TokenAccount, Withdraw,
@@ -614,7 +615,21 @@ fn withdraw_invalid_orca_mint_address() {
     let _ = unstake_and_advance(&mut env, withdraw_index, 1_000_000, 0);
     // Wrong ORCA mint
     let wrong_orca_mint = Pubkey::new_unique();
-    env.ctx.write_account(wrong_orca_mint, TOKEN_PROGRAM_ID, crate::token_mint_data!(supply => 0, decimals => 6, mint_authority_flag => 1, mint_authority => Pubkey::default(), is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default())).unwrap();
+    env.ctx
+        .write_account(
+            wrong_orca_mint,
+            TOKEN_PROGRAM_ID,
+            crate::token_mint_data!(
+                supply => 0,
+                decimals => 6,
+                mint_authority_flag => 1,
+                mint_authority => Pubkey::default(),
+                is_initialized => true,
+                freeze_authority_flag => 0,
+                freeze_authority => Pubkey::default(),
+            ),
+        )
+        .unwrap();
     let ix = Withdraw {
         unstaker_account: env.staker,
         state_account: env.state,
@@ -1600,4 +1615,144 @@ fn withdraw_escrow_underflow_attempt() {
     ).unwrap();
     // Attempt withdraw; expected to panic (ignored until math is hardened)
     let _ = do_withdraw(&mut env, pending_withdraw_account, idx).unwrap();
+}
+
+
+// Timestamp overflow: test with very large timestamps that could cause overflow
+#[test]
+fn test_withdraw_timestamp_overflow() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000_000,
+        vault_orca: 1_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: i64::MAX, // Maximum possible cool down period
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+
+    // Set the current timestamp to a value that will cause overflow when adding i64::MAX
+    let mut clock = env.ctx.svm.get_sysvar::<Clock>();
+    clock.unix_timestamp = 1; // Set to 1 so that 1 + i64::MAX will overflow
+    env.ctx.svm.set_sysvar::<Clock>(&clock);
+
+    let idx = 24u8;
+    let res = do_unstake(&mut env, idx, 1_000_000);
+    // This should fail with arithmetic error due to timestamp overflow
+    assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
+}
+
+// Account closure failure: test when closing the pending withdraw account fails
+#[test]
+fn test_withdraw_account_closure_failure() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000_000,
+        vault_orca: 1_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 1,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let idx = 25u8;
+    let pending_withdraw_account = unstake_and_advance(&mut env, idx, 1_000_000, 2);
+
+    // Corrupt the pending withdraw account to make it uncloseable
+    // Set it to be owned by the wrong program
+    let pending_data = env.ctx.get_raw_account(pending_withdraw_account).unwrap();
+    env.ctx
+        .write_raw_account(
+            pending_withdraw_account,
+            SYSTEM_PROGRAM_ID, // Wrong owner - should be xorca::ID
+            pending_data.data,
+        )
+        .unwrap();
+
+    let res = do_withdraw(&mut env, pending_withdraw_account, idx);
+    // This should fail because the account can't be closed
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
+}
+
+// Vault insufficient balance: test when vault doesn't have enough ORCA to transfer
+#[test]
+fn test_withdraw_vault_insufficient_balance() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000_000,
+        vault_orca: 1_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 1,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let idx = 26u8;
+    let pending_withdraw_account = unstake_and_advance(&mut env, idx, 1_000_000, 2);
+
+    // Get the withdrawable amount
+    let withdrawable_amount = env
+        .ctx
+        .get_account::<PendingWithdraw>(pending_withdraw_account)
+        .unwrap()
+        .data
+        .withdrawable_orca_amount;
+
+    // Drain the vault to have insufficient balance
+    env.ctx
+        .write_account(
+            env.vault,
+            TOKEN_PROGRAM_ID,
+            crate::token_account_data!(
+                mint => ORCA_ID,
+                owner => env.state,
+                amount => withdrawable_amount.saturating_sub(1), // Less than needed
+            ),
+        )
+        .unwrap();
+
+    let res = do_withdraw(&mut env, pending_withdraw_account, idx);
+    // This should fail because the vault doesn't have enough ORCA
+    // The error comes from the SPL Token program, not our program
+    assert!(res.is_err());
+}
+
+// Wrong program ID: test with wrong program ID in account validation
+#[test]
+fn test_withdraw_wrong_program_id_in_state() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000_000,
+        vault_orca: 1_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 1,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let idx = 29u8;
+    let pending_withdraw_account = unstake_and_advance(&mut env, idx, 1_000_000, 2);
+
+    // Corrupt the state account to be owned by the wrong program
+    let state_data = env.ctx.get_raw_account(env.state).unwrap();
+    env.ctx
+        .write_raw_account(
+            env.state,
+            SYSTEM_PROGRAM_ID, // Wrong owner - should be xorca::ID
+            state_data.data,
+        )
+        .unwrap();
+
+    let res = do_withdraw(&mut env, pending_withdraw_account, idx);
+    // This should fail because the state account has wrong program owner
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }

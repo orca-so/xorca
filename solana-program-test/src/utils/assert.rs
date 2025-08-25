@@ -532,7 +532,7 @@ pub fn assert_unstake_effects(
     assert_eq!(
         escrow_after,
         snap.escrow_before.saturating_add(pending_orca_amount),
-        "{}: state escrow after",
+        "{}: state escrow after unstake",
         label
     );
 

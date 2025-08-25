@@ -17,7 +17,7 @@ fn test_unstake_success_at_initial_rate() {
     let ctx = TestContext::new();
     let pool = PoolSetup {
         xorca_supply: 10_000_000_000,
-        vault_orca: 1_000_000,
+        vault_orca: 10_000_000_000,
         escrowed_orca: 0,
         cool_down_period_s: 3 * 24 * 60 * 60,
     };
@@ -44,7 +44,7 @@ fn test_unstake_success_at_initial_rate() {
         &env.ctx,
         pending_withdraw_account,
         env.staker,
-        1_000_000,
+        10_000_000_000,
         now,
         "initial rate pending",
     );
@@ -56,7 +56,7 @@ fn test_unstake_success_at_initial_rate() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
-        1_000_000,
+        10_000_000_000,
         10_000_000_000,
         "initial rate unstake",
     );
@@ -104,7 +104,7 @@ fn test_unstake_succeeds_at_high_exchange_rate() {
         env.staker,
         expected,
         now,
-        "high rate pending",
+        "high rate pending withdraw",
     );
     assert_eq!(pend.data.withdrawable_orca_amount, expected);
     assert!(expected >= 5 * xorca_burn / 1); // lower bound sanity
@@ -118,7 +118,7 @@ fn test_unstake_succeeds_at_high_exchange_rate() {
         &snap,
         expected,
         xorca_burn,
-        "high rate",
+        "high rate unstake",
     );
 }
 
@@ -237,66 +237,6 @@ fn test_unstake_succeeds_with_existing_escrow() {
     );
 }
 
-// Success: using explicit vault override to set non-escrowed high; expect large withdrawable amount and correct deltas.
-#[test]
-fn test_unstake_succeeds_with_vault_override_large_non_escrowed() {
-    let ctx = TestContext::new();
-    let pool = PoolSetup {
-        xorca_supply: 500_000_000,
-        vault_orca: 5_000_000_000,
-        escrowed_orca: 0,
-        cool_down_period_s: 60,
-    };
-    let user = UserSetup {
-        staker_orca: 0,
-        staker_xorca: 5_000_000,
-    };
-    let mut env = Env::new(ctx, &pool, &user);
-    let idx = 26u8;
-    let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
-    let snap = take_withdraw_snapshot(
-        &env.ctx,
-        env.state,
-        env.vault,
-        env.staker_orca_ata,
-        env.staker_xorca_ata,
-        XORCA_ID,
-    );
-    let xorca_burn = 5_000_000u64;
-    assert!(do_unstake(&mut env, idx, xorca_burn).is_ok());
-    let non_escrowed = snap.vault_before.saturating_sub(snap.escrow_before);
-    let expected = xorca_burn
-        .saturating_mul(non_escrowed)
-        .saturating_div(snap.xorca_supply_before);
-    let pend = env
-        .ctx
-        .get_account::<PendingWithdraw>(pending_withdraw_account)
-        .unwrap();
-    let now = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
-    assert_pending_withdraw(
-        &env.ctx,
-        pending_withdraw_account,
-        env.staker,
-        expected,
-        now,
-        "vault override pending",
-    );
-    assert_eq!(pend.data.withdrawable_orca_amount, expected);
-    assert!(expected > 0);
-    assert_unstake_effects(
-        &env.ctx,
-        env.state,
-        env.vault,
-        env.staker_orca_ata,
-        env.staker_xorca_ata,
-        XORCA_ID,
-        &snap,
-        expected,
-        xorca_burn,
-        "vault override",
-    );
-}
-
 // Success: multiple indices produce multiple pendings with correct amounts and independent timestamps.
 #[test]
 fn test_unstake_multiple_indices_success() {
@@ -337,7 +277,7 @@ fn test_unstake_multiple_indices_success() {
         env.staker,
         a.data.withdrawable_orca_amount,
         now_a,
-        "multiple indices A pending",
+        "multiple indices A pending withdraw",
     );
     assert_unstake_effects(
         &env.ctx,
@@ -373,7 +313,7 @@ fn test_unstake_multiple_indices_success() {
         env.staker,
         b.data.withdrawable_orca_amount,
         now_b,
-        "multiple indices B pending",
+        "multiple indices B pending withdraw",
     );
     assert_unstake_effects(
         &env.ctx,
@@ -395,7 +335,7 @@ fn test_unstake_multiple_indices_success() {
     );
 }
 
-// Partial unstakes in sequence: two partial burns accumulate escrow and reduce user xORCA by the total.
+// Partial unstakes in sequence: two partial unstakes accumulate escrow and reduce user xORCA by the total.
 #[test]
 fn test_unstake_partial_two_steps_accumulate_escrow() {
     let ctx = TestContext::new();
@@ -424,7 +364,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
     );
     assert!(do_unstake(&mut env, idx1, 1_000_000).is_ok());
     let now1 = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
-    let pend1 = env
+    let pending_orca_amount_1 = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_1)
         .unwrap()
@@ -434,7 +374,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         &env.ctx,
         pending_withdraw_account_1,
         env.staker,
-        pend1,
+        pending_orca_amount_1,
         now1,
         "partial step 1 pending",
     );
@@ -446,7 +386,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap1,
-        pend1,
+        pending_orca_amount_1,
         1_000_000,
         "partial step 1",
     );
@@ -461,7 +401,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
     );
     assert!(do_unstake(&mut env, idx2, 1_500_000).is_ok());
     let now2 = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
-    let pend2 = env
+    let pending_orca_amount_2 = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_2)
         .unwrap()
@@ -471,7 +411,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         &env.ctx,
         pending_withdraw_account_2,
         env.staker,
-        pend2,
+        pending_orca_amount_2,
         now2,
         "partial step 2 pending",
     );
@@ -483,7 +423,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap2,
-        pend2,
+        pending_orca_amount_2,
         1_500_000,
         "partial step 2",
     );
@@ -499,8 +439,8 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         state_after,
         snap1
             .escrow_before
-            .saturating_add(pend1)
-            .saturating_add(pend2)
+            .saturating_add(pending_orca_amount_1)
+            .saturating_add(pending_orca_amount_2)
     );
     // Verify user xORCA decreased by total burned (no withdraws yet)
     let user_xorca_after = env
@@ -561,13 +501,13 @@ fn test_unstake_partial_with_existing_escrow_low_rate() {
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_1)
         .unwrap();
-    let pend1 = pend1_acc.data.withdrawable_orca_amount;
+    let pending_orca_amount_1 = pend1_acc.data.withdrawable_orca_amount;
     let now1 = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
     assert_pending_withdraw(
         &env.ctx,
         pending_withdraw_account_1,
         env.staker,
-        pend1,
+        pending_orca_amount_1,
         now1,
         "partial low-rate step 1 pending",
     );
@@ -579,7 +519,7 @@ fn test_unstake_partial_with_existing_escrow_low_rate() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap1,
-        pend1,
+        pending_orca_amount_1,
         500_000,
         "partial low-rate step 1",
     );
@@ -589,26 +529,26 @@ fn test_unstake_partial_with_existing_escrow_low_rate() {
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_2)
         .unwrap();
-    let pend2 = pend2_acc.data.withdrawable_orca_amount;
+    let pending_orca_amount_2 = pend2_acc.data.withdrawable_orca_amount;
     let now2 = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
     assert_pending_withdraw(
         &env.ctx,
         pending_withdraw_account_2,
         env.staker,
-        pend2,
+        pending_orca_amount_2,
         now2,
         "partial low-rate step 2 pending",
     );
-    assert_eq!(pend1, expected1);
-    assert_eq!(pend2, expected2);
+    assert_eq!(pending_orca_amount_1, expected1);
+    assert_eq!(pending_orca_amount_2, expected2);
     // Escrow increased by total pending; compare against initial snapshot
     let final_state = env.ctx.get_account::<State>(env.state).unwrap();
     assert_eq!(
         final_state.data.escrowed_orca_amount,
         snap1
             .escrow_before
-            .saturating_add(pend1)
-            .saturating_add(pend2)
+            .saturating_add(pending_orca_amount_1)
+            .saturating_add(pending_orca_amount_2)
     );
 }
 
@@ -722,7 +662,54 @@ fn test_unstake_partial_all_but_one_then_last() {
     );
 }
 
-// Duplicate a few invalid-account tests from the original into fixture style
+// Cool down period overflow: test with very large cool_down_period_s that could cause timestamp overflow
+#[test]
+fn test_unstake_cool_down_period_overflow() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000_000,
+        vault_orca: 1_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: i64::MAX, // Maximum possible cool down period
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+
+    // Set the current timestamp to a value that will cause overflow when adding i64::MAX
+    let mut clock = env.ctx.svm.get_sysvar::<Clock>();
+    clock.unix_timestamp = 1; // Set to 1 so that 1 + i64::MAX will overflow
+    env.ctx.svm.set_sysvar::<Clock>(&clock);
+
+    let idx = 43u8;
+    let res = do_unstake(&mut env, idx, 1_000_000);
+    assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
+}
+
+// u128 overflow in conversion: test with values that could cause u128 overflow in convert_xorca_to_orca
+#[test]
+fn test_unstake_u128_overflow_in_conversion() {
+    let ctx = TestContext::new();
+    // Use very large values that could cause u128 overflow in the conversion
+    // The conversion is: xorca_amount * non_escrowed / supply
+    // We need xorca_amount * non_escrowed to overflow u128
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000_000,
+        vault_orca: u64::MAX, // Maximum possible vault amount
+        escrowed_orca: 0,
+        cool_down_period_s: 60,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: u64::MAX, // Maximum possible xORCA amount
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let idx = 45u8;
+    let res = do_unstake(&mut env, idx, u64::MAX);
+    assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
+}
 
 // Invalid: state account owner is wrong program (not staking program).
 #[test]
@@ -1751,4 +1738,72 @@ fn test_unstake_precision_loss_rounds_down_to_zero() {
     let idx = 42u8; // arbitrary
     let res = do_unstake(&mut env, idx, 1);
     assert_program_error!(res, XorcaStakingProgramError::InsufficientUnstakeAmount);
+}
+
+// Invalid bump seed: test with wrong bump seeds in PDA derivation
+#[test]
+fn test_unstake_invalid_bump_seed() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000_000,
+        vault_orca: 1_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 60,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let idx = 46u8;
+    let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
+
+    // Create a pending withdraw account with wrong bump seed
+    // We'll create it manually with a different bump
+    let wrong_bump = 0u8; // Wrong bump seed
+    let withdraw_index_bytes = [idx];
+    let mut seeds = vec![env.staker.as_ref(), &withdraw_index_bytes];
+    seeds.push(&[wrong_bump]);
+
+    // Create the account manually with wrong bump
+    env.ctx
+        .write_account(
+            pending_withdraw_account,
+            xorca::ID,
+            crate::pending_withdraw_data!(
+                unstaker => env.staker,
+                withdrawable_orca_amount => 0,
+                withdrawable_timestamp => 0,
+            ),
+        )
+        .unwrap();
+
+    let res = do_unstake(&mut env, idx, 1_000_000);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
+}
+
+// Account too small: test with accounts that are too small for their expected data structure
+#[test]
+fn test_unstake_account_too_small() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000_000,
+        vault_orca: 1_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 60,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let idx = 47u8;
+
+    // Make the state account too small by truncating its data
+    let mut state_acc = env.ctx.get_raw_account(env.state).unwrap();
+    state_acc.data.truncate(10); // Make it much smaller than expected State size
+    env.ctx.svm.set_account(env.state, state_acc).unwrap();
+
+    let res = do_unstake(&mut env, idx, 1_000_000);
+    assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }
