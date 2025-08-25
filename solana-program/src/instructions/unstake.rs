@@ -163,7 +163,7 @@ pub fn process_instruction(
     let current_unix_timestamp = get_current_unix_timestamp()?;
     let withdrawable_timestamp = current_unix_timestamp
         .checked_add(state.cool_down_period_s)
-        .ok_or(ErrorCode::ArithmeticError)?;
+        .ok_or(ErrorCode::CoolDownOverflow)?;
     pending_withdraw_data.withdrawable_timestamp = withdrawable_timestamp;
 
     Event::Unstake {

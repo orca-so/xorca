@@ -61,6 +61,9 @@ pub enum XorcaStakingProgramError {
     /// 6016 - Insufficient escrow to cover withdraw amount
     #[error("Insufficient escrow to cover withdraw amount")]
     InsufficientEscrow = 0x1780,
+    /// 6017 - Cooldown timestamp overflowed
+    #[error("Cooldown timestamp overflowed")]
+    CoolDownOverflow = 0x1781,
 }
 
 impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {

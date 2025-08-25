@@ -51,6 +51,9 @@ pub enum ErrorCode {
 
     #[error("Insufficient escrow to cover withdraw amount")]
     InsufficientEscrow = 6016, // 0x1780
+
+    #[error("Cooldown timestamp overflowed")]
+    CoolDownOverflow = 6017, // 0x1781
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {

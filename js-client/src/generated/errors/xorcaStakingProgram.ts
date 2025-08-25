@@ -48,9 +48,12 @@ export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_STAKE_AMOUNT = 0x177e; //
 export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_UNSTAKE_AMOUNT = 0x177f; // 6015
 /** InsufficientEscrow: Insufficient escrow to cover withdraw amount */
 export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_ESCROW = 0x1780; // 6016
+/** CoolDownOverflow: Cooldown timestamp overflowed */
+export const XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_OVERFLOW = 0x1781; // 6017
 
 export type XorcaStakingProgramError =
   | typeof XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR
+  | typeof XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_OVERFLOW
   | typeof XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_PERIOD_STILL_ACTIVE
   | typeof XORCA_STAKING_PROGRAM_ERROR__EMIT_EVENT_ERROR
   | typeof XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS
@@ -72,6 +75,7 @@ let xorcaStakingProgramErrorMessages: Record<XorcaStakingProgramError, string> |
 if (process.env.NODE_ENV !== 'production') {
   xorcaStakingProgramErrorMessages = {
     [XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR]: `Arithmetic error`,
+    [XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_OVERFLOW]: `Cooldown timestamp overflowed`,
     [XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_PERIOD_STILL_ACTIVE]: `Cool down period still active`,
     [XORCA_STAKING_PROGRAM_ERROR__EMIT_EVENT_ERROR]: `Event serialization failed`,
     [XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS]: `Invalid account address`,

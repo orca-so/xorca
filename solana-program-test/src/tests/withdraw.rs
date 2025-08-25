@@ -1694,8 +1694,8 @@ fn test_withdraw_timestamp_overflow() {
 
     let idx = 24u8;
     let res = do_unstake(&mut env, idx, 1_000_000);
-    // This should fail with arithmetic error due to timestamp overflow
-    assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
+    // This should fail with CoolDownOverflow due to timestamp overflow
+    assert_program_error!(res, XorcaStakingProgramError::CoolDownOverflow);
 }
 
 // Account closure failure: test when closing the pending withdraw account fails

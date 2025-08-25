@@ -685,7 +685,7 @@ fn test_unstake_cool_down_period_overflow() {
 
     let idx = 43u8;
     let res = do_unstake(&mut env, idx, 1_000_000);
-    assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
+    assert_program_error!(res, XorcaStakingProgramError::CoolDownOverflow);
 }
 
 // u128 overflow in conversion: test with values that could cause u128 overflow in convert_xorca_to_orca
