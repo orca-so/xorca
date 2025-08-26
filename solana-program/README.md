@@ -13,6 +13,7 @@ A Solana program that implements a staking pool model for ORCA with a liquid sta
   - **Pinocchio**: Implemented with Pinocchio primitives (account assertions, PDA derivation, CPI invocations).
 
 ### Table of Contents
+
 - Accounts Overview (Primary, Derived/Secondary)
 - Account Relationship Diagram
 - Instructions Overview (grouped by lifecycle)
@@ -23,7 +24,9 @@ A Solana program that implements a staking pool model for ORCA with a liquid sta
 ### Accounts Overview
 
 - **Primary**
+
   - **State**
+
     - **Purpose**: Global configuration and authority for the staking pool; acts as mint authority for xORCA and as signing authority for vault transfers via PDA.
     - **Lifecycle**: Created during initialization; persistent. Size: 2048 bytes.
     - **Critical fields**:
@@ -80,7 +83,9 @@ graph TD
 ### Instructions Overview
 
 - **Pool/Config Management**
+
   - **Initialize**
+
     - **Preconditions**:
       - `xORCA` mint address must equal `XORCA_MINT_ID`; supply must be 0; mint authority must be the `State` PDA; freeze authority must be unset.
       - `ORCA` mint address must equal `ORCA_MINT_ID`.
@@ -98,7 +103,9 @@ graph TD
     - **Postconditions**: Applies the specified update.
 
 - **Staking Lifecycle**
+
   - **Stake**
+
     - **Preconditions**:
       - Staker signs; staker ORCA ATA has at least `orca_stake_amount`.
       - `State` PDA present and valid; `Vault` ORCA ATA must match ATA derivation for owner=`State` and mint=`ORCA`.
@@ -109,6 +116,7 @@ graph TD
       - Mints xORCA to staker xORCA ATA proportional to pool share: see conversion below.
 
   - **Unstake**
+
     - **Preconditions**:
       - Unstaker signs; unstaker xORCA ATA has at least `xorca_unstake_amount`.
       - `State` PDA present and writable; `Vault` ORCA ATA valid.
@@ -136,11 +144,13 @@ graph TD
 ### Authorization/Permission System
 
 - **Components**
+
   - **Update authority**: `State.update_authority` must sign to call `Set`.
   - **State PDA**: Serves as mint authority for xORCA and authority over the vault; program signs via seeds.
   - **Initial authority constraint**: During `Initialize`, the provided `update_authority_account` must equal a built-in constant; this becomes `State.update_authority`.
 
 - **Validation flow**
+
   - All instructions validate signer roles and writability for relevant accounts.
   - PDAs are checked via seeds and bump reproduction for `State`, `PendingWithdraw`, and the ATA vault address.
   - Token accounts and mints are validated against expected owners and fixed mint addresses.
@@ -172,32 +182,34 @@ graph TD
 ### Security Considerations
 
 - **Authority boundaries**
+
   - Only `update_authority` may change cooldown or rotate itself via `Set`.
   - `State` PDA is the sole authority for minting xORCA and moving ORCA from the vault.
 
 - **Invariants and assertions**
+
   - xORCA mint address fixed; mint authority must be `State`; freeze authority must be unset; initial supply must be zero.
   - ORCA mint address fixed.
   - Vault must be the ATA for owner=`State` and mint=`ORCA`.
   - `escrowed_orca_amount` tracks the sum of all pending withdrawal amounts; increased on `Unstake`, decreased on `Withdraw`.
 
 - **Re-entrancy and CPI**
+
   - Uses standard System/Token/ATA CPIs; no cross-program invocations back into this program; no re-entrancy surfaces identified.
 
 - **Rent and cleanup**
+
   - Program-created accounts are rent-exempt on creation.
   - `PendingWithdraw` is closed on successful `Withdraw`, returning lamports to the user; no lingering transient PDAs expected.
 
 - **Precision and overflow bounds**
   - Conversion math uses u128 intermediates and checks for overflow.
-  - Decimals: ORCA has 6; xORCA has 9. When the pool is empty (`xorca_supply == 0` or `non_escrowed_orca == 0`), stake mints `orca_amount * 1_000` xORCA (1:1 scaled by decimals).
+  - Decimals: ORCA has 6; xORCA has 6. When the pool is empty (`xorca_supply == 0` or `non_escrowed_orca == 0`), stake mints `orca_amount` xORCA (1:1).
 
 ### Conversion Details (for integrators)
 
 - **Stake (ORCA -> xORCA)**: If both `xorca_supply` and `non_escrowed_orca` are non-zero:
   - `xorca_to_mint = orca_amount * xorca_supply / non_escrowed_orca`
-  - Else: `xorca_to_mint = orca_amount * 1_000` (decimal alignment).
+  - Else: `xorca_to_mint = orca_amount`.
 - **Unstake (xORCA -> ORCA)**: Requires `xorca_supply > 0` and `non_escrowed_orca > 0`:
   - `withdrawable_orca = xorca_amount * non_escrowed_orca / xorca_supply`
-
-

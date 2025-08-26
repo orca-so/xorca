@@ -42,6 +42,21 @@ pub enum ErrorCode {
     EmitEventError = 6012, // 0x177C
     #[error("Invalid cooldown period: must be non-negative")]
     InvalidCoolDownPeriod = 6013, // 0x177D
+
+    #[error("Stake amount too small to mint any xORCA")]
+    InsufficientStakeAmount = 6014, // 0x177E
+
+    #[error("Unstake amount too small to receive any ORCA")]
+    InsufficientUnstakeAmount = 6015, // 0x177F
+
+    #[error("Insufficient escrow to cover withdraw amount")]
+    InsufficientEscrow = 6016, // 0x1780
+
+    #[error("Cooldown timestamp overflowed")]
+    CoolDownOverflow = 6017, // 0x1781
+
+    #[error("Insufficient vault backing (vault < escrow)")]
+    InsufficientVaultBacking = 6018, // 0x1782
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {

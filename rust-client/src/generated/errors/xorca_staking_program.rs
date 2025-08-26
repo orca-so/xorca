@@ -52,6 +52,21 @@ pub enum XorcaStakingProgramError {
     /// 6013 - Invalid cooldown period: must be non-negative
     #[error("Invalid cooldown period: must be non-negative")]
     InvalidCoolDownPeriod = 0x177D,
+    /// 6014 - Stake amount too small to mint any xORCA
+    #[error("Stake amount too small to mint any xORCA")]
+    InsufficientStakeAmount = 0x177E,
+    /// 6015 - Unstake amount too small to receive any ORCA
+    #[error("Unstake amount too small to receive any ORCA")]
+    InsufficientUnstakeAmount = 0x177F,
+    /// 6016 - Insufficient escrow to cover withdraw amount
+    #[error("Insufficient escrow to cover withdraw amount")]
+    InsufficientEscrow = 0x1780,
+    /// 6017 - Cooldown timestamp overflowed
+    #[error("Cooldown timestamp overflowed")]
+    CoolDownOverflow = 0x1781,
+    /// 6018 - Insufficient vault backing (vault < escrow)
+    #[error("Insufficient vault backing (vault < escrow)")]
+    InsufficientVaultBacking = 0x1782,
 }
 
 impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {

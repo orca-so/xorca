@@ -56,11 +56,18 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
     if xorca_mint_account_data.freeze_authority != pinocchio::pubkey::Pubkey::default() {
         return Err(ErrorCode::InvalidAccountData.into());
     }
+    // Enforce both ORCA and xORCA mints have 6 decimals
+    if xorca_mint_account_data.decimals != 6 {
+        return Err(ErrorCode::InvalidAccountData.into());
+    }
 
     // 4. Orca Mint Account Assertions
     assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    assert_external_account_data::<TokenMint>(orca_mint_account)?;
+    let orca_mint_account_data = assert_external_account_data::<TokenMint>(orca_mint_account)?;
     assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
+    if orca_mint_account_data.decimals != 6 {
+        return Err(ErrorCode::InvalidAccountData.into());
+    }
 
     // 5. Update Authority Account Assertions
     assert_account_address(update_authority_account, &INITIAL_UPGRADE_AUTHORITY_ID)?;

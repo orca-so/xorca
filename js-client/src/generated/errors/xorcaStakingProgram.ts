@@ -42,15 +42,30 @@ export const XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_PERIOD_STILL_ACTIVE = 0x177b
 export const XORCA_STAKING_PROGRAM_ERROR__EMIT_EVENT_ERROR = 0x177c; // 6012
 /** InvalidCoolDownPeriod: Invalid cooldown period: must be non-negative */
 export const XORCA_STAKING_PROGRAM_ERROR__INVALID_COOL_DOWN_PERIOD = 0x177d; // 6013
+/** InsufficientStakeAmount: Stake amount too small to mint any xORCA */
+export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_STAKE_AMOUNT = 0x177e; // 6014
+/** InsufficientUnstakeAmount: Unstake amount too small to receive any ORCA */
+export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_UNSTAKE_AMOUNT = 0x177f; // 6015
+/** InsufficientEscrow: Insufficient escrow to cover withdraw amount */
+export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_ESCROW = 0x1780; // 6016
+/** CoolDownOverflow: Cooldown timestamp overflowed */
+export const XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_OVERFLOW = 0x1781; // 6017
+/** InsufficientVaultBacking: Insufficient vault backing (vault < escrow) */
+export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_VAULT_BACKING = 0x1782; // 6018
 
 export type XorcaStakingProgramError =
   | typeof XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR
+  | typeof XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_OVERFLOW
   | typeof XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_PERIOD_STILL_ACTIVE
   | typeof XORCA_STAKING_PROGRAM_ERROR__EMIT_EVENT_ERROR
   | typeof XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS
   | typeof XORCA_STAKING_PROGRAM_ERROR__INCORRECT_OWNER
   | typeof XORCA_STAKING_PROGRAM_ERROR__INCORRECT_PROGRAM_ID
+  | typeof XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_ESCROW
   | typeof XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_FUNDS
+  | typeof XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_STAKE_AMOUNT
+  | typeof XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_UNSTAKE_AMOUNT
+  | typeof XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_VAULT_BACKING
   | typeof XORCA_STAKING_PROGRAM_ERROR__INVALID_ACCOUNT_DATA
   | typeof XORCA_STAKING_PROGRAM_ERROR__INVALID_ACCOUNT_ROLE
   | typeof XORCA_STAKING_PROGRAM_ERROR__INVALID_COOL_DOWN_PERIOD
@@ -63,12 +78,17 @@ let xorcaStakingProgramErrorMessages: Record<XorcaStakingProgramError, string> |
 if (process.env.NODE_ENV !== 'production') {
   xorcaStakingProgramErrorMessages = {
     [XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR]: `Arithmetic error`,
+    [XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_OVERFLOW]: `Cooldown timestamp overflowed`,
     [XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_PERIOD_STILL_ACTIVE]: `Cool down period still active`,
     [XORCA_STAKING_PROGRAM_ERROR__EMIT_EVENT_ERROR]: `Event serialization failed`,
     [XORCA_STAKING_PROGRAM_ERROR__INCORRECT_ACCOUNT_ADDRESS]: `Invalid account address`,
     [XORCA_STAKING_PROGRAM_ERROR__INCORRECT_OWNER]: `Incorrect owner`,
     [XORCA_STAKING_PROGRAM_ERROR__INCORRECT_PROGRAM_ID]: `Incorrect program id`,
+    [XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_ESCROW]: `Insufficient escrow to cover withdraw amount`,
     [XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_FUNDS]: `Insufficient funds error`,
+    [XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_STAKE_AMOUNT]: `Stake amount too small to mint any xORCA`,
+    [XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_UNSTAKE_AMOUNT]: `Unstake amount too small to receive any ORCA`,
+    [XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_VAULT_BACKING]: `Insufficient vault backing (vault < escrow)`,
     [XORCA_STAKING_PROGRAM_ERROR__INVALID_ACCOUNT_DATA]: `Invalid account data`,
     [XORCA_STAKING_PROGRAM_ERROR__INVALID_ACCOUNT_ROLE]: `Invalid account role`,
     [XORCA_STAKING_PROGRAM_ERROR__INVALID_COOL_DOWN_PERIOD]: `Invalid cooldown period: must be non-negative`,
