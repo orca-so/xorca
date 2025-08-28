@@ -52,7 +52,7 @@ pub struct Env {
 
 impl Env {
     pub fn new(mut ctx: TestContext, pool: &PoolSetup, user: &UserSetup) -> Self {
-        let state = find_state_address().unwrap().0;
+        let (state, state_bump) = find_state_address().unwrap();
         let staker = ctx.signer();
         let vault = Pubkey::find_program_address(
             &[
@@ -90,6 +90,7 @@ impl Env {
                 escrowed_orca_amount => pool.escrowed_orca,
                 update_authority => Pubkey::default(),
                 cool_down_period_s => pool.cool_down_period_s,
+                bump => state_bump,
             ),
         )
         .unwrap();

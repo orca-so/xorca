@@ -35,21 +35,37 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     assert_account_role(state_account, &[AccountRole::Writable])?;
     assert_account_owner(state_account, &crate::ID)?;
     let mut state_seeds = State::seeds();
-    let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
-    state_seeds.push(Seed::from(&state_bump));
+    let state_bump_value: u8 = {
+        let view = assert_account_data::<State>(state_account)?;
+        view.bump
+    };
+
+    State::verify_address_with_bump(state_account, &crate::ID, state_bump_value)
+        .map_err(|_| ErrorCode::InvalidSeeds)?;
+
+    let bump_bytes = [state_bump_value];
+    state_seeds.push(Seed::from(&bump_bytes));
 
     // 3. Pending Withdraw Account Assertions
     assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
     assert_account_owner(pending_withdraw_account, &crate::ID)?;
     let withdraw_index_bytes = [*withdraw_index];
-    let mut pending_withdraw_seeds =
-        PendingWithdraw::seeds(unstaker_account.key(), &withdraw_index_bytes);
-    let pending_withdraw_bump = assert_account_seeds(
+    // Prefer cached bump from account data if present; else compute and verify
+    let pending_withdraw_bump_byte = {
+        let data = assert_account_data::<PendingWithdraw>(pending_withdraw_account)?;
+        data.bump
+    };
+
+    // Use derive_address for verification when we have the stored bump
+    PendingWithdraw::verify_address_with_bump(
         pending_withdraw_account,
+        unstaker_account.key(),
+        &withdraw_index_bytes,
         &crate::ID,
-        &pending_withdraw_seeds,
-    )?;
-    pending_withdraw_seeds.push(Seed::from(&pending_withdraw_bump));
+        pending_withdraw_bump_byte,
+    )
+    .map_err(|_| ErrorCode::InvalidSeeds)?;
+
     let (withdrawable_orca_amount, withdrawable_timestamp) = {
         let pending_withdraw_data =
             assert_account_data::<PendingWithdraw>(pending_withdraw_account)?;

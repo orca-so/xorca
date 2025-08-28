@@ -1,6 +1,9 @@
 use borsh::{BorshDeserialize, BorshSerialize};
 use pinocchio::{instruction::Seed, pubkey::Pubkey};
+use pinocchio_pubkey::derive_address;
 use shank::ShankAccount;
+
+use crate::error::ErrorCode;
 
 use super::{AccountDiscriminator, ProgramAccount};
 
@@ -12,13 +15,15 @@ pub struct PendingWithdraw {
     pub discriminator: AccountDiscriminator, // 1 byte
     // Explicit padding to ensure that the next field (u64) is 8-byte aligned
     // in memory when #[repr(C)] is used.
-    // Calculation: 8 (desired alignment) - 1 (discriminator size) = 7 bytes.
-    pub padding1: [u8; 7],
+    // Calculation: use 6 bytes + 1-byte bump to reach 8-byte alignment.
+    pub padding1: [u8; 6],
+    // Cached bump for PDA derivation of this pending withdraw account
+    pub bump: u8,                      // 1 byte
     pub unstaker: Pubkey,              // 32 bytes
     pub withdrawable_orca_amount: u64, // 8 bytes
     pub withdrawable_timestamp: i64,   // 8 bytes
     // Remaining bytes to fill PENDING_WITHDRAW_LEN
-    // Calculation: PENDING_WITHDRAW_LEN - (1 + 7 + 32 + 8 + 8) = 1024 - 56 = 968 bytes.
+    // Calculation: PENDING_WITHDRAW_LEN - (1 + 6 + 1 + 32 + 8 + 8) = 968 bytes.
     pub padding2: [u8; 968],
 }
 
@@ -26,7 +31,8 @@ impl Default for PendingWithdraw {
     fn default() -> Self {
         Self {
             discriminator: AccountDiscriminator::PendingWithdraw,
-            padding1: [0; 7],
+            padding1: [0; 6],
+            bump: 0,
             unstaker: [0; 32],
             withdrawable_orca_amount: 0,
             withdrawable_timestamp: 0,
@@ -36,6 +42,26 @@ impl Default for PendingWithdraw {
 }
 
 impl PendingWithdraw {
+    /// Verify the pending withdraw PDA address using pinocchio-pubkey's derive_address with stored bump
+    pub fn verify_address_with_bump(
+        account: &pinocchio::account_info::AccountInfo,
+        unstaker: &Pubkey,
+        withdraw_index: &[u8],
+        program_id: &Pubkey,
+        stored_bump: u8,
+    ) -> Result<(), ErrorCode> {
+        let derived_address = derive_address(
+            &[b"pending_withdraw", unstaker.as_ref(), withdraw_index],
+            Some(stored_bump),
+            program_id,
+        );
+        if account.key() != &derived_address {
+            return Err(ErrorCode::InvalidSeeds.into());
+        }
+        Ok(())
+    }
+
+    /// Get seeds for backward compatibility with existing assert_account_seeds calls
     pub fn seeds<'a>(unstaker: &'a Pubkey, withdraw_index: &'a [u8]) -> Vec<Seed<'a>> {
         vec![
             Seed::from(b"pending_withdraw"),
@@ -61,7 +87,8 @@ mod tests {
         // are correctly serialized/deserialized and reinterpreted.
         let expected = PendingWithdraw {
             discriminator: AccountDiscriminator::PendingWithdraw,
-            padding1: [0xAA; 7],
+            padding1: [0xAA; 6],
+            bump: 0x45,
             unstaker: Pubkey::default(),
             withdrawable_orca_amount: 0x1122334455667788,
             withdrawable_timestamp: 0x0123456789ABCDEF,
@@ -121,7 +148,8 @@ mod tests {
     #[test]
     fn test_pending_withdraw_calculated_sizes() {
         let core_data_with_internal_padding_size: usize = size_of::<AccountDiscriminator>() // 1 byte
-            + size_of::<[u8; 7]>() // 7 bytes (padding1)
+            + size_of::<[u8; 6]>() // 6 bytes (padding1)
+            + size_of::<u8>() // 1 byte (bump)
             + size_of::<u64>() // 8 bytes
             + size_of::<i64>(); // 8 bytes
         assert_eq!(core_data_with_internal_padding_size, 24);

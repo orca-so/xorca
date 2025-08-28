@@ -9,7 +9,7 @@ use pinocchio::{
     account_info::{AccountInfo, Ref, RefMut},
     instruction::Seed,
     program_error::ProgramError,
-    pubkey::{find_program_address, Pubkey},
+    pubkey::{create_program_address, find_program_address, Pubkey},
     ProgramResult,
 };
 use pinocchio_log::log;
@@ -89,6 +89,31 @@ pub fn assert_account_seeds(
         return Err(ErrorCode::InvalidSeeds.into());
     }
     Ok([bump])
+}
+
+pub fn assert_account_seeds_with_bump(
+    account: &AccountInfo,
+    program_id: &Pubkey,
+    seeds: &[Seed],
+    bump: u8,
+) -> ProgramResult {
+    let mut seed_bytes = seeds
+        .iter()
+        .map(|seed| seed.as_ref())
+        .collect::<Vec<&[u8]>>();
+    let bump_bytes = [bump];
+    seed_bytes.push(&bump_bytes);
+
+    let address =
+        create_program_address(&seed_bytes, program_id).map_err(|_| ErrorCode::InvalidSeeds)?;
+    if account.key() != &address {
+        log!(
+            "Account {} has wrong seeds",
+            account.key().to_base58().as_str()
+        );
+        return Err(ErrorCode::InvalidSeeds.into());
+    }
+    Ok(())
 }
 
 pub fn assert_account_address(account: &impl Key, address: &Pubkey) -> ProgramResult {

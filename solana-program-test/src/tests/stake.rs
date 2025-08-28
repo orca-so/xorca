@@ -8,7 +8,8 @@ use crate::{
 };
 use solana_sdk::pubkey::Pubkey;
 use xorca::{
-    Event, Stake, StakeInstructionArgs, TokenAccount, TokenMint, XorcaStakingProgramError,
+    find_state_address, Event, Stake, StakeInstructionArgs, TokenAccount, TokenMint,
+    XorcaStakingProgramError,
 };
 
 // Fresh deployment path: supply=0, non_escrowed=0 → initial exchange rate
@@ -698,6 +699,7 @@ fn stake_invalid_state_account_owner() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Overwrite state with wrong owner
+    let (_, state_bump) = find_state_address().unwrap();
     env.ctx
         .write_account(
             env.state,
@@ -706,6 +708,7 @@ fn stake_invalid_state_account_owner() {
                 escrowed_orca_amount => 0,
                 update_authority => Pubkey::default(),
                 cool_down_period_s => 7*24*60*60,
+                bump => state_bump,
             ),
         )
         .unwrap();
@@ -781,6 +784,7 @@ fn stake_underflow_non_escrowed_error() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     // Ensure state escrow is strictly greater than vault to force underflow
+    let (_, state_bump) = find_state_address().unwrap();
     env.ctx
         .write_account(
             env.state,
@@ -789,6 +793,7 @@ fn stake_underflow_non_escrowed_error() {
                 escrowed_orca_amount => u64::MAX,
                 update_authority => Pubkey::default(),
                 cool_down_period_s => pool.cool_down_period_s,
+                bump => state_bump,
             ),
         )
         .unwrap();
@@ -1131,6 +1136,7 @@ fn stake_invalid_state_account_seeds() {
                 escrowed_orca_amount => 0,
                 update_authority => Pubkey::default(),
                 cool_down_period_s => 7*24*60*60,
+                bump => 0, // Wrong bump for invalid state
             ),
         )
         .unwrap();

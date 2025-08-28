@@ -25,6 +25,8 @@ import {
   getStructEncoder,
   getU64Decoder,
   getU64Encoder,
+  getU8Decoder,
+  getU8Encoder,
   transformEncoder,
   type Account,
   type Address,
@@ -53,6 +55,7 @@ export function getStateDiscriminatorBytes() {
 export type State = {
   discriminator: AccountDiscriminator;
   padding1: ReadonlyUint8Array;
+  bump: number;
   escrowedOrcaAmount: bigint;
   coolDownPeriodS: bigint;
   updateAuthority: Address;
@@ -61,6 +64,7 @@ export type State = {
 
 export type StateArgs = {
   padding1?: ReadonlyUint8Array;
+  bump: number;
   escrowedOrcaAmount: number | bigint;
   coolDownPeriodS: number | bigint;
   updateAuthority: Address;
@@ -71,7 +75,8 @@ export function getStateEncoder(): Encoder<StateArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getAccountDiscriminatorEncoder()],
-      ['padding1', fixEncoderSize(getBytesEncoder(), 7)],
+      ['padding1', fixEncoderSize(getBytesEncoder(), 6)],
+      ['bump', getU8Encoder()],
       ['escrowedOrcaAmount', getU64Encoder()],
       ['coolDownPeriodS', getI64Encoder()],
       ['updateAuthority', getAddressEncoder()],
@@ -80,7 +85,7 @@ export function getStateEncoder(): Encoder<StateArgs> {
     (value) => ({
       ...value,
       discriminator: STATE_DISCRIMINATOR,
-      padding1: value.padding1 ?? new Uint8Array([0, 0, 0, 0, 0, 0, 0]),
+      padding1: value.padding1 ?? new Uint8Array([0, 0, 0, 0, 0, 0]),
       padding2:
         value.padding2 ??
         new Uint8Array([
@@ -159,7 +164,8 @@ export function getStateEncoder(): Encoder<StateArgs> {
 export function getStateDecoder(): Decoder<State> {
   return getStructDecoder([
     ['discriminator', getAccountDiscriminatorDecoder()],
-    ['padding1', fixDecoderSize(getBytesDecoder(), 7)],
+    ['padding1', fixDecoderSize(getBytesDecoder(), 6)],
+    ['bump', getU8Decoder()],
     ['escrowedOrcaAmount', getU64Decoder()],
     ['coolDownPeriodS', getI64Decoder()],
     ['updateAuthority', getAddressDecoder()],

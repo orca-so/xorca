@@ -45,13 +45,11 @@ pub fn process_instruction(
     // 2. xOrca State Account Assertions
     assert_account_role(state_account, &[AccountRole::Writable])?;
     assert_account_owner(state_account, &crate::ID)?;
-    let mut state_seeds = State::seeds();
-    let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
-    state_seeds.push(Seed::from(&state_bump));
+    // No CPI signed by state in this instruction; only verify owner
+    // Snapshot initial escrowed amount in its own short-lived borrow
     let initial_escrowed_orca_amount = {
-        // Use a block to control scope
-        let state_ref = assert_account_data::<State>(state_account)?;
-        state_ref.escrowed_orca_amount
+        let view = assert_account_data::<State>(state_account)?;
+        view.escrowed_orca_amount
     };
 
     // 3. Vault Account Assertions
@@ -141,7 +139,6 @@ pub fn process_instruction(
     };
     burn_instruction.invoke()?;
 
-    // Add the unstake ORCA amount to escrowed ORCA amount
     // Ensure state wasn't manipulated since initial read
     {
         let current_state_view = assert_account_data::<State>(state_account)?;
@@ -149,6 +146,7 @@ pub fn process_instruction(
             return Err(ErrorCode::InvalidAccountData.into());
         }
     }
+    // Add the unstake ORCA amount to escrowed ORCA amount
     let mut state = assert_account_data_mut::<State>(state_account)?;
     state.escrowed_orca_amount = state
         .escrowed_orca_amount
@@ -164,6 +162,7 @@ pub fn process_instruction(
     )?;
 
     // Populate pending withdraw account data
+    pending_withdraw_data.bump = pending_withdraw_bump[0];
     pending_withdraw_data.unstaker = *unstaker_account.key();
     pending_withdraw_data.withdrawable_orca_amount = withdrawable_orca_amount;
     let current_unix_timestamp = get_current_unix_timestamp()?;

@@ -81,6 +81,7 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
         return Err(ErrorCode::InvalidCoolDownPeriod.into());
     }
     state_data.cool_down_period_s = *cool_down_period_s;
+    state_data.bump = state_bump[0];
     state_data.update_authority = *update_authority_account.key();
 
     create_program_account_borsh(

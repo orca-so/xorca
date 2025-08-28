@@ -14,7 +14,8 @@ use solana_program::pubkey::Pubkey;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct State {
     pub discriminator: AccountDiscriminator,
-    pub padding1: [u8; 7],
+    pub padding1: [u8; 6],
+    pub bump: u8,
     pub escrowed_orca_amount: u64,
     pub cool_down_period_s: i64,
     #[cfg_attr(

@@ -1,3 +1,4 @@
+mod bump_edge_cases;
 mod initialize;
 mod set;
 mod stake;

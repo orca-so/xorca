@@ -10,8 +10,8 @@ use crate::{
 use solana_sdk::clock::Clock;
 use solana_sdk::pubkey::Pubkey;
 use xorca::{
-    find_pending_withdraw_pda, Event, PendingWithdraw, State, TokenAccount, Withdraw,
-    WithdrawInstructionArgs, XorcaStakingProgramError,
+    find_pending_withdraw_pda, find_state_address, Event, PendingWithdraw, State, TokenAccount,
+    Withdraw, WithdrawInstructionArgs, XorcaStakingProgramError,
 };
 
 // Mirror structure of stake tests: success, edge cases, account validation
@@ -1326,7 +1326,7 @@ fn withdraw_invalid_pending_withdraw_account_seeds() {
     ctx2.write_account(
         bogus_pending,
         xorca::ID,
-        crate::pending_withdraw_data!(unstaker => env.staker, withdrawable_orca_amount => withdrawable_orca_amount, withdrawable_timestamp => withdrawable_timestamp)
+        crate::pending_withdraw_data!(unstaker => env.staker, withdrawable_orca_amount => withdrawable_orca_amount, withdrawable_timestamp => withdrawable_timestamp, bump => 0)
     ).unwrap();
     // Attempt withdraw using bogus pending account
     let res = {
@@ -1654,6 +1654,7 @@ fn test_withdraw_insufficient_escrow_error() {
     }
     // Manipulate state to have escrow much less than withdrawable amount
     // This should cause arithmetic error when trying to subtract
+    let (_, state_bump) = find_state_address().unwrap();
     env.ctx
         .write_account(
             env.state,
@@ -1662,6 +1663,7 @@ fn test_withdraw_insufficient_escrow_error() {
                 escrowed_orca_amount => 0, // Zero escrow, but withdrawable amount is much larger
                 update_authority => Pubkey::default(),
                 cool_down_period_s => pool.cool_down_period_s,
+                bump => state_bump,
             ),
         )
         .unwrap();

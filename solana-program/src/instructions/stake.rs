@@ -66,9 +66,13 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
     // 6. State Account Assertions
     assert_account_owner(state_account, &crate::ID)?;
     let mut state_seeds = State::seeds();
-    let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
-    state_seeds.push(Seed::from(&state_bump));
-    let state = assert_account_data::<State>(state_account)?;
+    let state_view = assert_account_data::<State>(state_account)?;
+    State::verify_address_with_bump(state_account, &crate::ID, state_view.bump)
+        .map_err(|_| ErrorCode::InvalidSeeds)?;
+
+    let bump_bytes = [state_view.bump];
+    state_seeds.push(Seed::from(&bump_bytes));
+    let state = state_view;
 
     // 7. Orca Mint Account Assertions
     assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
