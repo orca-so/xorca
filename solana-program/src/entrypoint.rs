@@ -8,10 +8,10 @@ use crate::{
 };
 
 #[cfg(target_os = "solana")]
-use pinocchio::{default_allocator, default_panic_handler, program_entrypoint};
+use pinocchio::entrypoint;
 
 #[cfg(target_os = "solana")]
-program_entrypoint!(process_instruction);
+entrypoint!(process_instruction);
 
 #[cfg(target_os = "solana")]
 default_allocator!();

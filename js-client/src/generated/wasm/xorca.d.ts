@@ -122,6 +122,7 @@ export type InitInput = RequestInfo | URL | Response | BufferSource | WebAssembl
 
 export interface InitOutput {
   readonly memory: WebAssembly.Memory;
+  readonly solana_program_init: () => void;
   readonly __wbg_message_free: (a: number, b: number) => void;
   readonly __wbg_get_message_recent_blockhash: (a: number) => number;
   readonly __wbg_set_message_recent_blockhash: (a: number, b: number) => void;
@@ -186,7 +187,6 @@ export interface InitOutput {
   readonly __wbg_instructions_free: (a: number, b: number) => void;
   readonly instructions_constructor: () => number;
   readonly instructions_push: (a: number, b: number) => void;
-  readonly solana_program_init: () => void;
   readonly __wbg_instruction_free: (a: number, b: number) => void;
   readonly __wbg_pubkey_free: (a: number, b: number) => void;
   readonly pubkey_constructor: (a: any) => [number, number, number];
