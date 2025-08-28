@@ -189,12 +189,6 @@ function debugString(val) {
 function isLikeNone(x) {
   return x === undefined || x === null;
 }
-
-function _assertClass(instance, klass) {
-  if (!(instance instanceof klass)) {
-    throw new Error(`expected instance of ${klass.name}`);
-  }
-}
 /**
  * Initialize Javascript logging and panic handler
  */
@@ -206,6 +200,12 @@ function takeFromExternrefTable0(idx) {
   const value = wasm.__wbindgen_export_2.get(idx);
   wasm.__externref_table_dealloc(idx);
   return value;
+}
+
+function _assertClass(instance, klass) {
+  if (!(instance instanceof klass)) {
+    throw new Error(`expected instance of ${klass.name}`);
+  }
 }
 
 function getArrayU8FromWasm0(ptr, len) {

@@ -663,7 +663,7 @@ fn test_unstake_partial_all_but_one_then_last() {
 }
 
 // Ensures the program rejects inconsistent backing: when `escrowed_orca_amount` exceeds the
-// vault balance, computing non-escrowed (vault - escrow) would underflow. 
+// vault balance, computing non-escrowed (vault - escrow) would underflow.
 #[test]
 fn test_unstake_insufficient_vault_backing_error() {
     let ctx = TestContext::new();
