@@ -13,12 +13,6 @@ use pinocchio::entrypoint;
 #[cfg(target_os = "solana")]
 entrypoint!(process_instruction);
 
-#[cfg(target_os = "solana")]
-default_allocator!();
-
-#[cfg(target_os = "solana")]
-default_panic_handler!();
-
 pub fn process_instruction(
     program_id: &Pubkey,
     accounts: &[AccountInfo],
