@@ -3,7 +3,9 @@ use crate::utils::assert::{
     take_withdraw_snapshot,
 };
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
-use crate::utils::flows::{do_unstake, do_withdraw, unstake_and_advance};
+use crate::utils::flows::{
+    advance_clock_env, do_unstake, do_withdraw, stake_orca, unstake_and_advance,
+};
 use crate::{
     assert_program_error, TestContext, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
 };
@@ -13,6 +15,7 @@ use xorca::{
     find_pending_withdraw_pda, find_state_address, Event, PendingWithdraw, State, TokenAccount,
     Withdraw, WithdrawInstructionArgs, XorcaStakingProgramError,
 };
+use xorca::{Set, SetInstructionArgs, StateUpdateInstruction};
 
 // Mirror structure of stake tests: success, edge cases, account validation
 
@@ -1819,4 +1822,141 @@ fn test_withdraw_wrong_program_id_in_state() {
     let res = do_withdraw(&mut env, pending_withdraw_account, idx);
     // This should fail because the state account has wrong program owner
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
+}
+
+// Verify that cooldown updates mid-flight are handled correctly - Old withdraws do not get updated, but new ones do.
+#[test]
+fn withdraw_cooldown_update_mid_flight_policy_change() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 10_000_000,
+        vault_orca: 10_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 10,
+    };
+    let user = UserSetup {
+        staker_orca: 5_000_000,
+        staker_xorca: 0,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+
+    // Seed update authority to signer so Set succeeds
+    let (_, state_bump) = find_state_address().unwrap();
+    let vault_bump: u8 = env
+        .ctx
+        .get_account::<State>(env.state)
+        .unwrap()
+        .data
+        .vault_bump;
+    env.ctx
+        .write_account(
+            env.state,
+            xorca::XORCA_STAKING_PROGRAM_ID,
+            crate::state_data!(
+                escrowed_orca_amount => 0,
+                update_authority => env.ctx.signer(),
+                cool_down_period_s => pool.cool_down_period_s,
+                bump => state_bump,
+                vault_bump => vault_bump,
+            ),
+        )
+        .unwrap();
+
+    // Stake to get xORCA tokens first
+    stake_orca(&mut env, 2_000_000, "initial stake for cooldown test");
+
+    // Create a pending withdraw at old cooldown (10s)
+    let idx_old = 40u8;
+    let pending_old = unstake_and_advance(&mut env, idx_old, 1_000_000, 0);
+    let old_pending_ts = env
+        .ctx
+        .get_account::<PendingWithdraw>(pending_old)
+        .unwrap()
+        .data
+        .withdrawable_timestamp;
+
+    // Update cooldown to a new value (e.g., 100s)
+    let ix_set = Set {
+        update_authority_account: env.ctx.signer(),
+        state_account: env.state,
+    }
+    .instruction(SetInstructionArgs {
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: 100,
+        },
+    });
+    assert!(env.ctx.send(ix_set).is_ok());
+
+    // New pending should use new cooldown value
+    let idx_new = 41u8;
+    let pending_new = unstake_and_advance(&mut env, idx_new, 500_000, 0);
+    let new_pending_ts = env
+        .ctx
+        .get_account::<PendingWithdraw>(pending_new)
+        .unwrap()
+        .data
+        .withdrawable_timestamp;
+
+    // Verify timestamps: new pending is strictly later (longer cooldown) or equal if clock advanced between ops
+    assert!(new_pending_ts >= old_pending_ts + (100 - 10));
+
+    // Advance to just before old cooldown maturity: old withdraw should still fail
+    advance_clock_env(&mut env, 9);
+    let res_old_early = do_withdraw(&mut env, pending_old, idx_old);
+    assert_program_error!(
+        res_old_early,
+        XorcaStakingProgramError::CoolDownPeriodStillActive
+    );
+
+    // Advance to satisfy old cooldown but not the new one
+    advance_clock_env(&mut env, 1);
+    let res_old_ok = do_withdraw(&mut env, pending_old, idx_old);
+    assert!(res_old_ok.is_ok());
+
+    // New pending should still be locked (we've only advanced ~10s total)
+    let res_new_early = do_withdraw(&mut env, pending_new, idx_new);
+    assert_program_error!(
+        res_new_early,
+        XorcaStakingProgramError::CoolDownPeriodStillActive
+    );
+}
+
+// Index reuse lifecycle: withdraw closes pending, then reuse the same index to create a fresh pending and withdraw again
+#[test]
+fn withdraw_index_reuse_lifecycle() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 5_000_000,
+        vault_orca: 5_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 2,
+    };
+    let user = UserSetup {
+        staker_orca: 2_000_000,
+        staker_xorca: 0,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+
+    // Stake to get xORCA tokens first
+    stake_orca(&mut env, 2_000_000, "initial stake for index reuse test");
+
+    let idx = 42u8;
+
+    // First cycle: create pending and withdraw
+    let pending1 = unstake_and_advance(&mut env, idx, 1_000_000, 3);
+    let res1 = do_withdraw(&mut env, pending1, idx);
+    assert!(res1.is_ok());
+    assert_account_closed(&env.ctx, pending1, "pending1 closed");
+
+    // Second cycle: reuse the same index; should create a fresh pending with new timestamp
+    let pending2 = unstake_and_advance(&mut env, idx, 500_000, 0);
+    // Ensure it's a different account instance by reading data and verifying bump/timestamp updated
+    let pend2 = env.ctx.get_account::<PendingWithdraw>(pending2).unwrap();
+    assert!(pend2.data.withdrawable_orca_amount > 0);
+
+    // Advance and withdraw the second pending
+    advance_clock_env(&mut env, pool.cool_down_period_s + 1);
+    let res2 = do_withdraw(&mut env, pending2, idx);
+    assert!(res2.is_ok());
+    assert_account_closed(&env.ctx, pending2, "pending2 closed");
 }

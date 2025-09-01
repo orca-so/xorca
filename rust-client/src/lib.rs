@@ -4,7 +4,7 @@
 mod generated;
 #[cfg(feature = "wasm")]
 mod math;
-mod pda;
+pub mod pda;
 
 pub use generated::accounts::*;
 pub use generated::errors::*;

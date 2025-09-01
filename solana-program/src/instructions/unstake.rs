@@ -105,8 +105,8 @@ pub fn process_instruction(
 
         // Verify vault address using stored vault_bump
         State::verify_vault_address_with_bump(
-            vault_account,
             state_account,
+            vault_account,
             orca_mint_account,
             state_view.vault_bump,
         )
