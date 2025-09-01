@@ -54,7 +54,8 @@ impl Env {
     pub fn new(mut ctx: TestContext, pool: &PoolSetup, user: &UserSetup) -> Self {
         let (state, state_bump) = find_state_address().unwrap();
         let staker = ctx.signer();
-        let (vault, vault_bump) = find_orca_vault_address(&state).unwrap();
+        let (vault, vault_bump) =
+            find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
         let staker_orca_ata = Pubkey::find_program_address(
             &[
                 &staker.to_bytes(),

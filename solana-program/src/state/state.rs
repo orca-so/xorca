@@ -1,4 +1,5 @@
 use super::{AccountDiscriminator, ProgramAccount};
+
 use borsh::{BorshDeserialize, BorshSerialize};
 use pinocchio::{instruction::Seed, pubkey::Pubkey};
 use pinocchio_pubkey::derive_address;
@@ -43,51 +44,45 @@ impl Default for State {
 }
 
 impl State {
-    /// Verify the pending withdraw PDA address using pinocchio-pubkey's derive_address with stored bump
+    pub fn seeds<'a>() -> Vec<Seed<'a>> {
+        crate::pda::seeds::state_seeds()
+    }
+
+    pub fn vault_seeds<'a>(
+        state_account: &'a pinocchio::account_info::AccountInfo,
+        orca_mint: &'a pinocchio::account_info::AccountInfo,
+    ) -> Vec<Seed<'a>> {
+        crate::pda::seeds::vault_seeds(state_account.key(), &pinocchio_token::ID, orca_mint.key())
+    }
+
     pub fn verify_address_with_bump(
         account: &pinocchio::account_info::AccountInfo,
         program_id: &Pubkey,
         stored_bump: u8,
     ) -> Result<(), ErrorCode> {
-        let derived_address = derive_address(&[b"state"], Some(stored_bump), program_id);
+        let derived_address = derive_address(
+            &crate::pda::seeds::state_seeds_raw(),
+            Some(stored_bump),
+            program_id,
+        );
         if account.key() != &derived_address {
             return Err(ErrorCode::InvalidSeeds.into());
         }
         Ok(())
     }
 
-    /// Get seeds for backward compatibility with existing assert_account_seeds calls
-    pub fn seeds<'a>() -> Vec<Seed<'a>> {
-        vec![Seed::from(b"state")]
-    }
-
-    /// Get vault seeds for ATA derivation
-    pub fn vault_seeds<'a>(
-        state_account: &'a pinocchio::account_info::AccountInfo,
-        orca_mint: &'a pinocchio::account_info::AccountInfo,
-    ) -> Vec<Seed<'a>> {
-        vec![
-            Seed::from(state_account.key()),
-            Seed::from(pinocchio_token::ID.as_ref()),
-            Seed::from(orca_mint.key()),
-        ]
-    }
-
-    /// Verify the vault ATA address using pinocchio-pubkey's derive_address with stored bump
     pub fn verify_vault_address_with_bump(
-        &self,
         state_account: &pinocchio::account_info::AccountInfo,
         vault_account: &pinocchio::account_info::AccountInfo,
         orca_mint: &pinocchio::account_info::AccountInfo,
         stored_vault_bump: u8,
     ) -> Result<(), ErrorCode> {
-        let vault_seeds = [
-            state_account.key().as_ref(),
-            pinocchio_token::ID.as_ref(),
-            orca_mint.key().as_ref(),
-        ];
         let derived_address = derive_address(
-            &vault_seeds,
+            &crate::pda::seeds::vault_seeds_raw(
+                state_account.key(),
+                &pinocchio_token::ID,
+                orca_mint.key(),
+            ),
             Some(stored_vault_bump),
             &pinocchio_associated_token_account::ID,
         );

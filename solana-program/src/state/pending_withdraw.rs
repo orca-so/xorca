@@ -42,7 +42,11 @@ impl Default for PendingWithdraw {
 }
 
 impl PendingWithdraw {
-    /// Verify the pending withdraw PDA address using pinocchio-pubkey's derive_address with stored bump
+    pub fn seeds<'a>(unstaker: &'a Pubkey, withdraw_index: &'a [u8]) -> Vec<Seed<'a>> {
+        let seed_slices = crate::pda::pending_withdraw_seeds(unstaker, withdraw_index);
+        seed_slices.into_iter().map(Seed::from).collect()
+    }
+
     pub fn verify_address_with_bump(
         account: &pinocchio::account_info::AccountInfo,
         unstaker: &Pubkey,
@@ -51,7 +55,7 @@ impl PendingWithdraw {
         stored_bump: u8,
     ) -> Result<(), ErrorCode> {
         let derived_address = derive_address(
-            &[b"pending_withdraw", unstaker.as_ref(), withdraw_index],
+            &crate::pda::pending_withdraw_seeds_raw(unstaker, withdraw_index),
             Some(stored_bump),
             program_id,
         );
@@ -59,12 +63,6 @@ impl PendingWithdraw {
             return Err(ErrorCode::InvalidSeeds.into());
         }
         Ok(())
-    }
-
-    /// Get seeds for backward compatibility with existing assert_account_seeds calls
-    pub fn seeds<'a>(unstaker: &'a Pubkey, withdraw_index: &'a [u8]) -> Vec<Seed<'a>> {
-        let seed_slices = crate::pda::pending_withdraw_seeds(unstaker, withdraw_index);
-        seed_slices.into_iter().map(Seed::from).collect()
     }
 }
 

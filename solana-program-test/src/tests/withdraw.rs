@@ -3,7 +3,9 @@ use crate::utils::assert::{
     take_withdraw_snapshot,
 };
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
-use crate::utils::flows::{advance_clock_env, do_unstake, do_withdraw, stake_orca, unstake_and_advance};
+use crate::utils::flows::{
+    advance_clock_env, do_unstake, do_withdraw, stake_orca, unstake_and_advance,
+};
 use crate::{
     assert_program_error, TestContext, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
 };
@@ -1901,7 +1903,10 @@ fn withdraw_cooldown_update_mid_flight_policy_change() {
     // Advance to just before old cooldown maturity: old withdraw should still fail
     advance_clock_env(&mut env, 9);
     let res_old_early = do_withdraw(&mut env, pending_old, idx_old);
-    assert_program_error!(res_old_early, XorcaStakingProgramError::CoolDownPeriodStillActive);
+    assert_program_error!(
+        res_old_early,
+        XorcaStakingProgramError::CoolDownPeriodStillActive
+    );
 
     // Advance to satisfy old cooldown but not the new one
     advance_clock_env(&mut env, 1);
@@ -1910,7 +1915,10 @@ fn withdraw_cooldown_update_mid_flight_policy_change() {
 
     // New pending should still be locked (we've only advanced ~10s total)
     let res_new_early = do_withdraw(&mut env, pending_new, idx_new);
-    assert_program_error!(res_new_early, XorcaStakingProgramError::CoolDownPeriodStillActive);
+    assert_program_error!(
+        res_new_early,
+        XorcaStakingProgramError::CoolDownPeriodStillActive
+    );
 }
 
 // Index reuse lifecycle: withdraw closes pending, then reuse the same index to create a fresh pending and withdraw again

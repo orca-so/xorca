@@ -44,7 +44,7 @@ fn initialize_sets_values_with_standard_values_success() {
     .unwrap();
 
     // Calculate vault account address
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -111,7 +111,7 @@ fn initialize_fails_with_wrong_update_authority_account() {
     let wrong_update = Pubkey::new_unique();
 
     // Calculate vault account address
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -171,7 +171,7 @@ fn initialize_fails_with_wrong_system_program_account() {
     let wrong_system = Pubkey::new_unique();
 
     // Calculate vault account address
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -243,7 +243,7 @@ fn initialize_fails_with_insufficient_lamports() {
     .unwrap();
 
     // Calculate vault account address
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -295,7 +295,7 @@ fn initialize_fails_when_xorca_mint_frozen() {
     ).unwrap();
 
     // Calculate vault account address
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -346,7 +346,7 @@ fn initialize_fails_when_xorca_mint_no_authority_flag() {
         )
     ).unwrap();
 
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -400,7 +400,7 @@ fn initialize_fails_when_xorca_mint_supply_nonzero() {
     .unwrap();
 
     // Calculate vault account address
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -453,7 +453,7 @@ fn initialize_fails_when_xorca_mint_wrong_owner() {
         ),
     )
     .unwrap();
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -507,7 +507,7 @@ fn initialize_fails_when_xorca_mint_wrong_address() {
         ),
     )
     .unwrap();
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -567,7 +567,7 @@ fn initialize_fails_when_state_already_initialized() {
     )
     .unwrap();
 
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
@@ -626,7 +626,7 @@ fn initialize_fails_with_wrong_state_owner() {
         ),
     )
     .unwrap();
-    let (vault_account, _) = find_orca_vault_address(&state).unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
