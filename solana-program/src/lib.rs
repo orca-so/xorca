@@ -4,6 +4,7 @@ pub mod entrypoint;
 pub mod error;
 pub mod event;
 pub mod instructions;
+pub mod pda;
 pub mod state;
 pub mod util;
 

@@ -75,8 +75,9 @@ impl State {
 
     /// Verify the vault ATA address using pinocchio-pubkey's derive_address with stored bump
     pub fn verify_vault_address_with_bump(
-        vault_account: &pinocchio::account_info::AccountInfo,
+        &self,
         state_account: &pinocchio::account_info::AccountInfo,
+        vault_account: &pinocchio::account_info::AccountInfo,
         orca_mint: &pinocchio::account_info::AccountInfo,
         stored_vault_bump: u8,
     ) -> Result<(), ErrorCode> {

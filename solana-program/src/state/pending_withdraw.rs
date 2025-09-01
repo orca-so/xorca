@@ -63,11 +63,8 @@ impl PendingWithdraw {
 
     /// Get seeds for backward compatibility with existing assert_account_seeds calls
     pub fn seeds<'a>(unstaker: &'a Pubkey, withdraw_index: &'a [u8]) -> Vec<Seed<'a>> {
-        vec![
-            Seed::from(b"pending_withdraw"),
-            Seed::from(unstaker),
-            Seed::from(withdraw_index),
-        ]
+        let seed_slices = crate::pda::pending_withdraw_seeds(unstaker, withdraw_index);
+        seed_slices.into_iter().map(Seed::from).collect()
     }
 }
 

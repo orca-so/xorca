@@ -104,13 +104,14 @@ pub fn process_instruction(
         let state_view = assert_account_data::<State>(state_account)?;
 
         // Verify vault address using stored vault_bump
-        State::verify_vault_address_with_bump(
-            vault_account,
-            state_account,
-            orca_mint_account,
-            state_view.vault_bump,
-        )
-        .map_err(|_| ErrorCode::InvalidSeeds)?;
+        state_view
+            .verify_vault_address_with_bump(
+                state_account,
+                vault_account,
+                orca_mint_account,
+                state_view.vault_bump,
+            )
+            .map_err(|_| ErrorCode::InvalidSeeds)?;
 
         state_view.escrowed_orca_amount
     };

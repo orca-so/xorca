@@ -44,13 +44,14 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
             .map_err(|_| ErrorCode::InvalidSeeds)?;
 
         // Verify vault address using stored vault_bump
-        State::verify_vault_address_with_bump(
-            vault_account,
-            state_account,
-            orca_mint_account,
-            state_view.vault_bump,
-        )
-        .map_err(|_| ErrorCode::InvalidSeeds)?;
+        state_view
+            .verify_vault_address_with_bump(
+                state_account,
+                vault_account,
+                orca_mint_account,
+                state_view.vault_bump,
+            )
+            .map_err(|_| ErrorCode::InvalidSeeds)?;
 
         state_view.bump
     };

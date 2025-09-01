@@ -95,18 +95,16 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
     )?;
 
     // Calculate vault bump for future verification
-    let (_, vault_bump) = find_program_address(
-        &[
-            state_account.key().as_ref(),
-            SPL_TOKEN_PROGRAM_ID.as_ref(),
-            orca_mint_account.key().as_ref(),
-        ],
-        &ASSOCIATED_TOKEN_PROGRAM_ID,
-    );
+    let vault_seeds = crate::pda::vault_seeds(state_account.key());
+    let (_, vault_bump) = find_program_address(&vault_seeds, &ASSOCIATED_TOKEN_PROGRAM_ID);
 
-    // Verify vault address using find_program_address (old method)
-    let vault_seeds = State::vault_seeds(state_account, orca_mint_account);
-    assert_account_seeds(vault_account, &ASSOCIATED_TOKEN_PROGRAM_ID, &vault_seeds)?;
+    // Verify vault address using centralized seeds
+    let vault_seed_objects: Vec<Seed> = vault_seeds.iter().map(|s| Seed::from(*s)).collect();
+    assert_account_seeds(
+        vault_account,
+        &ASSOCIATED_TOKEN_PROGRAM_ID,
+        &vault_seed_objects,
+    )?;
 
     // Create the State struct
     let mut state_data = State::default();

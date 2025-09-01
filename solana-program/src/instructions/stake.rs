@@ -65,13 +65,14 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
         .map_err(|_| ErrorCode::InvalidSeeds)?;
 
     // Verify vault address using stored vault_bump
-    State::verify_vault_address_with_bump(
-        vault_account,
-        state_account,
-        orca_mint_account,
-        state_view.vault_bump,
-    )
-    .map_err(|_| ErrorCode::InvalidSeeds)?;
+    state_view
+        .verify_vault_address_with_bump(
+            state_account,
+            vault_account,
+            orca_mint_account,
+            state_view.vault_bump,
+        )
+        .map_err(|_| ErrorCode::InvalidSeeds)?;
 
     let bump_bytes = [state_view.bump];
     state_seeds.push(Seed::from(&bump_bytes));

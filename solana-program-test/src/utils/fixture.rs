@@ -3,7 +3,7 @@ use crate::{
     TOKEN_PROGRAM_ID, XORCA_ID, XORCA_PROGRAM_ID,
 };
 use solana_sdk::pubkey::Pubkey;
-use xorca::find_state_address;
+use xorca::{find_orca_vault_address, find_state_address};
 // (reserved) test math helpers could be added here if needed
 
 /// Describe initial pool state in terms of supply, vault ORCA, escrowed ORCA, and cooldown.
@@ -54,15 +54,7 @@ impl Env {
     pub fn new(mut ctx: TestContext, pool: &PoolSetup, user: &UserSetup) -> Self {
         let (state, state_bump) = find_state_address().unwrap();
         let staker = ctx.signer();
-        let vault = Pubkey::find_program_address(
-            &[
-                &state.to_bytes(),
-                &TOKEN_PROGRAM_ID.to_bytes(),
-                &ORCA_ID.to_bytes(),
-            ],
-            &ATA_PROGRAM_ID,
-        )
-        .0;
+        let (vault, vault_bump) = find_orca_vault_address(&state).unwrap();
         let staker_orca_ata = Pubkey::find_program_address(
             &[
                 &staker.to_bytes(),
@@ -81,16 +73,6 @@ impl Env {
             &ATA_PROGRAM_ID,
         )
         .0;
-
-        // Calculate vault bump for state
-        let (_, vault_bump) = Pubkey::find_program_address(
-            &[
-                &state.to_bytes(),
-                &TOKEN_PROGRAM_ID.to_bytes(),
-                &ORCA_ID.to_bytes(),
-            ],
-            &ATA_PROGRAM_ID,
-        );
 
         // Write state
         ctx.write_account(
