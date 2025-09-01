@@ -681,6 +681,14 @@ fn test_unstake_insufficient_vault_backing_error() {
         staker_xorca: 1_000,
     };
     let mut env = Env::new(ctx, &pool, &user);
+
+    let vault_bump: u8 = env
+        .ctx
+        .get_account::<State>(env.state)
+        .unwrap()
+        .data
+        .vault_bump;
+
     // Force state escrow >> vault to guarantee non_escrowed underflow
     let (_, state_bump) = find_state_address().unwrap();
     env.ctx
@@ -692,6 +700,7 @@ fn test_unstake_insufficient_vault_backing_error() {
                 update_authority => Pubkey::default(),
                 cool_down_period_s => pool.cool_down_period_s,
                 bump => state_bump,
+                vault_bump => vault_bump,
             ),
         )
         .unwrap();
@@ -1039,7 +1048,7 @@ fn test_unstake_invalid_xorca_mint_address() {
         });
         env.ctx.send(ix)
     };
-    assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
 // Invalid ORCA mint address: wrong ORCA mint should be rejected (incorrect account address check).
@@ -1055,14 +1064,20 @@ fn test_unstake_invalid_orca_mint_address() {
     let idx = 5u8;
     let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
     let wrong_orca = Pubkey::new_unique();
-    env.ctx.write_account(
-        wrong_orca,
-        TOKEN_PROGRAM_ID, crate::token_mint_data!(supply => 0,
-            decimals => 6,
-            mint_authority_flag => 1,
-            mint_authority => Pubkey::default(), is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
-        ),
-    ).unwrap();
+    env.ctx
+        .write_account(
+            wrong_orca,
+            TOKEN_PROGRAM_ID,
+            crate::token_mint_data!(supply => 0,
+                decimals => 6,
+                mint_authority_flag => 1,
+                mint_authority => Pubkey::default(),
+                is_initialized => true,
+                freeze_authority_flag => 0,
+                freeze_authority => Pubkey::default(),
+            ),
+        )
+        .unwrap();
     let res = {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
@@ -1081,7 +1096,7 @@ fn test_unstake_invalid_orca_mint_address() {
         });
         env.ctx.send(ix)
     };
-    assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
 // Precision loss: unstake 1 lamport of xORCA at high exchange rate so withdrawable rounds to 0.

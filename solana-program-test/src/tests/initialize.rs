@@ -1,9 +1,21 @@
 use crate::{
-    assert_program_error, TestContext, INITIAL_UPDATE_AUTHORITY_ID, ORCA_ID, SYSTEM_PROGRAM_ID,
-    TOKEN_PROGRAM_ID, XORCA_ID,
+    assert_program_error, TestContext, ATA_PROGRAM_ID, INITIAL_UPDATE_AUTHORITY_ID, ORCA_ID,
+    SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
 };
 use solana_sdk::pubkey::Pubkey;
 use xorca::{find_state_address, Initialize, InitializeInstructionArgs, State, TokenMint};
+
+/// Helper function to calculate the ORCA vault address for a given state
+fn find_orca_vault_address(state: &Pubkey) -> (Pubkey, u8) {
+    Pubkey::find_program_address(
+        &[
+            &state.to_bytes(),
+            &TOKEN_PROGRAM_ID.to_bytes(),
+            &ORCA_ID.to_bytes(),
+        ],
+        &ATA_PROGRAM_ID,
+    )
+}
 
 #[test]
 fn initialize_sets_values_with_standard_values_success() {
@@ -40,6 +52,9 @@ fn initialize_sets_values_with_standard_values_success() {
     )
     .unwrap();
 
+    // Calculate vault account address
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -47,6 +62,9 @@ fn initialize_sets_values_with_standard_values_success() {
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 100,
@@ -100,6 +118,10 @@ fn initialize_fails_with_wrong_update_authority_account() {
     )
     .unwrap();
     let wrong_update = Pubkey::new_unique();
+
+    // Calculate vault account address
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -107,6 +129,9 @@ fn initialize_fails_with_wrong_update_authority_account() {
         orca_mint_account: ORCA_ID,
         update_authority_account: wrong_update,
         system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
@@ -153,6 +178,10 @@ fn initialize_fails_with_wrong_system_program_account() {
     )
     .unwrap();
     let wrong_system = Pubkey::new_unique();
+
+    // Calculate vault account address
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -160,6 +189,9 @@ fn initialize_fails_with_wrong_system_program_account() {
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: wrong_system,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
@@ -218,6 +250,10 @@ fn initialize_fails_with_insufficient_lamports() {
         ),
     )
     .unwrap();
+
+    // Calculate vault account address
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -225,6 +261,9 @@ fn initialize_fails_with_insufficient_lamports() {
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
@@ -263,6 +302,10 @@ fn initialize_fails_when_xorca_mint_frozen() {
             is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
         )
     ).unwrap();
+
+    // Calculate vault account address
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -270,6 +313,9 @@ fn initialize_fails_when_xorca_mint_frozen() {
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
@@ -308,6 +354,9 @@ fn initialize_fails_when_xorca_mint_no_authority_flag() {
             is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
         )
     ).unwrap();
+
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -315,6 +364,9 @@ fn initialize_fails_when_xorca_mint_no_authority_flag() {
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
@@ -355,6 +407,10 @@ fn initialize_fails_when_xorca_mint_supply_nonzero() {
         ),
     )
     .unwrap();
+
+    // Calculate vault account address
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -362,6 +418,9 @@ fn initialize_fails_when_xorca_mint_supply_nonzero() {
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
@@ -403,6 +462,8 @@ fn initialize_fails_when_xorca_mint_wrong_owner() {
         ),
     )
     .unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -410,6 +471,9 @@ fn initialize_fails_when_xorca_mint_wrong_owner() {
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
@@ -452,6 +516,8 @@ fn initialize_fails_when_xorca_mint_wrong_address() {
         ),
     )
     .unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -459,6 +525,9 @@ fn initialize_fails_when_xorca_mint_wrong_address() {
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
@@ -506,6 +575,9 @@ fn initialize_fails_when_state_already_initialized() {
         ),
     )
     .unwrap();
+
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -513,6 +585,9 @@ fn initialize_fails_when_state_already_initialized() {
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
@@ -560,6 +635,8 @@ fn initialize_fails_with_wrong_state_owner() {
         ),
     )
     .unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state);
+
     let ix = Initialize {
         payer_account: ctx.signer(),
         state_account: state,
@@ -567,6 +644,9 @@ fn initialize_fails_with_wrong_state_owner() {
         orca_mint_account: ORCA_ID,
         update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,

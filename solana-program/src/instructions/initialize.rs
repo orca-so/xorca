@@ -9,7 +9,10 @@ use crate::{
     state::state::State,
     util::account::{create_program_account_borsh, get_account_info},
 };
-use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
+use pinocchio::{
+    account_info::AccountInfo, instruction::Seed, pubkey::find_program_address, ProgramResult,
+};
+use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
 
@@ -20,6 +23,9 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
     let orca_mint_account = get_account_info(accounts, 3)?;
     let update_authority_account = get_account_info(accounts, 4)?;
     let system_program_account = get_account_info(accounts, 5)?;
+    let vault_account = get_account_info(accounts, 6)?;
+    let token_program_account = get_account_info(accounts, 7)?;
+    let associated_token_program_account = get_account_info(accounts, 8)?;
 
     // 1. Payer Account Assertions
     assert_account_role(payer_account, &[AccountRole::Signer, AccountRole::Writable])?;
@@ -75,6 +81,33 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
     // 6. System Program Account Assertions
     assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;
 
+    // 7. Vault Account Assertions
+    assert_account_role(vault_account, &[AccountRole::Writable])?;
+    assert_account_owner(vault_account, &SYSTEM_PROGRAM_ID)?;
+
+    // 8. Token Program Account Assertions
+    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    // 9. Associated Token Program Account Assertions
+    assert_account_address(
+        associated_token_program_account,
+        &ASSOCIATED_TOKEN_PROGRAM_ID,
+    )?;
+
+    // Calculate vault bump for future verification
+    let (_, vault_bump) = find_program_address(
+        &[
+            state_account.key().as_ref(),
+            SPL_TOKEN_PROGRAM_ID.as_ref(),
+            orca_mint_account.key().as_ref(),
+        ],
+        &ASSOCIATED_TOKEN_PROGRAM_ID,
+    );
+
+    // Verify vault address using find_program_address (old method)
+    let vault_seeds = State::vault_seeds(state_account, orca_mint_account);
+    assert_account_seeds(vault_account, &ASSOCIATED_TOKEN_PROGRAM_ID, &vault_seeds)?;
+
     // Create the State struct
     let mut state_data = State::default();
     if *cool_down_period_s < 0 {
@@ -82,6 +115,7 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
     }
     state_data.cool_down_period_s = *cool_down_period_s;
     state_data.bump = state_bump[0];
+    state_data.vault_bump = vault_bump;
     state_data.update_authority = *update_authority_account.key();
 
     create_program_account_borsh(
@@ -90,6 +124,33 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
         state_account,
         &[state_seeds.as_slice().into()],
         &state_data,
+    )?;
+
+    // Create the vault ATA using CPI
+    let create_ata_ix = pinocchio::instruction::Instruction {
+        program_id: &ASSOCIATED_TOKEN_PROGRAM_ID,
+        accounts: &[
+            pinocchio::instruction::AccountMeta::writable_signer(payer_account.key()),
+            pinocchio::instruction::AccountMeta::writable(vault_account.key()),
+            pinocchio::instruction::AccountMeta::readonly(state_account.key()),
+            pinocchio::instruction::AccountMeta::readonly(orca_mint_account.key()),
+            pinocchio::instruction::AccountMeta::readonly(system_program_account.key()),
+            pinocchio::instruction::AccountMeta::readonly(token_program_account.key()),
+            pinocchio::instruction::AccountMeta::readonly(&ASSOCIATED_TOKEN_PROGRAM_ID),
+        ],
+        data: &[],
+    };
+    pinocchio::program::invoke(
+        &create_ata_ix,
+        &[
+            payer_account,
+            vault_account,
+            state_account,
+            orca_mint_account,
+            system_program_account,
+            token_program_account,
+            associated_token_program_account,
+        ],
     )?;
 
     Ok(())

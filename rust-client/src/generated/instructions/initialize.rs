@@ -22,6 +22,12 @@ pub struct Initialize {
     pub update_authority_account: solana_program::pubkey::Pubkey,
 
     pub system_program_account: solana_program::pubkey::Pubkey,
+
+    pub vault_account: solana_program::pubkey::Pubkey,
+
+    pub token_program_account: solana_program::pubkey::Pubkey,
+
+    pub associated_token_program_account: solana_program::pubkey::Pubkey,
 }
 
 impl Initialize {
@@ -38,7 +44,7 @@ impl Initialize {
         args: InitializeInstructionArgs,
         remaining_accounts: &[solana_program::instruction::AccountMeta],
     ) -> solana_program::instruction::Instruction {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             self.payer_account,
             true,
@@ -61,6 +67,18 @@ impl Initialize {
         ));
         accounts.push(solana_program::instruction::AccountMeta::new_readonly(
             self.system_program_account,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            self.vault_account,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.token_program_account,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            self.associated_token_program_account,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -110,6 +128,9 @@ pub struct InitializeInstructionArgs {
 ///   3. `[]` orca_mint_account
 ///   4. `[]` update_authority_account
 ///   5. `[]` system_program_account
+///   6. `[writable]` vault_account
+///   7. `[]` token_program_account
+///   8. `[]` associated_token_program_account
 #[derive(Clone, Debug, Default)]
 pub struct InitializeBuilder {
     payer_account: Option<solana_program::pubkey::Pubkey>,
@@ -118,6 +139,9 @@ pub struct InitializeBuilder {
     orca_mint_account: Option<solana_program::pubkey::Pubkey>,
     update_authority_account: Option<solana_program::pubkey::Pubkey>,
     system_program_account: Option<solana_program::pubkey::Pubkey>,
+    vault_account: Option<solana_program::pubkey::Pubkey>,
+    token_program_account: Option<solana_program::pubkey::Pubkey>,
+    associated_token_program_account: Option<solana_program::pubkey::Pubkey>,
     cool_down_period_s: Option<i64>,
     __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
 }
@@ -169,6 +193,27 @@ impl InitializeBuilder {
         self
     }
     #[inline(always)]
+    pub fn vault_account(&mut self, vault_account: solana_program::pubkey::Pubkey) -> &mut Self {
+        self.vault_account = Some(vault_account);
+        self
+    }
+    #[inline(always)]
+    pub fn token_program_account(
+        &mut self,
+        token_program_account: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.token_program_account = Some(token_program_account);
+        self
+    }
+    #[inline(always)]
+    pub fn associated_token_program_account(
+        &mut self,
+        associated_token_program_account: solana_program::pubkey::Pubkey,
+    ) -> &mut Self {
+        self.associated_token_program_account = Some(associated_token_program_account);
+        self
+    }
+    #[inline(always)]
     pub fn cool_down_period_s(&mut self, cool_down_period_s: i64) -> &mut Self {
         self.cool_down_period_s = Some(cool_down_period_s);
         self
@@ -208,6 +253,13 @@ impl InitializeBuilder {
             system_program_account: self
                 .system_program_account
                 .expect("system_program_account is not set"),
+            vault_account: self.vault_account.expect("vault_account is not set"),
+            token_program_account: self
+                .token_program_account
+                .expect("token_program_account is not set"),
+            associated_token_program_account: self
+                .associated_token_program_account
+                .expect("associated_token_program_account is not set"),
         };
         let args = InitializeInstructionArgs {
             cool_down_period_s: self
@@ -233,6 +285,12 @@ pub struct InitializeCpiAccounts<'a, 'b> {
     pub update_authority_account: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub vault_account: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub token_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub associated_token_program_account: &'b solana_program::account_info::AccountInfo<'a>,
 }
 
 /// `initialize` CPI instruction.
@@ -251,6 +309,12 @@ pub struct InitializeCpi<'a, 'b> {
     pub update_authority_account: &'b solana_program::account_info::AccountInfo<'a>,
 
     pub system_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub vault_account: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub token_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+
+    pub associated_token_program_account: &'b solana_program::account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: InitializeInstructionArgs,
 }
@@ -269,6 +333,9 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             orca_mint_account: accounts.orca_mint_account,
             update_authority_account: accounts.update_authority_account,
             system_program_account: accounts.system_program_account,
+            vault_account: accounts.vault_account,
+            token_program_account: accounts.token_program_account,
+            associated_token_program_account: accounts.associated_token_program_account,
             __args: args,
         }
     }
@@ -306,7 +373,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             bool,
         )],
     ) -> solana_program::entrypoint::ProgramResult {
-        let mut accounts = Vec::with_capacity(6 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
         accounts.push(solana_program::instruction::AccountMeta::new(
             *self.payer_account.key,
             true,
@@ -331,6 +398,18 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             *self.system_program_account.key,
             false,
         ));
+        accounts.push(solana_program::instruction::AccountMeta::new(
+            *self.vault_account.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.token_program_account.key,
+            false,
+        ));
+        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+            *self.associated_token_program_account.key,
+            false,
+        ));
         remaining_accounts.iter().for_each(|remaining_account| {
             accounts.push(solana_program::instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
@@ -347,7 +426,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(7 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(10 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.payer_account.clone());
         account_infos.push(self.state_account.clone());
@@ -355,6 +434,9 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
         account_infos.push(self.orca_mint_account.clone());
         account_infos.push(self.update_authority_account.clone());
         account_infos.push(self.system_program_account.clone());
+        account_infos.push(self.vault_account.clone());
+        account_infos.push(self.token_program_account.clone());
+        account_infos.push(self.associated_token_program_account.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -377,6 +459,9 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
 ///   3. `[]` orca_mint_account
 ///   4. `[]` update_authority_account
 ///   5. `[]` system_program_account
+///   6. `[writable]` vault_account
+///   7. `[]` token_program_account
+///   8. `[]` associated_token_program_account
 #[derive(Clone, Debug)]
 pub struct InitializeCpiBuilder<'a, 'b> {
     instruction: Box<InitializeCpiBuilderInstruction<'a, 'b>>,
@@ -392,6 +477,9 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
             orca_mint_account: None,
             update_authority_account: None,
             system_program_account: None,
+            vault_account: None,
+            token_program_account: None,
+            associated_token_program_account: None,
             cool_down_period_s: None,
             __remaining_accounts: Vec::new(),
         });
@@ -443,6 +531,30 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
         system_program_account: &'b solana_program::account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.system_program_account = Some(system_program_account);
+        self
+    }
+    #[inline(always)]
+    pub fn vault_account(
+        &mut self,
+        vault_account: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.vault_account = Some(vault_account);
+        self
+    }
+    #[inline(always)]
+    pub fn token_program_account(
+        &mut self,
+        token_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.token_program_account = Some(token_program_account);
+        self
+    }
+    #[inline(always)]
+    pub fn associated_token_program_account(
+        &mut self,
+        associated_token_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.associated_token_program_account = Some(associated_token_program_account);
         self
     }
     #[inline(always)]
@@ -530,6 +642,21 @@ impl<'a, 'b> InitializeCpiBuilder<'a, 'b> {
                 .instruction
                 .system_program_account
                 .expect("system_program_account is not set"),
+
+            vault_account: self
+                .instruction
+                .vault_account
+                .expect("vault_account is not set"),
+
+            token_program_account: self
+                .instruction
+                .token_program_account
+                .expect("token_program_account is not set"),
+
+            associated_token_program_account: self
+                .instruction
+                .associated_token_program_account
+                .expect("associated_token_program_account is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -548,6 +675,9 @@ struct InitializeCpiBuilderInstruction<'a, 'b> {
     orca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     update_authority_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     system_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    vault_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    token_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    associated_token_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
     cool_down_period_s: Option<i64>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(

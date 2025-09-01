@@ -9,6 +9,15 @@ pub fn find_state_address() -> Result<(Pubkey, u8), ProgramError> {
         .ok_or(ProgramError::InvalidSeeds)
 }
 
+pub fn find_orca_vault_address(
+    state: &Pubkey,
+    orca_mint: &Pubkey,
+) -> Result<(Pubkey, u8), ProgramError> {
+    let seeds: &[&[u8]] = &[state.as_ref(), orca_mint.as_ref()];
+    Pubkey::try_find_program_address(seeds, &XORCA_STAKING_PROGRAM_ID)
+        .ok_or(ProgramError::InvalidSeeds)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

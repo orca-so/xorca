@@ -681,7 +681,7 @@ fn withdraw_invalid_orca_mint_address() {
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
     let res = env.ctx.send(ix);
-    assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
 // Wrong Token Program should fail
@@ -1652,6 +1652,14 @@ fn test_withdraw_insufficient_escrow_error() {
     if withdrawable_amount == 0 {
         panic!("Withdrawable amount is 0, cannot test arithmetic underflow");
     }
+
+    let vault_bump: u8 = env
+        .ctx
+        .get_account::<State>(env.state)
+        .unwrap()
+        .data
+        .vault_bump;
+
     // Manipulate state to have escrow much less than withdrawable amount
     // This should cause arithmetic error when trying to subtract
     let (_, state_bump) = find_state_address().unwrap();
@@ -1664,6 +1672,7 @@ fn test_withdraw_insufficient_escrow_error() {
                 update_authority => Pubkey::default(),
                 cool_down_period_s => pool.cool_down_period_s,
                 bump => state_bump,
+                vault_bump => vault_bump,
             ),
         )
         .unwrap();

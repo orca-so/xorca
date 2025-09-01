@@ -343,10 +343,10 @@ fn set_fails_on_negative_cooldown_fails() {
 #[test]
 fn set_fails_with_wrong_bump_in_state_data() {
     let mut ctx = TestContext::new();
-    
+
     // Create a bogus state account with wrong address but correct owner
     let bogus_state = solana_sdk::pubkey::Pubkey::new_unique();
-    
+
     // Use wrong bump in account data
     let wrong_bump = 0; // Wrong bump for bogus state
     ctx.write_account(
@@ -360,7 +360,7 @@ fn set_fails_with_wrong_bump_in_state_data() {
         ),
     )
     .unwrap();
-    
+
     let ix = Set {
         update_authority_account: ctx.signer(),
         state_account: bogus_state,
@@ -370,7 +370,7 @@ fn set_fails_with_wrong_bump_in_state_data() {
             new_cool_down_period_s: 500,
         },
     });
-    
+
     let res = ctx.send(ix);
     assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
 }
@@ -380,7 +380,7 @@ fn set_fails_with_wrong_bump_in_state_data() {
 fn set_succeeds_with_correct_bump_in_state_data() {
     let mut ctx = TestContext::new();
     let (state, correct_bump) = find_state_address().unwrap();
-    
+
     // Use correct bump in account data
     ctx.write_account(
         state,
@@ -393,7 +393,7 @@ fn set_succeeds_with_correct_bump_in_state_data() {
         ),
     )
     .unwrap();
-    
+
     let ix = Set {
         update_authority_account: ctx.signer(),
         state_account: state,
@@ -403,10 +403,10 @@ fn set_succeeds_with_correct_bump_in_state_data() {
             new_cool_down_period_s: 500,
         },
     });
-    
+
     let res = ctx.send(ix);
     assert!(res.is_ok());
-    
+
     // Verify the update was applied
     let state_account = ctx.get_account::<State>(state).unwrap();
     assert_eq!(state_account.data.cool_down_period_s, 500);

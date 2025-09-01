@@ -1,8 +1,7 @@
 use crate::{
     assertions::account::{
         assert_account_address, assert_account_data, assert_account_owner, assert_account_role,
-        assert_account_seeds, assert_external_account_data, make_owner_token_account_assertions,
-        AccountRole,
+        assert_external_account_data, make_owner_token_account_assertions, AccountRole,
     },
     cpi::token::{TokenMint, ORCA_MINT_ID, XORCA_MINT_ID},
     error::ErrorCode,
@@ -11,7 +10,6 @@ use crate::{
     util::{account::get_account_info, math::convert_orca_to_xorca},
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
-use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use pinocchio_token::{
     instructions::{MintTo, Transfer},
     ID as SPL_TOKEN_PROGRAM_ID,
@@ -33,19 +31,10 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
         &[AccountRole::Signer, AccountRole::Writable],
     )?;
 
-    // 2. Vault Account Assertions
-    let vault_account_seeds = vec![
-        Seed::from(state_account.key()),
-        Seed::from(SPL_TOKEN_PROGRAM_ID.as_ref()),
-        Seed::from(orca_mint_account.key()),
-    ];
-    assert_account_seeds(
-        vault_account,
-        &ASSOCIATED_TOKEN_PROGRAM_ID,
-        &vault_account_seeds,
-    )?;
-    let vault_account_data =
-        make_owner_token_account_assertions(vault_account, state_account, orca_mint_account)?;
+    // 2. Account Address Assertions
+    assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
+    assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
+    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     // 3. Staker Orca ATA Assertions
     let staker_orca_ata_data =
@@ -59,9 +48,14 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
 
     // 5. xOrca Mint Account Assertions
     assert_account_role(xorca_mint_account, &[AccountRole::Writable])?;
-    assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
     assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
     let xorca_mint_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
+
+    // 7. Orca Mint Account Assertions
+
+    assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    // 8. Token Program Assertions
 
     // 6. State Account Assertions
     assert_account_owner(state_account, &crate::ID)?;
@@ -70,16 +64,22 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
     State::verify_address_with_bump(state_account, &crate::ID, state_view.bump)
         .map_err(|_| ErrorCode::InvalidSeeds)?;
 
+    // Verify vault address using stored vault_bump
+    State::verify_vault_address_with_bump(
+        vault_account,
+        state_account,
+        orca_mint_account,
+        state_view.vault_bump,
+    )
+    .map_err(|_| ErrorCode::InvalidSeeds)?;
+
     let bump_bytes = [state_view.bump];
     state_seeds.push(Seed::from(&bump_bytes));
     let state = state_view;
 
-    // 7. Orca Mint Account Assertions
-    assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
-    assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-
-    // 8. Token Program Assertions
-    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+    // 2. Vault Account Assertions
+    let vault_account_data =
+        make_owner_token_account_assertions(vault_account, state_account, orca_mint_account)?;
 
     // Calculate xOrca to mint
     // Use checked math to guard against vault < escrow (should not happen, but defensive)
