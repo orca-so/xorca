@@ -1,7 +1,7 @@
 use crate::{
     assertions::account::{
         assert_account_address, assert_account_data_mut, assert_account_owner, assert_account_role,
-        assert_account_seeds, AccountRole,
+        AccountRole,
     },
     error::ErrorCode,
     instructions::StateUpdateInstruction,
@@ -26,10 +26,11 @@ pub fn process_instruction(
     // 2. xOrca State Account Assertions
     assert_account_role(state_account, &[AccountRole::Writable])?;
     assert_account_owner(state_account, &crate::ID)?;
-    let state_seeds = State::seeds();
-    assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
-    let mut state = assert_account_data_mut::<State>(state_account)?;
-    assert_account_address(update_authority_account, &state.update_authority)?;
+    // Use stored bump for verification - more efficient than assert_account_seeds
+    let mut state_view = assert_account_data_mut::<State>(state_account)?;
+    State::verify_address_with_bump(state_account, &crate::ID, state_view.bump)
+        .map_err(|_| ErrorCode::InvalidSeeds)?;
+    assert_account_address(update_authority_account, &state_view.update_authority)?;
 
     // Apply updates based on the instruction_data enum
     match instruction_data {
@@ -39,10 +40,10 @@ pub fn process_instruction(
             if *new_cool_down_period_s < 0 {
                 return Err(ErrorCode::InvalidCoolDownPeriod.into());
             }
-            state.cool_down_period_s = *new_cool_down_period_s;
+            state_view.cool_down_period_s = *new_cool_down_period_s;
         }
         StateUpdateInstruction::UpdateUpdateAuthority { new_authority } => {
-            state.update_authority = *new_authority;
+            state_view.update_authority = *new_authority;
         }
     };
 

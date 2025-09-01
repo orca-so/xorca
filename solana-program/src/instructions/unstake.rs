@@ -17,7 +17,6 @@ use crate::{
     },
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
-use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 use pinocchio_token::{instructions::Burn, ID as SPL_TOKEN_PROGRAM_ID};
 
@@ -42,29 +41,20 @@ pub fn process_instruction(
         &[AccountRole::Signer, AccountRole::Writable],
     )?;
 
+    // 2. Account Address Assertions
+    assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
+    assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
+    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+    assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;
+
     // 2. xOrca State Account Assertions
     assert_account_role(state_account, &[AccountRole::Writable])?;
     assert_account_owner(state_account, &crate::ID)?;
-    let mut state_seeds = State::seeds();
-    let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
-    state_seeds.push(Seed::from(&state_bump));
-    let initial_escrowed_orca_amount = {
-        // Use a block to control scope
-        let state_ref = assert_account_data::<State>(state_account)?;
-        state_ref.escrowed_orca_amount
-    };
+    // No CPI signed by state in this instruction; only verify owner
+    // We'll read the state data later when we need it
 
     // 3. Vault Account Assertions
-    let vault_account_seeds = vec![
-        Seed::from(state_account.key()),
-        Seed::from(SPL_TOKEN_PROGRAM_ID.as_ref()),
-        Seed::from(orca_mint_account.key()),
-    ];
-    assert_account_seeds(
-        vault_account,
-        &ASSOCIATED_TOKEN_PROGRAM_ID,
-        &vault_account_seeds,
-    )?;
+    // Use stored vault_bump for verification - more efficient than assert_account_seeds
     let vault_account_data =
         make_owner_token_account_assertions(vault_account, state_account, orca_mint_account)?;
 
@@ -94,7 +84,6 @@ pub fn process_instruction(
     // 6. xOrca Mint Account Assertions
     assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
     assert_account_role(xorca_mint_account, &[AccountRole::Writable])?;
-    assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
     let xorca_mint_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
     // Enforce xORCA mint authority must be the state and freeze authority must be None
     if xorca_mint_data.mint_authority_flag == 0
@@ -108,16 +97,24 @@ pub fn process_instruction(
 
     // 7. Orca Mint Account Assertions
     assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
     assert_external_account_data::<TokenMint>(orca_mint_account)?;
 
-    // 8. System Program Account Assertions
-    assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;
-
-    // 9. Token Account Assertions
-    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
-
     // Calculate withdrawable ORCA amount using checked math
+    let initial_escrowed_orca_amount = {
+        let state_view = assert_account_data::<State>(state_account)?;
+
+        // Verify vault address using stored vault_bump
+        State::verify_vault_address_with_bump(
+            vault_account,
+            state_account,
+            orca_mint_account,
+            state_view.vault_bump,
+        )
+        .map_err(|_| ErrorCode::InvalidSeeds)?;
+
+        state_view.escrowed_orca_amount
+    };
+
     let non_escrowed_orca_amount = vault_account_data
         .amount
         .checked_sub(initial_escrowed_orca_amount)
@@ -142,13 +139,6 @@ pub fn process_instruction(
     burn_instruction.invoke()?;
 
     // Add the unstake ORCA amount to escrowed ORCA amount
-    // Ensure state wasn't manipulated since initial read
-    {
-        let current_state_view = assert_account_data::<State>(state_account)?;
-        if current_state_view.escrowed_orca_amount != initial_escrowed_orca_amount {
-            return Err(ErrorCode::InvalidAccountData.into());
-        }
-    }
     let mut state = assert_account_data_mut::<State>(state_account)?;
     state.escrowed_orca_amount = state
         .escrowed_orca_amount
@@ -164,6 +154,7 @@ pub fn process_instruction(
     )?;
 
     // Populate pending withdraw account data
+    pending_withdraw_data.bump = pending_withdraw_bump[0];
     pending_withdraw_data.unstaker = *unstaker_account.key();
     pending_withdraw_data.withdrawable_orca_amount = withdrawable_orca_amount;
     let current_unix_timestamp = get_current_unix_timestamp()?;

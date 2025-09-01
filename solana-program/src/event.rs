@@ -1,6 +1,6 @@
 use crate::error::ErrorCode;
 use borsh::{BorshDeserialize, BorshSerialize};
-use pinocchio::{pubkey::Pubkey, ProgramResult};
+use pinocchio::ProgramResult;
 use shank::ShankType;
 
 #[derive(Debug, Clone, BorshSerialize, BorshDeserialize, ShankType)]

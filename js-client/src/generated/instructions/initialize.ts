@@ -46,6 +46,9 @@ export type InitializeInstruction<
   TAccountOrcaMintAccount extends string | IAccountMeta<string> = string,
   TAccountUpdateAuthorityAccount extends string | IAccountMeta<string> = string,
   TAccountSystemProgramAccount extends string | IAccountMeta<string> = string,
+  TAccountVaultAccount extends string | IAccountMeta<string> = string,
+  TAccountTokenProgramAccount extends string | IAccountMeta<string> = string,
+  TAccountAssociatedTokenProgramAccount extends string | IAccountMeta<string> = string,
   TRemainingAccounts extends readonly IAccountMeta<string>[] = [],
 > = IInstruction<TProgram> &
   IInstructionWithData<Uint8Array> &
@@ -69,6 +72,15 @@ export type InitializeInstruction<
       TAccountSystemProgramAccount extends string
         ? ReadonlyAccount<TAccountSystemProgramAccount>
         : TAccountSystemProgramAccount,
+      TAccountVaultAccount extends string
+        ? WritableAccount<TAccountVaultAccount>
+        : TAccountVaultAccount,
+      TAccountTokenProgramAccount extends string
+        ? ReadonlyAccount<TAccountTokenProgramAccount>
+        : TAccountTokenProgramAccount,
+      TAccountAssociatedTokenProgramAccount extends string
+        ? ReadonlyAccount<TAccountAssociatedTokenProgramAccount>
+        : TAccountAssociatedTokenProgramAccount,
       ...TRemainingAccounts,
     ]
   >;
@@ -113,6 +125,9 @@ export type InitializeInput<
   TAccountOrcaMintAccount extends string = string,
   TAccountUpdateAuthorityAccount extends string = string,
   TAccountSystemProgramAccount extends string = string,
+  TAccountVaultAccount extends string = string,
+  TAccountTokenProgramAccount extends string = string,
+  TAccountAssociatedTokenProgramAccount extends string = string,
 > = {
   payerAccount: TransactionSigner<TAccountPayerAccount>;
   stateAccount: Address<TAccountStateAccount>;
@@ -120,6 +135,9 @@ export type InitializeInput<
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   updateAuthorityAccount: Address<TAccountUpdateAuthorityAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
+  vaultAccount: Address<TAccountVaultAccount>;
+  tokenProgramAccount: Address<TAccountTokenProgramAccount>;
+  associatedTokenProgramAccount: Address<TAccountAssociatedTokenProgramAccount>;
   coolDownPeriodS: InitializeInstructionDataArgs['coolDownPeriodS'];
 };
 
@@ -130,6 +148,9 @@ export function getInitializeInstruction<
   TAccountOrcaMintAccount extends string,
   TAccountUpdateAuthorityAccount extends string,
   TAccountSystemProgramAccount extends string,
+  TAccountVaultAccount extends string,
+  TAccountTokenProgramAccount extends string,
+  TAccountAssociatedTokenProgramAccount extends string,
   TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: InitializeInput<
@@ -138,7 +159,10 @@ export function getInitializeInstruction<
     TAccountXorcaMintAccount,
     TAccountOrcaMintAccount,
     TAccountUpdateAuthorityAccount,
-    TAccountSystemProgramAccount
+    TAccountSystemProgramAccount,
+    TAccountVaultAccount,
+    TAccountTokenProgramAccount,
+    TAccountAssociatedTokenProgramAccount
   >,
   config?: { programAddress?: TProgramAddress }
 ): InitializeInstruction<
@@ -148,7 +172,10 @@ export function getInitializeInstruction<
   TAccountXorcaMintAccount,
   TAccountOrcaMintAccount,
   TAccountUpdateAuthorityAccount,
-  TAccountSystemProgramAccount
+  TAccountSystemProgramAccount,
+  TAccountVaultAccount,
+  TAccountTokenProgramAccount,
+  TAccountAssociatedTokenProgramAccount
 > {
   // Program address.
   const programAddress = config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
@@ -173,6 +200,15 @@ export function getInitializeInstruction<
       value: input.systemProgramAccount ?? null,
       isWritable: false,
     },
+    vaultAccount: { value: input.vaultAccount ?? null, isWritable: true },
+    tokenProgramAccount: {
+      value: input.tokenProgramAccount ?? null,
+      isWritable: false,
+    },
+    associatedTokenProgramAccount: {
+      value: input.associatedTokenProgramAccount ?? null,
+      isWritable: false,
+    },
   };
   const accounts = originalAccounts as Record<keyof typeof originalAccounts, ResolvedAccount>;
 
@@ -188,6 +224,9 @@ export function getInitializeInstruction<
       getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.updateAuthorityAccount),
       getAccountMeta(accounts.systemProgramAccount),
+      getAccountMeta(accounts.vaultAccount),
+      getAccountMeta(accounts.tokenProgramAccount),
+      getAccountMeta(accounts.associatedTokenProgramAccount),
     ],
     programAddress,
     data: getInitializeInstructionDataEncoder().encode(args as InitializeInstructionDataArgs),
@@ -198,7 +237,10 @@ export function getInitializeInstruction<
     TAccountXorcaMintAccount,
     TAccountOrcaMintAccount,
     TAccountUpdateAuthorityAccount,
-    TAccountSystemProgramAccount
+    TAccountSystemProgramAccount,
+    TAccountVaultAccount,
+    TAccountTokenProgramAccount,
+    TAccountAssociatedTokenProgramAccount
   >;
 
   return instruction;
@@ -216,6 +258,9 @@ export type ParsedInitializeInstruction<
     orcaMintAccount: TAccountMetas[3];
     updateAuthorityAccount: TAccountMetas[4];
     systemProgramAccount: TAccountMetas[5];
+    vaultAccount: TAccountMetas[6];
+    tokenProgramAccount: TAccountMetas[7];
+    associatedTokenProgramAccount: TAccountMetas[8];
   };
   data: InitializeInstructionData;
 };
@@ -228,7 +273,7 @@ export function parseInitializeInstruction<
     IInstructionWithAccounts<TAccountMetas> &
     IInstructionWithData<Uint8Array>
 ): ParsedInitializeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 6) {
+  if (instruction.accounts.length < 9) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -247,6 +292,9 @@ export function parseInitializeInstruction<
       orcaMintAccount: getNextAccount(),
       updateAuthorityAccount: getNextAccount(),
       systemProgramAccount: getNextAccount(),
+      vaultAccount: getNextAccount(),
+      tokenProgramAccount: getNextAccount(),
+      associatedTokenProgramAccount: getNextAccount(),
     },
     data: getInitializeInstructionDataDecoder().decode(instruction.data),
   };

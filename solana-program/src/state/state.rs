@@ -1,7 +1,10 @@
 use super::{AccountDiscriminator, ProgramAccount};
 use borsh::{BorshDeserialize, BorshSerialize};
 use pinocchio::{instruction::Seed, pubkey::Pubkey};
+use pinocchio_pubkey::derive_address;
 use shank::ShankAccount;
+
+use crate::error::ErrorCode;
 
 const STATE_ACCOUNT_LEN: usize = 2048;
 
@@ -11,12 +14,16 @@ pub struct State {
     pub discriminator: AccountDiscriminator, // 1 byte
     // Explicit padding to ensure that the next field (u64) is 8-byte aligned
     // in memory when #[repr(C)] is used.
-    // Calculation: 8 (desired alignment) - 1 (discriminator size) = 7 bytes.
-    pub padding1: [u8; 7],
+    // Calculation: use 5 bytes + 1-byte bump + 1-byte vault_bump to reach 8-byte alignment.
+    pub padding1: [u8; 5],
+    // Cached bump for PDA derivation of the state account.
+    pub bump: u8, // 1 byte
+    // Cached bump for vault ATA derivation
+    pub vault_bump: u8,            // 1 byte
     pub escrowed_orca_amount: u64, // 8 bytes
     pub cool_down_period_s: i64,   // 8 bytes
     pub update_authority: Pubkey,  // 32 bytes
-    // STATE_ACCOUNT_LEN (2048 bytes) - 56 = 1992 bytes.
+    // STATE_ACCOUNT_LEN (2048 bytes) - (1 + 5 + 1 + 1 + 8 + 8 + 32) = 1992 bytes.
     pub padding2: [u8; 1992],
 }
 
@@ -24,7 +31,9 @@ impl Default for State {
     fn default() -> Self {
         Self {
             discriminator: AccountDiscriminator::State,
-            padding1: [0; 7],
+            padding1: [0; 5],
+            bump: 0,
+            vault_bump: 0,
             escrowed_orca_amount: 0,
             update_authority: Pubkey::default(),
             cool_down_period_s: 0,
@@ -34,8 +43,57 @@ impl Default for State {
 }
 
 impl State {
+    /// Verify the pending withdraw PDA address using pinocchio-pubkey's derive_address with stored bump
+    pub fn verify_address_with_bump(
+        account: &pinocchio::account_info::AccountInfo,
+        program_id: &Pubkey,
+        stored_bump: u8,
+    ) -> Result<(), ErrorCode> {
+        let derived_address = derive_address(&[b"state"], Some(stored_bump), program_id);
+        if account.key() != &derived_address {
+            return Err(ErrorCode::InvalidSeeds.into());
+        }
+        Ok(())
+    }
+
+    /// Get seeds for backward compatibility with existing assert_account_seeds calls
     pub fn seeds<'a>() -> Vec<Seed<'a>> {
         vec![Seed::from(b"state")]
+    }
+
+    /// Get vault seeds for ATA derivation
+    pub fn vault_seeds<'a>(
+        state_account: &'a pinocchio::account_info::AccountInfo,
+        orca_mint: &'a pinocchio::account_info::AccountInfo,
+    ) -> Vec<Seed<'a>> {
+        vec![
+            Seed::from(state_account.key()),
+            Seed::from(pinocchio_token::ID.as_ref()),
+            Seed::from(orca_mint.key()),
+        ]
+    }
+
+    /// Verify the vault ATA address using pinocchio-pubkey's derive_address with stored bump
+    pub fn verify_vault_address_with_bump(
+        vault_account: &pinocchio::account_info::AccountInfo,
+        state_account: &pinocchio::account_info::AccountInfo,
+        orca_mint: &pinocchio::account_info::AccountInfo,
+        stored_vault_bump: u8,
+    ) -> Result<(), ErrorCode> {
+        let vault_seeds = [
+            state_account.key().as_ref(),
+            pinocchio_token::ID.as_ref(),
+            orca_mint.key().as_ref(),
+        ];
+        let derived_address = derive_address(
+            &vault_seeds,
+            Some(stored_vault_bump),
+            &pinocchio_associated_token_account::ID,
+        );
+        if vault_account.key() != &derived_address {
+            return Err(ErrorCode::InvalidSeeds.into());
+        }
+        Ok(())
     }
 }
 
@@ -56,7 +114,9 @@ mod tests {
         // are correctly serialized/deserialized and reinterpreted.
         let expected = State {
             discriminator: AccountDiscriminator::State,
-            padding1: [0xAA; 7],
+            padding1: [0xAA; 5],
+            bump: 0x42,
+            vault_bump: 0x43,
             escrowed_orca_amount: 0x1122334455667788,
             cool_down_period_s: 7 * 24 * 60 * 60,
             update_authority: Pubkey::default(),
@@ -113,7 +173,8 @@ mod tests {
         // 1. Calculate the expected size of the core data fields
         //    (excluding final padding2, but including padding1)
         let core_data_with_internal_padding_size: usize = size_of::<AccountDiscriminator>() // 1 byte
-            + size_of::<[u8; 7]>() // 7 bytes (padding1)
+            + size_of::<[u8; 6]>() // 6 bytes (padding1)
+            + size_of::<u8>() // 1 byte (bump)
             + size_of::<u64>() // 8 bytes
             + size_of::<u64>() // 8 bytes
             + size_of::<Pubkey>(); // 32 bytes

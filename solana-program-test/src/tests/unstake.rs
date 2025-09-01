@@ -9,7 +9,10 @@ use crate::{
 };
 use solana_sdk::clock::Clock;
 use solana_sdk::pubkey::Pubkey;
-use xorca::{find_pending_withdraw_pda, Event, PendingWithdraw, State, XorcaStakingProgramError};
+use xorca::{
+    find_pending_withdraw_pda, find_state_address, Event, PendingWithdraw, State,
+    XorcaStakingProgramError,
+};
 
 // Happy path: burns xORCA, increases escrow by withdrawable ORCA, and creates a pending withdraw account
 #[test]
@@ -678,7 +681,16 @@ fn test_unstake_insufficient_vault_backing_error() {
         staker_xorca: 1_000,
     };
     let mut env = Env::new(ctx, &pool, &user);
+
+    let vault_bump: u8 = env
+        .ctx
+        .get_account::<State>(env.state)
+        .unwrap()
+        .data
+        .vault_bump;
+
     // Force state escrow >> vault to guarantee non_escrowed underflow
+    let (_, state_bump) = find_state_address().unwrap();
     env.ctx
         .write_account(
             env.state,
@@ -687,6 +699,8 @@ fn test_unstake_insufficient_vault_backing_error() {
                 escrowed_orca_amount => u64::MAX,
                 update_authority => Pubkey::default(),
                 cool_down_period_s => pool.cool_down_period_s,
+                bump => state_bump,
+                vault_bump => vault_bump,
             ),
         )
         .unwrap();
@@ -779,6 +793,7 @@ fn test_unstake_invalid_state_account_owner() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Wrong owner for state
+    let (_, state_bump) = find_state_address().unwrap();
     env.ctx
         .write_account(
             env.state,
@@ -787,6 +802,7 @@ fn test_unstake_invalid_state_account_owner() {
                 escrowed_orca_amount => 0,
                 update_authority => Pubkey::default(),
                 cool_down_period_s => 7 * 24 * 60 * 60,
+                bump => state_bump,
             ),
         )
         .unwrap();
@@ -1032,7 +1048,7 @@ fn test_unstake_invalid_xorca_mint_address() {
         });
         env.ctx.send(ix)
     };
-    assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
 // Invalid ORCA mint address: wrong ORCA mint should be rejected (incorrect account address check).
@@ -1048,14 +1064,20 @@ fn test_unstake_invalid_orca_mint_address() {
     let idx = 5u8;
     let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
     let wrong_orca = Pubkey::new_unique();
-    env.ctx.write_account(
-        wrong_orca,
-        TOKEN_PROGRAM_ID, crate::token_mint_data!(supply => 0,
-            decimals => 6,
-            mint_authority_flag => 1,
-            mint_authority => Pubkey::default(), is_initialized => true, freeze_authority_flag => 0, freeze_authority => Pubkey::default(),
-        ),
-    ).unwrap();
+    env.ctx
+        .write_account(
+            wrong_orca,
+            TOKEN_PROGRAM_ID,
+            crate::token_mint_data!(supply => 0,
+                decimals => 6,
+                mint_authority_flag => 1,
+                mint_authority => Pubkey::default(),
+                is_initialized => true,
+                freeze_authority_flag => 0,
+                freeze_authority => Pubkey::default(),
+            ),
+        )
+        .unwrap();
     let res = {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
@@ -1074,7 +1096,7 @@ fn test_unstake_invalid_orca_mint_address() {
         });
         env.ctx.send(ix)
     };
-    assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
 // Precision loss: unstake 1 lamport of xORCA at high exchange rate so withdrawable rounds to 0.
@@ -1307,6 +1329,7 @@ fn test_unstake_pending_withdraw_already_exists() {
     let idx = 12u8;
     let p = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
     // Pre-create program-owned pending account with minimal valid data
+    let (_, pending_bump) = find_pending_withdraw_pda(&env.staker, &idx).unwrap();
     env.ctx
         .write_account(
             p,
@@ -1314,6 +1337,7 @@ fn test_unstake_pending_withdraw_already_exists() {
             crate::pending_withdraw_data!(
                 unstaker => env.staker,
                 withdrawable_orca_amount => 0, withdrawable_timestamp => 0,
+                bump => pending_bump,
             ),
         )
         .unwrap();
@@ -1828,6 +1852,7 @@ fn test_unstake_invalid_bump_seed() {
                 unstaker => env.staker,
                 withdrawable_orca_amount => 0,
                 withdrawable_timestamp => 0,
+                bump => 0, // Wrong bump for testing
             ),
         )
         .unwrap();

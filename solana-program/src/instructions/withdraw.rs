@@ -1,8 +1,7 @@
 use crate::{
     assertions::account::{
         assert_account_address, assert_account_data, assert_account_data_mut, assert_account_owner,
-        assert_account_role, assert_account_seeds, make_owner_token_account_assertions,
-        AccountRole,
+        assert_account_role, make_owner_token_account_assertions, AccountRole,
     },
     cpi::{system::get_current_unix_timestamp, token::ORCA_MINT_ID},
     error::ErrorCode,
@@ -11,7 +10,6 @@ use crate::{
     util::account::{close_program_account, get_account_info},
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
-use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 use pinocchio_token::{instructions::Transfer, ID as SPL_TOKEN_PROGRAM_ID};
 
@@ -31,25 +29,55 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
         &[AccountRole::Signer, AccountRole::Writable],
     )?;
 
-    // 2. Xorca State Account Assertions
+    // 6. Orca Mint Account Assertions
+    assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
+    assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
+
+    // 3. Xorca State Account Assertions
     assert_account_role(state_account, &[AccountRole::Writable])?;
     assert_account_owner(state_account, &crate::ID)?;
     let mut state_seeds = State::seeds();
-    let state_bump = assert_account_seeds(state_account, &crate::ID, &state_seeds)?;
-    state_seeds.push(Seed::from(&state_bump));
+    let state_bump_value = {
+        let state_view = assert_account_data::<State>(state_account)?;
 
-    // 3. Pending Withdraw Account Assertions
+        State::verify_address_with_bump(state_account, &crate::ID, state_view.bump)
+            .map_err(|_| ErrorCode::InvalidSeeds)?;
+
+        // Verify vault address using stored vault_bump
+        State::verify_vault_address_with_bump(
+            vault_account,
+            state_account,
+            orca_mint_account,
+            state_view.vault_bump,
+        )
+        .map_err(|_| ErrorCode::InvalidSeeds)?;
+
+        state_view.bump
+    };
+
+    let bump_bytes = [state_bump_value];
+    state_seeds.push(Seed::from(&bump_bytes));
+
+    // 4. Pending Withdraw Account Assertions
     assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
     assert_account_owner(pending_withdraw_account, &crate::ID)?;
     let withdraw_index_bytes = [*withdraw_index];
-    let mut pending_withdraw_seeds =
-        PendingWithdraw::seeds(unstaker_account.key(), &withdraw_index_bytes);
-    let pending_withdraw_bump = assert_account_seeds(
+    // Prefer cached bump from account data if present; else compute and verify
+    let pending_withdraw_bump_byte = {
+        let data = assert_account_data::<PendingWithdraw>(pending_withdraw_account)?;
+        data.bump
+    };
+
+    // Use derive_address for verification when we have the stored bump
+    PendingWithdraw::verify_address_with_bump(
         pending_withdraw_account,
+        unstaker_account.key(),
+        &withdraw_index_bytes,
         &crate::ID,
-        &pending_withdraw_seeds,
-    )?;
-    pending_withdraw_seeds.push(Seed::from(&pending_withdraw_bump));
+        pending_withdraw_bump_byte,
+    )
+    .map_err(|_| ErrorCode::InvalidSeeds)?;
+
     let (withdrawable_orca_amount, withdrawable_timestamp) = {
         let pending_withdraw_data =
             assert_account_data::<PendingWithdraw>(pending_withdraw_account)?;
@@ -59,25 +87,12 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
         )
     };
 
-    // 4. Unstaker Stake Token Account Assertions
+    // 5. Unstaker Stake Token Account Assertions
     make_owner_token_account_assertions(unstaker_orca_ata, unstaker_account, orca_mint_account)?;
 
-    // 5. Vault Account Assertions
-    let vault_account_seeds = vec![
-        Seed::from(state_account.key()),
-        Seed::from(SPL_TOKEN_PROGRAM_ID.as_ref()),
-        Seed::from(orca_mint_account.key()),
-    ];
-    assert_account_seeds(
-        vault_account,
-        &ASSOCIATED_TOKEN_PROGRAM_ID,
-        &vault_account_seeds,
-    )?;
+    // 6. Vault Account Assertions
+    // Use stored vault_bump for verification - more efficient than assert_account_seeds
     make_owner_token_account_assertions(vault_account, state_account, orca_mint_account)?;
-
-    // 6. Orca Mint Account Assertions
-    assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
 
     // 7. System Program Account Assertions
     assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;

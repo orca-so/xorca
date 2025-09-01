@@ -8,8 +8,11 @@ use crate::{
 };
 use solana_sdk::pubkey::Pubkey;
 use xorca::{
-    Event, Stake, StakeInstructionArgs, TokenAccount, TokenMint, XorcaStakingProgramError,
+    find_state_address, Event, Stake, StakeInstructionArgs, TokenAccount, TokenMint,
+    XorcaStakingProgramError,
 };
+use xorca_staking_program::assertions::account::assert_account_data;
+use xorca_staking_program::state::state::State;
 
 // Fresh deployment path: supply=0, non_escrowed=0 → initial exchange rate
 #[test]
@@ -697,7 +700,9 @@ fn stake_invalid_state_account_owner() {
     };
     let mut env = Env::new(ctx, &pool, &user);
 
+    let vault_bump: u8 = env.ctx.get_account::<State>(env.state).unwrap().data.bump;
     // Overwrite state with wrong owner
+    let (_, state_bump) = find_state_address().unwrap();
     env.ctx
         .write_account(
             env.state,
@@ -706,6 +711,8 @@ fn stake_invalid_state_account_owner() {
                 escrowed_orca_amount => 0,
                 update_authority => Pubkey::default(),
                 cool_down_period_s => 7*24*60*60,
+                bump => state_bump,
+                vault_bump => vault_bump,
             ),
         )
         .unwrap();
@@ -780,7 +787,14 @@ fn stake_underflow_non_escrowed_error() {
         staker_xorca: 0,
     };
     let mut env = Env::new(ctx, &pool, &user);
+    let vault_bump: u8 = env
+        .ctx
+        .get_account::<State>(env.state)
+        .unwrap()
+        .data
+        .vault_bump;
     // Ensure state escrow is strictly greater than vault to force underflow
+    let (_, state_bump) = find_state_address().unwrap();
     env.ctx
         .write_account(
             env.state,
@@ -789,6 +803,8 @@ fn stake_underflow_non_escrowed_error() {
                 escrowed_orca_amount => u64::MAX,
                 update_authority => Pubkey::default(),
                 cool_down_period_s => pool.cool_down_period_s,
+                bump => state_bump,
+                vault_bump => vault_bump,
             ),
         )
         .unwrap();
@@ -1005,11 +1021,10 @@ fn stake_wrong_xorca_mint_address() {
         orca_stake_amount: 1_000_000,
     });
     let res = env.ctx.send(ix);
-    assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
 // Tests that ORCA mint pubkey must match the canonical ORCA_ID
-// Using wrong ORCA mint should fail with InvalidSeeds
 #[test]
 fn stake_wrong_orca_mint_address() {
     let ctx = TestContext::new();
@@ -1049,7 +1064,7 @@ fn stake_wrong_orca_mint_address() {
         orca_stake_amount: 1_000_000,
     });
     let res = env.ctx.send(ix);
-    assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
 // Tests that token program account must be the correct SPL Token Program
@@ -1131,6 +1146,7 @@ fn stake_invalid_state_account_seeds() {
                 escrowed_orca_amount => 0,
                 update_authority => Pubkey::default(),
                 cool_down_period_s => 7*24*60*60,
+                bump => 0, // Wrong bump for invalid state
             ),
         )
         .unwrap();
