@@ -1,28 +1,53 @@
 {
   "name": "@orca-so/xorca",
-  "description": "The xORCA JS client for interacting with the xORCA program.",
-  "version": "0.0.0",
+  "description": "The xORCA JS client for interacting with the xORCA staking program on Solana.",
+  "version": "0.1.0",
   "license": "CUSTOM",
   "keywords": [
     "solana",
     "crypto",
     "defi",
     "dex",
-    "staking"
+    "staking",
+    "orca",
+    "xorca",
+    "web3"
   ],
-  "author": "team@orca.so",
+  "author": "Orca Team <team@orca.so>",
   "homepage": "https://orca.so",
+ 
   "type": "module",
   "main": "./dist/index.node.js",
   "browser": "./dist/index.browser.js",
   "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": {
+        "node": "./dist/index.node.js",
+        "default": "./dist/index.browser.js"
+      },
+      "types": "./dist/index.d.ts"
+    }
+  },
   "files": [
     "dist",
-    "README.md"
+    "README.md",
+    "LICENSE"
   ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "peerDependencies": {
     "@solana-program/token": "^0.6.0",
     "@solana/kit": "^2.1.0"
+  },
+  "peerDependenciesMeta": {
+    "@solana-program/token": {
+      "optional": false
+    },
+    "@solana/kit": {
+      "optional": false
+    }
   },
   "devDependencies": {
     "@solana-program/token": "^0.6.0",
@@ -38,6 +63,10 @@
   "scripts": {
     "build": "vite build --mode browser && vite build --mode node",
     "test": "vitest run",
-    "fmt": "prettier './**/*.{js,jsx,ts,tsx,json}' --write"
+    "fmt": "prettier './**/*.{js,jsx,ts,tsx,json}' --write",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

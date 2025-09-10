@@ -1,0 +1,60 @@
+# Source files
+src/
+tsconfig.json
+vite.config.ts
+
+# Development files
+node_modules/
+*.log
+*.tgz
+*.tar.gz
+
+# Test files
+*.test.*
+*.spec.*
+test/
+tests/
+__tests__/
+coverage/
+
+# Development tools
+.git/
+.gitignore
+.eslintrc*
+.prettierrc*
+.editorconfig
+
+# Build artifacts (except dist)
+target/
+*.tsbuildinfo
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Temporary files
+tmp/
+temp/
+*.tmp
+
+# Documentation (except README.md and LICENSE)
+docs/
+*.md
+!README.md
+!LICENSE
+
+# Package manager files
+yarn.lock
+package-lock.json
+pnpm-lock.yaml
+
+# Environment files
+.env*
+!.env.example

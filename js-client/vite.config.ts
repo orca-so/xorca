@@ -13,10 +13,13 @@ function wasmBuildPlugin(): Plugin {
       console.log('[wasm-build-plugin] Building WASM files...');
       try {
         const wasmOutputDir = resolve(__dirname, 'src/generated/wasm');
-        execSync(`wasm-pack build ../rust-client --target web --out-dir ${wasmOutputDir}`, {
-          stdio: 'inherit',
-          cwd: __dirname,
-        });
+        execSync(
+          `wasm-pack build ../rust-client --target web --out-dir ${wasmOutputDir} -- --features wasm`,
+          {
+            stdio: 'inherit',
+            cwd: __dirname,
+          }
+        );
         console.log('[wasm-build-plugin] WASM build completed successfully');
       } catch (error) {
         console.error('[wasm-build-plugin] WASM build failed:', error);

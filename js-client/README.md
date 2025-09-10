@@ -1,59 +1,54 @@
-# xORCA JavaScript Client
+# @orca-so/xorca
 
-A TypeScript/JavaScript client library for interacting with the xORCA staking program on Solana.
+[![npm version](https://badge.fury.io/js/%40orca-so%2Fxorca.svg)](https://badge.fury.io/js/%40orca-so%2Fxorca)
+[![License: Custom](https://img.shields.io/badge/License-Custom-blue.svg)](../LICENSE)
 
-## Features
+A TypeScript/JavaScript client library for interacting with the xORCA staking program on Solana. Built with type safety, performance, and developer experience in mind.
 
-- **Type-safe interactions** with the xORCA staking program
-- **Auto-generated code** from the program IDL using Codama
-- **WASM integration** for high-performance math operations
-- **Browser and Node.js support** with dual build outputs
-- **Solana Kit integration** for seamless Solana development
-- **Comprehensive TypeScript types** for all program interactions
+## ✨ Features
 
-## Installation
+- 🔒 **Type-safe interactions** with the xORCA staking program
+- ⚡ **WASM-optimized math operations** for high-performance calculations
+- 🌐 **Universal compatibility** - works in both browser and Node.js environments
+- 🛠️ **Auto-generated code** from the program IDL using Codama
+- 📦 **Zero-config setup** with comprehensive TypeScript definitions
+- 🔗 **Solana Kit integration** for seamless Solana development
+- 🎯 **Complete program coverage** - all instructions, accounts, and errors
+
+## 📦 Installation
 
 ```bash
 npm install @orca-so/xorca
-# or
+```
+
+Or with yarn:
+
+```bash
 yarn add @orca-so/xorca
 ```
 
-## Prerequisites
+## 🔧 Prerequisites
 
-This library requires `@solana/kit` as a peer dependency:
+This library requires the following peer dependencies:
 
 ```bash
-npm install @solana/kit
-# or
-yarn add @solana/kit
+npm install @solana/kit @solana-program/token
 ```
 
-## Usage
+Or with yarn:
+
+```bash
+yarn add @solana/kit @solana-program/token
+```
+
+## 📖 Usage Guide
 
 ### Basic Setup
-
-```typescript
-import { Connection, PublicKey } from "@solana/web3.js";
-import {
-  XORCA_STAKING_PROGRAM_ID,
-  createStakeInstruction,
-  createUnstakeInstruction,
-  findStakingPoolPda,
-  findPendingClaimPda,
-} from "@orca-so/xorca";
-
-// Connect to Solana
-const connection = new Connection("https://api.mainnet-beta.solana.com");
-
-// Program ID
-const programId = XORCA_STAKING_PROGRAM_ID;
-```
 
 ### Staking Operations
 
 ```typescript
-import { createStakeInstruction } from "@orca-so/xorca";
+import { createStakeInstruction } from '@orca-so/xorca';
 
 // Create a stake instruction
 const stakeInstruction = createStakeInstruction({
@@ -71,7 +66,7 @@ transaction.add(stakeInstruction);
 ### Unstaking Operations
 
 ```typescript
-import { createUnstakeInstruction } from "@orca-so/xorca";
+import { createUnstakeInstruction } from '@orca-so/xorca';
 
 // Create an unstake instruction
 const unstakeInstruction = createUnstakeInstruction({
@@ -89,7 +84,7 @@ transaction.add(unstakeInstruction);
 ### Claiming Rewards
 
 ```typescript
-import { createClaimInstruction } from "@orca-so/xorca";
+import { createClaimInstruction } from '@orca-so/xorca';
 
 // Create a claim instruction
 const claimInstruction = createClaimInstruction({
@@ -106,11 +101,7 @@ transaction.add(claimInstruction);
 ### PDA Derivation
 
 ```typescript
-import {
-  findStakingPoolPda,
-  findPendingClaimPda,
-  findPendingWithdrawPda,
-} from "@orca-so/xorca";
+import { findStakingPoolPda, findPendingClaimPda, findPendingWithdrawPda } from '@orca-so/xorca';
 
 // Derive staking pool PDA
 const [stakingPoolPda, stakingPoolBump] = findStakingPoolPda({
@@ -135,27 +126,20 @@ const [pendingWithdrawPda, pendingWithdrawBump] = findPendingWithdrawPda({
 ### Account Data Deserialization
 
 ```typescript
-import { StakingPool, PendingClaim } from "@orca-so/xorca";
+import { StakingPool, PendingClaim } from '@orca-so/xorca';
 
 // Fetch and deserialize staking pool account
 const stakingPoolAccount = await connection.getAccountInfo(stakingPoolPda);
 const stakingPool = StakingPool.fromAccountInfo(stakingPoolAccount.data);
 
 // Access account fields
-console.log("Total staked:", stakingPool.totalStaked.toString());
-console.log("Reward rate:", stakingPool.rewardRate.toString());
+console.log('Total staked:', stakingPool.totalStaked.toString());
+console.log('Reward rate:', stakingPool.rewardRate.toString());
 ```
 
-### WASM Math Functions
+## 📋 API Reference
 
-```typescript
-import { calculateRewards } from "@orca-so/xorca";
-
-// Use WASM-optimized math functions
-const rewards = calculateRewards(amount, rate, duration);
-```
-
-## Available Instructions
+### Available Instructions
 
 The client provides type-safe builders for all program instructions:
 
@@ -167,7 +151,7 @@ The client provides type-safe builders for all program instructions:
 - `createCancelStakeInstruction` - Cancel a pending stake
 - `createSetInstruction` - Update pool parameters
 
-## Account Types
+### Account Types
 
 The client includes all account types from the program:
 
@@ -175,12 +159,12 @@ The client includes all account types from the program:
 - `PendingClaim` - Pending reward claims
 - `PendingWithdraw` - Pending withdrawals
 
-## Error Handling
+### Error Handling
 
 All program errors are available as TypeScript types:
 
 ```typescript
-import { XorcaStakingProgramError } from "@orca-so/xorca";
+import { XorcaStakingProgramError } from '@orca-so/xorca';
 
 try {
   // Execute transaction
@@ -188,55 +172,55 @@ try {
 } catch (error) {
   if (error instanceof XorcaStakingProgramError) {
     switch (error.code) {
-      case "InsufficientFunds":
-        console.error("Insufficient funds for operation");
+      case 'InsufficientFunds':
+        console.error('Insufficient funds for operation');
         break;
-      case "InvalidAccount":
-        console.error("Invalid account provided");
+      case 'InvalidAccount':
+        console.error('Invalid account provided');
         break;
       default:
-        console.error("Program error:", error.message);
+        console.error('Program error:', error.message);
     }
   }
 }
 ```
 
-## Build Outputs
+## 🏗️ Build Outputs
 
-The library provides multiple build outputs:
+The library provides multiple build outputs for different environments:
 
 - **Browser**: `dist/index.browser.js` - Optimized for browser environments
 - **Node.js**: `dist/index.node.js` - Optimized for Node.js environments
-- **TypeScript**: `dist/index.d.ts` - Type definitions
+- **TypeScript**: `dist/index.d.ts` - Complete type definitions
 
-## Development
+## 🔧 Development
 
 ### Building
 
 ```bash
 # Build for both browser and Node.js
-yarn build
+npm run build
 
 # Build for browser only
-yarn build --mode browser
+npm run build -- --mode browser
 
 # Build for Node.js only
-yarn build --mode node
+npm run build -- --mode node
 ```
 
 ### Testing
 
 ```bash
-yarn test
+npm test
 ```
 
 ### Formatting
 
 ```bash
-yarn fmt
+npm run fmt
 ```
 
-## Code Generation
+## 🔄 Code Generation
 
 This client is auto-generated from the Solana program IDL using the [Codama](https://github.com/codama-ai/codama) framework. The generated code includes:
 
@@ -246,55 +230,10 @@ This client is auto-generated from the Solana program IDL using the [Codama](htt
 - Program constants
 - WASM bindings for math operations
 
-To regenerate the code after program changes:
+## 📊 Package Info
 
-```bash
-yarn generate
-```
-
-## Examples
-
-### Complete Staking Flow
-
-```typescript
-import {
-  Connection,
-  Transaction,
-  PublicKey,
-  sendAndConfirmTransaction,
-} from "@solana/web3.js";
-import {
-  createStakeInstruction,
-  findStakingPoolPda,
-  XORCA_STAKING_PROGRAM_ID,
-} from "@orca-so/xorca";
-
-async function stakeTokens(
-  connection: Connection,
-  user: Keypair,
-  amount: number
-) {
-  const programId = XORCA_STAKING_PROGRAM_ID;
-  const [stakingPoolPda] = findStakingPoolPda({ programId });
-
-  const instruction = createStakeInstruction({
-    stakingPool: stakingPoolPda,
-    user: user.publicKey,
-    userTokenAccount: userTokenAccount,
-    amount,
-    // ... other required accounts
-  });
-
-  const transaction = new Transaction().add(instruction);
-
-  const signature = await sendAndConfirmTransaction(connection, transaction, [
-    user,
-  ]);
-
-  console.log("Stake transaction:", signature);
-}
-```
-
-## License
-
-See [LICENSE](../LICENSE) for details.
+- **Package Size**: ~60KB (compressed)
+- **Bundle Size**: ~122KB (uncompressed)
+- **TypeScript Support**: Full type definitions included
+- **Node.js Support**: >=18.0.0
+- **Browser Support**: Modern browsers with ES2020 support

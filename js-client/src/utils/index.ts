@@ -2,7 +2,6 @@ import {
   getAccountDiscriminatorEncoder,
   getPendingWithdrawDecoder,
   getStateDecoder,
-  getTokenMintDecoder,
   PENDING_WITHDRAW_DISCRIMINATOR,
   PendingWithdraw,
   State,
@@ -95,7 +94,7 @@ export async function fetchDecodedProgramAccounts<T extends object>(
   }));
 }
 
-export async function fetchState(
+export async function fetchStateAccountData(
   rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi>
 ): Promise<State> {
   const discriminator = getBase58Decoder().decode(
@@ -124,7 +123,7 @@ export async function fetchState(
 export async function fetchStateAccountCoolDownPeriodS(
   rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi>
 ): Promise<bigint> {
-  const state = await fetchState(rpc);
+  const state = await fetchStateAccountData(rpc);
   return state.coolDownPeriodS;
 }
 
@@ -205,7 +204,7 @@ export async function getStakingExchangeRate(
   numerator: bigint;
   denominator: bigint;
 }> {
-  const state = await fetchState(rpc);
+  const state = await fetchStateAccountData(rpc);
   const vault = await fetchVaultState(rpc);
   const numerator = vault.amount - state.escrowedOrcaAmount;
   const denominator = await fetchXorcaMintSupply(rpc);

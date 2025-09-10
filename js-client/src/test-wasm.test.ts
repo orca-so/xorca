@@ -35,24 +35,34 @@ describe('WASM Infrastructure', () => {
   });
 
   describe('Build Scripts', () => {
-    it('should have build-wasm script', () => {
-      const buildScriptPath = join(__dirname, '..', '..', 'scripts', 'build-wasm.js');
-      expect(existsSync(buildScriptPath)).toBe(true);
+    it('should have vite build configuration for WASM', () => {
+      const viteConfigPath = join(__dirname, '..', 'vite.config.ts');
+      expect(existsSync(viteConfigPath)).toBe(true);
+
+      const viteConfigContent = readFileSync(viteConfigPath, 'utf8');
+      expect(viteConfigContent).toContain('wasm-build-plugin');
+      expect(viteConfigContent).toContain('--features wasm');
     });
 
-    it('should have copy-wasm script', () => {
-      const copyScriptPath = join(__dirname, '..', '..', 'scripts', 'copy-wasm.js');
-      expect(existsSync(copyScriptPath)).toBe(true);
+    it('should have build script in package.json', () => {
+      const packageJsonPath = join(__dirname, '..', 'package.json');
+      const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
+
+      expect(packageJson.scripts['build']).toBeDefined();
+      expect(packageJson.scripts['build']).toContain('vite build');
     });
   });
 
   describe('Package Configuration', () => {
-    it('should have WASM build script in package.json', () => {
-      const packageJsonPath = join(__dirname, '..', '..', 'package.json');
+    it('should have proper package.json configuration', () => {
+      const packageJsonPath = join(__dirname, '..', 'package.json');
       const packageJson = JSON.parse(readFileSync(packageJsonPath, 'utf8'));
 
-      expect(packageJson.scripts['build:wasm']).toBe('node scripts/build-wasm.js');
-      expect(packageJson.scripts['copy:wasm']).toBe('node scripts/copy-wasm.js');
+      expect(packageJson.name).toBe('@orca-so/xorca');
+      expect(packageJson.type).toBe('module');
+      expect(packageJson.main).toBe('./dist/index.node.js');
+      expect(packageJson.browser).toBe('./dist/index.browser.js');
+      expect(packageJson.types).toBe('./dist/index.d.ts');
     });
   });
 
@@ -79,11 +89,16 @@ describe('WASM Infrastructure', () => {
   });
 
   describe('Integration Points', () => {
-    it('should export WASM from main index', () => {
+    it('should export WASM through generated index', () => {
       const indexPath = join(__dirname, 'index.ts');
       const indexContent = readFileSync(indexPath, 'utf8');
 
-      expect(indexContent).toContain('export * from "./generated/wasm"');
+      expect(indexContent).toContain("export * from './generated'");
+
+      // Check that generated index exports WASM
+      const generatedIndexPath = join(__dirname, 'generated', 'index.ts');
+      const generatedIndexContent = readFileSync(generatedIndexPath, 'utf8');
+      expect(generatedIndexContent).toContain("export * from './wasm'");
     });
   });
 });
