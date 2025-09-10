@@ -49,6 +49,7 @@ fn test_unstake_success_at_initial_rate() {
         env.staker,
         10_000_000_000,
         now,
+        withdraw_index,
         "initial rate pending",
     );
     assert_unstake_effects(
@@ -107,9 +108,11 @@ fn test_unstake_succeeds_at_high_exchange_rate() {
         env.staker,
         expected,
         now,
+        idx,
         "high rate pending withdraw",
     );
     assert_eq!(pend.data.withdrawable_orca_amount, expected);
+    assert_eq!(pend.data.withdraw_index, idx, "withdraw index should match");
     assert!(expected >= 5 * xorca_burn / 1); // lower bound sanity
     assert_unstake_effects(
         &env.ctx,
@@ -167,9 +170,11 @@ fn test_unstake_succeeds_at_low_exchange_rate() {
         env.staker,
         expected,
         now,
+        idx,
         "low rate pending",
     );
     assert_eq!(pend.data.withdrawable_orca_amount, expected);
+    assert_eq!(pend.data.withdraw_index, idx, "withdraw index should match");
     assert_unstake_effects(
         &env.ctx,
         env.state,
@@ -223,9 +228,11 @@ fn test_unstake_succeeds_with_existing_escrow() {
         env.staker,
         expected,
         now,
+        idx,
         "with escrow pending",
     );
     assert_eq!(pend.data.withdrawable_orca_amount, expected);
+    assert_eq!(pend.data.withdraw_index, idx, "withdraw index should match");
     assert_unstake_effects(
         &env.ctx,
         env.state,
@@ -280,6 +287,7 @@ fn test_unstake_multiple_indices_success() {
         env.staker,
         a.data.withdrawable_orca_amount,
         now_a,
+        idx_a,
         "multiple indices A pending withdraw",
     );
     assert_unstake_effects(
@@ -316,6 +324,7 @@ fn test_unstake_multiple_indices_success() {
         env.staker,
         b.data.withdrawable_orca_amount,
         now_b,
+        idx_b,
         "multiple indices B pending withdraw",
     );
     assert_unstake_effects(
@@ -332,6 +341,14 @@ fn test_unstake_multiple_indices_success() {
     );
 
     assert!(a.data.withdrawable_orca_amount > 0 && b.data.withdrawable_orca_amount > 0);
+    assert_eq!(
+        a.data.withdraw_index, idx_a,
+        "withdraw index A should match"
+    );
+    assert_eq!(
+        b.data.withdraw_index, idx_b,
+        "withdraw index B should match"
+    );
     assert!(
         a.data.withdrawable_timestamp <= b.data.withdrawable_timestamp
             || b.data.withdrawable_timestamp <= a.data.withdrawable_timestamp
@@ -379,6 +396,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         env.staker,
         pending_orca_amount_1,
         now1,
+        idx1,
         "partial step 1 pending",
     );
     assert_unstake_effects(
@@ -416,6 +434,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         env.staker,
         pending_orca_amount_2,
         now2,
+        idx2,
         "partial step 2 pending",
     );
     assert_unstake_effects(
@@ -512,6 +531,7 @@ fn test_unstake_partial_with_existing_escrow_low_rate() {
         env.staker,
         pending_orca_amount_1,
         now1,
+        idx1,
         "partial low-rate step 1 pending",
     );
     assert_unstake_effects(
@@ -540,6 +560,7 @@ fn test_unstake_partial_with_existing_escrow_low_rate() {
         env.staker,
         pending_orca_amount_2,
         now2,
+        idx2,
         "partial low-rate step 2 pending",
     );
     assert_eq!(pending_orca_amount_1, expected1);
@@ -596,6 +617,7 @@ fn test_unstake_partial_all_but_one_then_last() {
         env.staker,
         a,
         now_a,
+        idx_a,
         "partial dust step A pending",
     );
     assert_unstake_effects(
@@ -634,6 +656,7 @@ fn test_unstake_partial_all_but_one_then_last() {
         env.staker,
         b,
         now_b,
+        idx_b,
         "partial dust step B pending",
     );
     assert_unstake_effects(
@@ -1132,6 +1155,7 @@ fn test_unstake_precision_loss_attack() {
         .unwrap();
     // With high rate and 1 xORCA, expect small nonzero ORCA if non_escrowed >= supply
     assert!(p.data.withdrawable_orca_amount > 0);
+    assert_eq!(p.data.withdraw_index, idx, "withdraw index should match");
     assert!(p.data.withdrawable_timestamp >= now);
     assert_unstake_effects(
         &env.ctx,
@@ -1336,6 +1360,7 @@ fn test_unstake_pending_withdraw_already_exists() {
             xorca::ID,
             crate::pending_withdraw_data!(
                 unstaker => env.staker,
+                withdraw_index => idx,
                 withdrawable_orca_amount => 0, withdrawable_timestamp => 0,
                 bump => pending_bump,
             ),
@@ -1454,6 +1479,7 @@ fn test_unstake_at_available_amount() {
         .get_account::<PendingWithdraw>(pending_withdraw_account)
         .unwrap();
     assert!(pend.data.withdrawable_orca_amount > 0);
+    assert_eq!(pend.data.withdraw_index, idx, "withdraw index should match");
     assert!(pend.data.withdrawable_timestamp >= now);
     assert_unstake_effects(
         &env.ctx,
@@ -1743,6 +1769,7 @@ fn test_unstake_withdraw_index_max_value_255_success() {
         env.staker,
         pend,
         now,
+        idx,
         "max index pending",
     );
     assert_unstake_effects(
@@ -1850,6 +1877,7 @@ fn test_unstake_invalid_bump_seed() {
             xorca::ID,
             crate::pending_withdraw_data!(
                 unstaker => env.staker,
+                withdraw_index => idx,
                 withdrawable_orca_amount => 0,
                 withdrawable_timestamp => 0,
                 bump => 0, // Wrong bump for testing

@@ -56,6 +56,7 @@ export type PendingWithdraw = {
   discriminator: AccountDiscriminator;
   padding1: ReadonlyUint8Array;
   bump: number;
+  withdrawIndex: number;
   unstaker: Address;
   withdrawableOrcaAmount: bigint;
   withdrawableTimestamp: bigint;
@@ -65,6 +66,7 @@ export type PendingWithdraw = {
 export type PendingWithdrawArgs = {
   padding1?: ReadonlyUint8Array;
   bump: number;
+  withdrawIndex: number;
   unstaker: Address;
   withdrawableOrcaAmount: number | bigint;
   withdrawableTimestamp: number | bigint;
@@ -75,8 +77,9 @@ export function getPendingWithdrawEncoder(): Encoder<PendingWithdrawArgs> {
   return transformEncoder(
     getStructEncoder([
       ['discriminator', getAccountDiscriminatorEncoder()],
-      ['padding1', fixEncoderSize(getBytesEncoder(), 6)],
+      ['padding1', fixEncoderSize(getBytesEncoder(), 5)],
       ['bump', getU8Encoder()],
+      ['withdrawIndex', getU8Encoder()],
       ['unstaker', getAddressEncoder()],
       ['withdrawableOrcaAmount', getU64Encoder()],
       ['withdrawableTimestamp', getI64Encoder()],
@@ -85,7 +88,7 @@ export function getPendingWithdrawEncoder(): Encoder<PendingWithdrawArgs> {
     (value) => ({
       ...value,
       discriminator: PENDING_WITHDRAW_DISCRIMINATOR,
-      padding1: value.padding1 ?? new Uint8Array([0, 0, 0, 0, 0, 0]),
+      padding1: value.padding1 ?? new Uint8Array([0, 0, 0, 0, 0]),
       padding2:
         value.padding2 ??
         new Uint8Array([
@@ -130,8 +133,9 @@ export function getPendingWithdrawEncoder(): Encoder<PendingWithdrawArgs> {
 export function getPendingWithdrawDecoder(): Decoder<PendingWithdraw> {
   return getStructDecoder([
     ['discriminator', getAccountDiscriminatorDecoder()],
-    ['padding1', fixDecoderSize(getBytesDecoder(), 6)],
+    ['padding1', fixDecoderSize(getBytesDecoder(), 5)],
     ['bump', getU8Decoder()],
+    ['withdrawIndex', getU8Decoder()],
     ['unstaker', getAddressDecoder()],
     ['withdrawableOrcaAmount', getU64Decoder()],
     ['withdrawableTimestamp', getI64Decoder()],

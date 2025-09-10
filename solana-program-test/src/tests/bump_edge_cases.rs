@@ -76,7 +76,7 @@ fn test_withdraw_pending_withdraw_wrong_bump_in_data() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // First, create a pending withdraw through unstake
-    let idx = 0u8;
+    let idx: u8 = 0u8;
     let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
     assert!(crate::utils::flows::do_unstake(&mut env, idx, 1_000_000).is_ok());
 
@@ -93,6 +93,7 @@ fn test_withdraw_pending_withdraw_wrong_bump_in_data() {
             xorca::ID,
             crate::pending_withdraw_data!(
                 unstaker => env.staker,
+                withdraw_index => idx,
                 withdrawable_orca_amount => 1_000_000,
                 withdrawable_timestamp => 0,
                 bump => wrong_bump, // Wrong bump in account data
@@ -196,6 +197,7 @@ fn test_withdraw_pending_withdraw_zero_bump_wrong_pda() {
             xorca::ID,
             crate::pending_withdraw_data!(
                 unstaker => env.staker,
+                withdraw_index => 0,
                 withdrawable_orca_amount => 1_000_000,
                 withdrawable_timestamp => 0,
                 bump => 0, // Zero bump but wrong PDA

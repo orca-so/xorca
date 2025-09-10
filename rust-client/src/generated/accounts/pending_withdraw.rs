@@ -14,8 +14,9 @@ use solana_program::pubkey::Pubkey;
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct PendingWithdraw {
     pub discriminator: AccountDiscriminator,
-    pub padding1: [u8; 6],
+    pub padding1: [u8; 5],
     pub bump: u8,
+    pub withdraw_index: u8,
     #[cfg_attr(
         feature = "serde",
         serde(with = "serde_with::As::<serde_with::DisplayFromStr>")

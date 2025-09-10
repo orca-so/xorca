@@ -155,6 +155,7 @@ pub fn process_instruction(
 
     // Populate pending withdraw account data
     pending_withdraw_data.bump = pending_withdraw_bump[0];
+    pending_withdraw_data.withdraw_index = *withdraw_index;
     pending_withdraw_data.unstaker = *unstaker_account.key();
     pending_withdraw_data.withdrawable_orca_amount = withdrawable_orca_amount;
     let current_unix_timestamp = get_current_unix_timestamp()?;

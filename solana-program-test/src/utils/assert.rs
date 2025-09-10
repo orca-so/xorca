@@ -489,6 +489,7 @@ pub fn assert_pending_withdraw(
     expected_unstaker: Pubkey,
     expected_withdrawable: u64,
     min_withdrawable_timestamp: i64,
+    expected_withdraw_index: u8,
     label: &str,
 ) {
     let acc = ctx
@@ -507,6 +508,11 @@ pub fn assert_pending_withdraw(
     assert!(
         acc.data.withdrawable_timestamp >= min_withdrawable_timestamp,
         "{}: pending timestamp >= now",
+        label
+    );
+    assert_eq!(
+        acc.data.withdraw_index, expected_withdraw_index,
+        "{}: pending withdraw index",
         label
     );
 }

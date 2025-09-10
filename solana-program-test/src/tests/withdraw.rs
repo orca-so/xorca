@@ -1329,7 +1329,7 @@ fn withdraw_invalid_pending_withdraw_account_seeds() {
     ctx2.write_account(
         bogus_pending,
         xorca::ID,
-        crate::pending_withdraw_data!(unstaker => env.staker, withdrawable_orca_amount => withdrawable_orca_amount, withdrawable_timestamp => withdrawable_timestamp, bump => 0)
+        crate::pending_withdraw_data!(unstaker => env.staker, withdraw_index => idx, withdrawable_orca_amount => withdrawable_orca_amount, withdrawable_timestamp => withdrawable_timestamp, bump => 0)
     ).unwrap();
     // Attempt withdraw using bogus pending account
     let res = {
@@ -1953,6 +1953,10 @@ fn withdraw_index_reuse_lifecycle() {
     // Ensure it's a different account instance by reading data and verifying bump/timestamp updated
     let pend2 = env.ctx.get_account::<PendingWithdraw>(pending2).unwrap();
     assert!(pend2.data.withdrawable_orca_amount > 0);
+    assert_eq!(
+        pend2.data.withdraw_index, idx,
+        "withdraw index should match"
+    );
 
     // Advance and withdraw the second pending
     advance_clock_env(&mut env, pool.cool_down_period_s + 1);
