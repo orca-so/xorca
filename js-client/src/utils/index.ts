@@ -2,6 +2,7 @@ import {
   getAccountDiscriminatorEncoder,
   getPendingWithdrawDecoder,
   getStateDecoder,
+  getTokenMintDecoder,
   PENDING_WITHDRAW_DISCRIMINATOR,
   PendingWithdraw,
   State,
@@ -24,11 +25,12 @@ import {
   GetAccountInfoApi,
 } from '@solana/kit';
 import { getAddressEncoder } from '@solana/addresses';
-import { getTokenDecoder } from '@solana-program/token';
+import { getTokenDecoder, getMintDecoder } from '@solana-program/token';
 
 const TOKEN_PROGRAM_ADDRESS = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address;
 const ASSOCIATED_TOKEN_PROGRAM_ADDRESS = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address;
-const ORCA_MINT_ADDRESS = 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE';
+const ORCA_MINT_ADDRESS = 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE' as Address;
+const XORCA_MINT_ADDRESS = 'xorcaYqbXUNz3474ubUMJAdu2xgPsew3rUCe5ughT3N' as Address; // TODO: update this
 
 export async function findStateAddress(): Promise<ProgramDerivedAddress> {
   return await getProgramDerivedAddress({
@@ -183,5 +185,32 @@ export async function fetchVaultState(rpc: Rpc<GetAccountInfoApi>): Promise<{
     owner: tokenAccount.owner,
     mint: tokenAccount.mint,
     amount: tokenAccount.amount,
+  };
+}
+
+export async function fetchXorcaMintSupply(rpc: Rpc<GetAccountInfoApi>): Promise<bigint> {
+  const accountInfo = await rpc.getAccountInfo(XORCA_MINT_ADDRESS, { encoding: 'base64' }).send();
+  if (!accountInfo.value) {
+    throw new Error('xORCA mint not found.');
+  }
+  const mintDecoder = getMintDecoder();
+  const dataBytes = new Uint8Array(Buffer.from(accountInfo.value.data[0], 'base64'));
+  const mintAccount = mintDecoder.decode(dataBytes);
+  return mintAccount.supply;
+}
+
+export async function getStakingExchangeRate(
+  rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi & GetAccountInfoApi>
+): Promise<{
+  numerator: bigint;
+  denominator: bigint;
+}> {
+  const state = await fetchState(rpc);
+  const vault = await fetchVaultState(rpc);
+  const numerator = vault.amount - state.escrowedOrcaAmount;
+  const denominator = await fetchXorcaMintSupply(rpc);
+  return {
+    numerator,
+    denominator,
   };
 }
