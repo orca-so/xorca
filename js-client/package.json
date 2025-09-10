@@ -21,9 +21,11 @@
     "README.md"
   ],
   "peerDependencies": {
+    "@solana-program/token": "^0.6.0",
     "@solana/kit": "^2.1.0"
   },
   "devDependencies": {
+    "@solana-program/token": "^0.6.0",
     "@solana/kit": "^2.1.0",
     "@types/node": "^20.0.0",
     "prettier": "^3.5.3",

@@ -447,6 +447,7 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@orca-so/xorca@workspace:js-client"
   dependencies:
+    "@solana-program/token": "npm:^0.6.0"
     "@solana/kit": "npm:^2.1.0"
     "@types/node": "npm:^20.0.0"
     prettier: "npm:^3.5.3"
@@ -456,6 +457,7 @@ __metadata:
     vite-plugin-dts: "npm:^4.5.3"
     vitest: "npm:^3.0.9"
   peerDependencies:
+    "@solana-program/token": ^0.6.0
     "@solana/kit": ^2.1.0
   languageName: unknown
   linkType: soft
@@ -818,6 +820,15 @@ __metadata:
     argparse: "npm:~1.0.9"
     string-argv: "npm:~0.3.1"
   checksum: 10c0/9f4ffe63d5eaa9bda2b026c68e62a99f6c1d6d8ad3cc7a4247d6cd90f2fdf038ca9e950911f8035f9cb408a54abcd049ba5435206f63f98fb8df484488debd83
+  languageName: node
+  linkType: hard
+
+"@solana-program/token@npm:^0.6.0":
+  version: 0.6.0
+  resolution: "@solana-program/token@npm:0.6.0"
+  peerDependencies:
+    "@solana/kit": ^3.0
+  checksum: 10c0/d556ef36e642f6d386cba9419abb94813f2eaeecd5dea93f911ed5e5d9a52907ac1b6c0adf3905c728e0c33f40ec81200caf1078aa98f46bd4d718d6bd188dae
   languageName: node
   linkType: hard
 
