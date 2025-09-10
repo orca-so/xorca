@@ -1,12 +1,15 @@
 [package]
 name = "xorca"
-description = "The xorca rust client to interact with the xorca program."
-version = "0.0.0"
+description = "A Rust client library for interacting with the xORCA staking program on Solana."
+version = "0.1.0"
 homepage = "https://orca.so"
-license-file = "../LICENSE"
-keywords = ["solana", "crypto", "defi", "dex", "staking"]
-authors = ["team@orca.so"]
+repository = "https://github.com/orca-so/xorca"
+license-file = "LICENSE"
+keywords = ["solana", "defi", "staking", "orca", "xorca"]
+authors = ["Orca Team <team@orca.so>"]
 edition = "2021"
+readme = "README.md"
+documentation = "https://docs.rs/xorca"
 
 [lib]
 crate-type = ["cdylib", "rlib"]
