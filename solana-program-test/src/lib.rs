@@ -31,7 +31,7 @@ pub const TOKEN_PROGRAM_ID: Pubkey =
 pub const ORCA_ID: Pubkey = solana_sdk::pubkey!("orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE");
 pub const XORCA_ID: Pubkey = solana_sdk::pubkey!("xorcaYqbXUNz3474ubUMJAdu2xgPsew3rUCe5ughT3N");
 pub const XORCA_PROGRAM_ID: Pubkey =
-    solana_sdk::pubkey!("5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY");
+    solana_sdk::pubkey!("2WTJWHG5LMsZUiUxTrTTGT5RzPkRYxiVCft4TnJEiQLF");
 pub const ATA_PROGRAM_ID: Pubkey =
     solana_sdk::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 pub const INITIAL_UPDATE_AUTHORITY_ID: Pubkey =
