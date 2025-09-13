@@ -8,31 +8,30 @@
 use borsh::BorshDeserialize;
 use borsh::BorshSerialize;
 
+pub const WITHDRAW_DISCRIMINATOR: u8 = 2;
+
 /// Accounts.
 #[derive(Debug)]
 pub struct Withdraw {
-    pub unstaker_account: solana_program::pubkey::Pubkey,
+    pub unstaker_account: solana_pubkey::Pubkey,
 
-    pub state_account: solana_program::pubkey::Pubkey,
+    pub state_account: solana_pubkey::Pubkey,
 
-    pub pending_withdraw_account: solana_program::pubkey::Pubkey,
+    pub pending_withdraw_account: solana_pubkey::Pubkey,
 
-    pub unstaker_orca_ata: solana_program::pubkey::Pubkey,
+    pub unstaker_orca_ata: solana_pubkey::Pubkey,
 
-    pub vault_account: solana_program::pubkey::Pubkey,
+    pub vault_account: solana_pubkey::Pubkey,
 
-    pub orca_mint_account: solana_program::pubkey::Pubkey,
+    pub orca_mint_account: solana_pubkey::Pubkey,
 
-    pub system_program_account: solana_program::pubkey::Pubkey,
+    pub system_program_account: solana_pubkey::Pubkey,
 
-    pub token_program_account: solana_program::pubkey::Pubkey,
+    pub token_program_account: solana_pubkey::Pubkey,
 }
 
 impl Withdraw {
-    pub fn instruction(
-        &self,
-        args: WithdrawInstructionArgs,
-    ) -> solana_program::instruction::Instruction {
+    pub fn instruction(&self, args: WithdrawInstructionArgs) -> solana_instruction::Instruction {
         self.instruction_with_remaining_accounts(args, &[])
     }
     #[allow(clippy::arithmetic_side_effects)]
@@ -40,38 +39,38 @@ impl Withdraw {
     pub fn instruction_with_remaining_accounts(
         &self,
         args: WithdrawInstructionArgs,
-        remaining_accounts: &[solana_program::instruction::AccountMeta],
-    ) -> solana_program::instruction::Instruction {
+        remaining_accounts: &[solana_instruction::AccountMeta],
+    ) -> solana_instruction::Instruction {
         let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new(
             self.unstaker_account,
             true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new(
             self.state_account,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new(
             self.pending_withdraw_account,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new(
             self.unstaker_orca_ata,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new(
             self.vault_account,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.orca_mint_account,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.system_program_account,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.token_program_account,
             false,
         ));
@@ -80,7 +79,7 @@ impl Withdraw {
         let mut args = borsh::to_vec(&args).unwrap();
         data.append(&mut args);
 
-        solana_program::instruction::Instruction {
+        solana_instruction::Instruction {
             program_id: crate::XORCA_STAKING_PROGRAM_ID,
             accounts,
             data,
@@ -126,16 +125,16 @@ pub struct WithdrawInstructionArgs {
 ///   7. `[]` token_program_account
 #[derive(Clone, Debug, Default)]
 pub struct WithdrawBuilder {
-    unstaker_account: Option<solana_program::pubkey::Pubkey>,
-    state_account: Option<solana_program::pubkey::Pubkey>,
-    pending_withdraw_account: Option<solana_program::pubkey::Pubkey>,
-    unstaker_orca_ata: Option<solana_program::pubkey::Pubkey>,
-    vault_account: Option<solana_program::pubkey::Pubkey>,
-    orca_mint_account: Option<solana_program::pubkey::Pubkey>,
-    system_program_account: Option<solana_program::pubkey::Pubkey>,
-    token_program_account: Option<solana_program::pubkey::Pubkey>,
+    unstaker_account: Option<solana_pubkey::Pubkey>,
+    state_account: Option<solana_pubkey::Pubkey>,
+    pending_withdraw_account: Option<solana_pubkey::Pubkey>,
+    unstaker_orca_ata: Option<solana_pubkey::Pubkey>,
+    vault_account: Option<solana_pubkey::Pubkey>,
+    orca_mint_account: Option<solana_pubkey::Pubkey>,
+    system_program_account: Option<solana_pubkey::Pubkey>,
+    token_program_account: Option<solana_pubkey::Pubkey>,
     withdraw_index: Option<u8>,
-    __remaining_accounts: Vec<solana_program::instruction::AccountMeta>,
+    __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
 
 impl WithdrawBuilder {
@@ -143,51 +142,42 @@ impl WithdrawBuilder {
         Self::default()
     }
     #[inline(always)]
-    pub fn unstaker_account(
-        &mut self,
-        unstaker_account: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
+    pub fn unstaker_account(&mut self, unstaker_account: solana_pubkey::Pubkey) -> &mut Self {
         self.unstaker_account = Some(unstaker_account);
         self
     }
     #[inline(always)]
-    pub fn state_account(&mut self, state_account: solana_program::pubkey::Pubkey) -> &mut Self {
+    pub fn state_account(&mut self, state_account: solana_pubkey::Pubkey) -> &mut Self {
         self.state_account = Some(state_account);
         self
     }
     #[inline(always)]
     pub fn pending_withdraw_account(
         &mut self,
-        pending_withdraw_account: solana_program::pubkey::Pubkey,
+        pending_withdraw_account: solana_pubkey::Pubkey,
     ) -> &mut Self {
         self.pending_withdraw_account = Some(pending_withdraw_account);
         self
     }
     #[inline(always)]
-    pub fn unstaker_orca_ata(
-        &mut self,
-        unstaker_orca_ata: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
+    pub fn unstaker_orca_ata(&mut self, unstaker_orca_ata: solana_pubkey::Pubkey) -> &mut Self {
         self.unstaker_orca_ata = Some(unstaker_orca_ata);
         self
     }
     #[inline(always)]
-    pub fn vault_account(&mut self, vault_account: solana_program::pubkey::Pubkey) -> &mut Self {
+    pub fn vault_account(&mut self, vault_account: solana_pubkey::Pubkey) -> &mut Self {
         self.vault_account = Some(vault_account);
         self
     }
     #[inline(always)]
-    pub fn orca_mint_account(
-        &mut self,
-        orca_mint_account: solana_program::pubkey::Pubkey,
-    ) -> &mut Self {
+    pub fn orca_mint_account(&mut self, orca_mint_account: solana_pubkey::Pubkey) -> &mut Self {
         self.orca_mint_account = Some(orca_mint_account);
         self
     }
     #[inline(always)]
     pub fn system_program_account(
         &mut self,
-        system_program_account: solana_program::pubkey::Pubkey,
+        system_program_account: solana_pubkey::Pubkey,
     ) -> &mut Self {
         self.system_program_account = Some(system_program_account);
         self
@@ -195,7 +185,7 @@ impl WithdrawBuilder {
     #[inline(always)]
     pub fn token_program_account(
         &mut self,
-        token_program_account: solana_program::pubkey::Pubkey,
+        token_program_account: solana_pubkey::Pubkey,
     ) -> &mut Self {
         self.token_program_account = Some(token_program_account);
         self
@@ -207,10 +197,7 @@ impl WithdrawBuilder {
     }
     /// Add an additional account to the instruction.
     #[inline(always)]
-    pub fn add_remaining_account(
-        &mut self,
-        account: solana_program::instruction::AccountMeta,
-    ) -> &mut Self {
+    pub fn add_remaining_account(&mut self, account: solana_instruction::AccountMeta) -> &mut Self {
         self.__remaining_accounts.push(account);
         self
     }
@@ -218,13 +205,13 @@ impl WithdrawBuilder {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[solana_program::instruction::AccountMeta],
+        accounts: &[solana_instruction::AccountMeta],
     ) -> &mut Self {
         self.__remaining_accounts.extend_from_slice(accounts);
         self
     }
     #[allow(clippy::clone_on_copy)]
-    pub fn instruction(&self) -> solana_program::instruction::Instruction {
+    pub fn instruction(&self) -> solana_instruction::Instruction {
         let accounts = Withdraw {
             unstaker_account: self.unstaker_account.expect("unstaker_account is not set"),
             state_account: self.state_account.expect("state_account is not set"),
@@ -258,50 +245,50 @@ impl WithdrawBuilder {
 
 /// `withdraw` CPI accounts.
 pub struct WithdrawCpiAccounts<'a, 'b> {
-    pub unstaker_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub unstaker_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub state_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub state_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub pending_withdraw_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub pending_withdraw_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub unstaker_orca_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub unstaker_orca_ata: &'b solana_account_info::AccountInfo<'a>,
 
-    pub vault_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub vault_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub orca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub orca_mint_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub system_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub system_program_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub token_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub token_program_account: &'b solana_account_info::AccountInfo<'a>,
 }
 
 /// `withdraw` CPI instruction.
 pub struct WithdrawCpi<'a, 'b> {
     /// The program to invoke.
-    pub __program: &'b solana_program::account_info::AccountInfo<'a>,
+    pub __program: &'b solana_account_info::AccountInfo<'a>,
 
-    pub unstaker_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub unstaker_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub state_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub state_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub pending_withdraw_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub pending_withdraw_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub unstaker_orca_ata: &'b solana_program::account_info::AccountInfo<'a>,
+    pub unstaker_orca_ata: &'b solana_account_info::AccountInfo<'a>,
 
-    pub vault_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub vault_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub orca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub orca_mint_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub system_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub system_program_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub token_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+    pub token_program_account: &'b solana_account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: WithdrawInstructionArgs,
 }
 
 impl<'a, 'b> WithdrawCpi<'a, 'b> {
     pub fn new(
-        program: &'b solana_program::account_info::AccountInfo<'a>,
+        program: &'b solana_account_info::AccountInfo<'a>,
         accounts: WithdrawCpiAccounts<'a, 'b>,
         args: WithdrawInstructionArgs,
     ) -> Self {
@@ -319,25 +306,18 @@ impl<'a, 'b> WithdrawCpi<'a, 'b> {
         }
     }
     #[inline(always)]
-    pub fn invoke(&self) -> solana_program::entrypoint::ProgramResult {
+    pub fn invoke(&self) -> solana_program_error::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], &[])
     }
     #[inline(always)]
     pub fn invoke_with_remaining_accounts(
         &self,
-        remaining_accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
-    ) -> solana_program::entrypoint::ProgramResult {
+        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+    ) -> solana_program_error::ProgramResult {
         self.invoke_signed_with_remaining_accounts(&[], remaining_accounts)
     }
     #[inline(always)]
-    pub fn invoke_signed(
-        &self,
-        signers_seeds: &[&[&[u8]]],
-    ) -> solana_program::entrypoint::ProgramResult {
+    pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
         self.invoke_signed_with_remaining_accounts(signers_seeds, &[])
     }
     #[allow(clippy::arithmetic_side_effects)]
@@ -346,47 +326,43 @@ impl<'a, 'b> WithdrawCpi<'a, 'b> {
     pub fn invoke_signed_with_remaining_accounts(
         &self,
         signers_seeds: &[&[&[u8]]],
-        remaining_accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
-    ) -> solana_program::entrypoint::ProgramResult {
+        remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
+    ) -> solana_program_error::ProgramResult {
         let mut accounts = Vec::with_capacity(8 + remaining_accounts.len());
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new(
             *self.unstaker_account.key,
             true,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new(
             *self.state_account.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new(
             *self.pending_withdraw_account.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new(
             *self.unstaker_orca_ata.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new(
             *self.vault_account.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.orca_mint_account.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.system_program_account.key,
             false,
         ));
-        accounts.push(solana_program::instruction::AccountMeta::new_readonly(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.token_program_account.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
-            accounts.push(solana_program::instruction::AccountMeta {
+            accounts.push(solana_instruction::AccountMeta {
                 pubkey: *remaining_account.0.key,
                 is_signer: remaining_account.1,
                 is_writable: remaining_account.2,
@@ -396,7 +372,7 @@ impl<'a, 'b> WithdrawCpi<'a, 'b> {
         let mut args = borsh::to_vec(&self.__args).unwrap();
         data.append(&mut args);
 
-        let instruction = solana_program::instruction::Instruction {
+        let instruction = solana_instruction::Instruction {
             program_id: crate::XORCA_STAKING_PROGRAM_ID,
             accounts,
             data,
@@ -416,9 +392,9 @@ impl<'a, 'b> WithdrawCpi<'a, 'b> {
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
 
         if signers_seeds.is_empty() {
-            solana_program::program::invoke(&instruction, &account_infos)
+            solana_cpi::invoke(&instruction, &account_infos)
         } else {
-            solana_program::program::invoke_signed(&instruction, &account_infos, signers_seeds)
+            solana_cpi::invoke_signed(&instruction, &account_infos, signers_seeds)
         }
     }
 }
@@ -441,7 +417,7 @@ pub struct WithdrawCpiBuilder<'a, 'b> {
 }
 
 impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
-    pub fn new(program: &'b solana_program::account_info::AccountInfo<'a>) -> Self {
+    pub fn new(program: &'b solana_account_info::AccountInfo<'a>) -> Self {
         let instruction = Box::new(WithdrawCpiBuilderInstruction {
             __program: program,
             unstaker_account: None,
@@ -460,7 +436,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn unstaker_account(
         &mut self,
-        unstaker_account: &'b solana_program::account_info::AccountInfo<'a>,
+        unstaker_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.unstaker_account = Some(unstaker_account);
         self
@@ -468,7 +444,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn state_account(
         &mut self,
-        state_account: &'b solana_program::account_info::AccountInfo<'a>,
+        state_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.state_account = Some(state_account);
         self
@@ -476,7 +452,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn pending_withdraw_account(
         &mut self,
-        pending_withdraw_account: &'b solana_program::account_info::AccountInfo<'a>,
+        pending_withdraw_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.pending_withdraw_account = Some(pending_withdraw_account);
         self
@@ -484,7 +460,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn unstaker_orca_ata(
         &mut self,
-        unstaker_orca_ata: &'b solana_program::account_info::AccountInfo<'a>,
+        unstaker_orca_ata: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.unstaker_orca_ata = Some(unstaker_orca_ata);
         self
@@ -492,7 +468,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn vault_account(
         &mut self,
-        vault_account: &'b solana_program::account_info::AccountInfo<'a>,
+        vault_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.vault_account = Some(vault_account);
         self
@@ -500,7 +476,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn orca_mint_account(
         &mut self,
-        orca_mint_account: &'b solana_program::account_info::AccountInfo<'a>,
+        orca_mint_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.orca_mint_account = Some(orca_mint_account);
         self
@@ -508,7 +484,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn system_program_account(
         &mut self,
-        system_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+        system_program_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.system_program_account = Some(system_program_account);
         self
@@ -516,7 +492,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn token_program_account(
         &mut self,
-        token_program_account: &'b solana_program::account_info::AccountInfo<'a>,
+        token_program_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.token_program_account = Some(token_program_account);
         self
@@ -530,7 +506,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_account(
         &mut self,
-        account: &'b solana_program::account_info::AccountInfo<'a>,
+        account: &'b solana_account_info::AccountInfo<'a>,
         is_writable: bool,
         is_signer: bool,
     ) -> &mut Self {
@@ -546,11 +522,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
     #[inline(always)]
     pub fn add_remaining_accounts(
         &mut self,
-        accounts: &[(
-            &'b solana_program::account_info::AccountInfo<'a>,
-            bool,
-            bool,
-        )],
+        accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
     ) -> &mut Self {
         self.instruction
             .__remaining_accounts
@@ -558,15 +530,12 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn invoke(&self) -> solana_program::entrypoint::ProgramResult {
+    pub fn invoke(&self) -> solana_program_error::ProgramResult {
         self.invoke_signed(&[])
     }
     #[allow(clippy::clone_on_copy)]
     #[allow(clippy::vec_init_then_push)]
-    pub fn invoke_signed(
-        &self,
-        signers_seeds: &[&[&[u8]]],
-    ) -> solana_program::entrypoint::ProgramResult {
+    pub fn invoke_signed(&self, signers_seeds: &[&[&[u8]]]) -> solana_program_error::ProgramResult {
         let args = WithdrawInstructionArgs {
             withdraw_index: self
                 .instruction
@@ -627,20 +596,16 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
 
 #[derive(Clone, Debug)]
 struct WithdrawCpiBuilderInstruction<'a, 'b> {
-    __program: &'b solana_program::account_info::AccountInfo<'a>,
-    unstaker_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    state_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    pending_withdraw_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    unstaker_orca_ata: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    vault_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    orca_mint_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    system_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
-    token_program_account: Option<&'b solana_program::account_info::AccountInfo<'a>>,
+    __program: &'b solana_account_info::AccountInfo<'a>,
+    unstaker_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    state_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    pending_withdraw_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    unstaker_orca_ata: Option<&'b solana_account_info::AccountInfo<'a>>,
+    vault_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    orca_mint_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    system_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    token_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     withdraw_index: Option<u8>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
-    __remaining_accounts: Vec<(
-        &'b solana_program::account_info::AccountInfo<'a>,
-        bool,
-        bool,
-    )>,
+    __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,
 }

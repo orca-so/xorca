@@ -54,7 +54,7 @@
     "@types/node": "^20.0.0",
     "prettier": "^3.5.3",
     "rollup": "^4.0.0",
-    "tsx": "^4.20.5",
+    "tsx": "^4.19.3",
     "typescript": "^5.8.2",
     "vite": "^6.2.2",
     "vite-plugin-dts": "^4.5.3",
