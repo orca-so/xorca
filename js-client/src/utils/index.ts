@@ -28,8 +28,8 @@ import { getTokenDecoder, getMintDecoder } from '@solana-program/token';
 
 const TOKEN_PROGRAM_ADDRESS = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address;
 const ASSOCIATED_TOKEN_PROGRAM_ADDRESS = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address;
-const ORCA_MINT_ADDRESS = 'DYYQ3arEeZjye3ppiJmF557NsqAoK7HBSUZtx3HC8pjL' as Address;
-const XORCA_MINT_ADDRESS = 'CT3ZnaEQuJsqdDFXedpitqb6gKQEuCzHUwztLrqV8Qrc' as Address; // TODO: update this
+const ORCA_MINT_ADDRESS = 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE' as Address;
+const XORCA_MINT_ADDRESS = 'xorcaYqbXUNz3474ubUMJAdu2xgPsew3rUCe5ughT3N' as Address; // TODO: update this
 
 export async function findStateAddress(): Promise<ProgramDerivedAddress> {
   return await getProgramDerivedAddress({
@@ -198,7 +198,7 @@ export async function fetchXorcaMintSupply(rpc: Rpc<GetAccountInfoApi>): Promise
   return mintAccount.supply;
 }
 
-export async function fetchStakingExchangeRate(
+export async function getStakingExchangeRate(
   rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi & GetAccountInfoApi>
 ): Promise<{
   numerator: bigint;

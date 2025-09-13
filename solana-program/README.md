@@ -2,7 +2,7 @@
 
 A Solana program that implements a staking pool model for ORCA with a liquid staking token, xORCA. Users deposit ORCA to receive xORCA proportional to their share of the pool and can later burn xORCA to initiate an unstake with a cooldown, completing withdrawal once the cooldown elapses. The program uses deterministic PDAs for core authorities and relies on SPL Token and Associated Token Account CPIs. The program emits Borsh-serialized events for Stake/Unstake/Withdraw.
 
-— Program Id: 2WTJWHG5LMsZUiUxTrTTGT5RzPkRYxiVCft4TnJEiQLF
+— Program Id: 5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY
 
 - **High-level features**:
   - **Staking model**: Single-sided ORCA deposit; mints xORCA as a proportional share of non-escrowed ORCA in the vault.

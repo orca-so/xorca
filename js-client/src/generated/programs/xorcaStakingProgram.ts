@@ -17,7 +17,7 @@ import {
 import { AccountDiscriminator, getAccountDiscriminatorEncoder } from '../types';
 
 export const XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS =
-  '2WTJWHG5LMsZUiUxTrTTGT5RzPkRYxiVCft4TnJEiQLF' as Address<'2WTJWHG5LMsZUiUxTrTTGT5RzPkRYxiVCft4TnJEiQLF'>;
+  '5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY' as Address<'5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY'>;
 
 export enum XorcaStakingProgramAccount {
   PendingWithdraw,
@@ -76,7 +76,7 @@ export function identifyXorcaStakingProgramInstruction(
 }
 
 export type ParsedXorcaStakingProgramInstruction<
-  TProgram extends string = '2WTJWHG5LMsZUiUxTrTTGT5RzPkRYxiVCft4TnJEiQLF',
+  TProgram extends string = '5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY',
 > =
   | ({
       instructionType: XorcaStakingProgramInstruction.Stake;
