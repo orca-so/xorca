@@ -69,14 +69,8 @@ pub enum XorcaStakingProgramError {
     InsufficientVaultBacking = 0x1782,
 }
 
-impl solana_program::program_error::PrintProgramError for XorcaStakingProgramError {
-    fn print<E>(&self) {
-        solana_program::msg!(&self.to_string());
-    }
-}
-
-impl<T> solana_program::decode_error::DecodeError<T> for XorcaStakingProgramError {
-    fn type_of() -> &'static str {
-        "XorcaStakingProgramError"
+impl From<XorcaStakingProgramError> for solana_program_error::ProgramError {
+    fn from(e: XorcaStakingProgramError) -> Self {
+        solana_program_error::ProgramError::Custom(e as u32)
     }
 }

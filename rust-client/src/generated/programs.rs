@@ -5,7 +5,7 @@
 //! <https://github.com/codama-idl/codama>
 //!
 
-use solana_program::{pubkey, pubkey::Pubkey};
+use solana_pubkey::{pubkey, Pubkey};
 
 /// `xorca_staking_program` program ID.
 pub const XORCA_STAKING_PROGRAM_ID: Pubkey =
