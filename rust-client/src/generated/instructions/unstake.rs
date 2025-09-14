@@ -52,7 +52,7 @@ impl Unstake {
             self.state_account,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.vault_account,
             false,
         ));
@@ -124,7 +124,7 @@ pub struct UnstakeInstructionArgs {
 ///
 ///   0. `[writable, signer]` unstaker_account
 ///   1. `[writable]` state_account
-///   2. `[writable]` vault_account
+///   2. `[]` vault_account
 ///   3. `[writable]` pending_withdraw_account
 ///   4. `[writable]` unstaker_xorca_ata
 ///   5. `[writable]` xorca_mint_account
@@ -369,7 +369,7 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
             *self.state_account.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new(
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.vault_account.key,
             false,
         ));
@@ -442,7 +442,7 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
 ///
 ///   0. `[writable, signer]` unstaker_account
 ///   1. `[writable]` state_account
-///   2. `[writable]` vault_account
+///   2. `[]` vault_account
 ///   3. `[writable]` pending_withdraw_account
 ///   4. `[writable]` unstaker_xorca_ata
 ///   5. `[writable]` xorca_mint_account

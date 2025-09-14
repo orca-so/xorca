@@ -37,7 +37,7 @@ export type Event =
   | {
       __kind: 'Unstake';
       xorcaUnstakeAmount: bigint;
-      vaultXorcaAmount: bigint;
+      vaultOrcaAmount: bigint;
       vaultEscrowedOrcaAmount: bigint;
       xorcaMintSupply: bigint;
       withdrawableOrcaAmount: bigint;
@@ -64,7 +64,7 @@ export type EventArgs =
   | {
       __kind: 'Unstake';
       xorcaUnstakeAmount: number | bigint;
-      vaultXorcaAmount: number | bigint;
+      vaultOrcaAmount: number | bigint;
       vaultEscrowedOrcaAmount: number | bigint;
       xorcaMintSupply: number | bigint;
       withdrawableOrcaAmount: number | bigint;
@@ -95,7 +95,7 @@ export function getEventEncoder(): Encoder<EventArgs> {
       'Unstake',
       getStructEncoder([
         ['xorcaUnstakeAmount', getU64Encoder()],
-        ['vaultXorcaAmount', getU64Encoder()],
+        ['vaultOrcaAmount', getU64Encoder()],
         ['vaultEscrowedOrcaAmount', getU64Encoder()],
         ['xorcaMintSupply', getU64Encoder()],
         ['withdrawableOrcaAmount', getU64Encoder()],
@@ -131,7 +131,7 @@ export function getEventDecoder(): Decoder<Event> {
       'Unstake',
       getStructDecoder([
         ['xorcaUnstakeAmount', getU64Decoder()],
-        ['vaultXorcaAmount', getU64Decoder()],
+        ['vaultOrcaAmount', getU64Decoder()],
         ['vaultEscrowedOrcaAmount', getU64Decoder()],
         ['xorcaMintSupply', getU64Decoder()],
         ['withdrawableOrcaAmount', getU64Decoder()],

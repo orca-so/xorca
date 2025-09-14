@@ -54,9 +54,12 @@ pub fn process_instruction(
     // We'll read the state data later when we need it
 
     // 3. Vault Account Assertions
-    // Use stored vault_bump for verification - more efficient than assert_account_seeds
-    let vault_account_data =
-        make_owner_token_account_assertions(vault_account, state_account, orca_mint_account)?;
+    let vault_account_data = make_owner_token_account_assertions(
+        vault_account,
+        state_account,
+        orca_mint_account,
+        false,
+    )?;
 
     // 4. Pending Withdraw Account Assertions
     assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
@@ -76,6 +79,7 @@ pub fn process_instruction(
         unstaker_xorca_ata,
         unstaker_account,
         xorca_mint_account,
+        true,
     )?;
     if unstaker_xorca_ata_data.amount < *xorca_unstake_amount {
         return Err(ErrorCode::InsufficientFunds.into());
@@ -166,7 +170,7 @@ pub fn process_instruction(
 
     Event::Unstake {
         xorca_unstake_amount: xorca_unstake_amount,
-        vault_xorca_amount: &vault_account_data.amount,
+        vault_orca_amount: &vault_account_data.amount,
         vault_escrowed_orca_amount: &state.escrowed_orca_amount,
         xorca_mint_supply: &xorca_mint_data.supply,
         withdrawable_orca_amount: &withdrawable_orca_amount,

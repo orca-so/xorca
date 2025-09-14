@@ -198,8 +198,11 @@ pub fn make_owner_token_account_assertions<'a>(
     owner_token_account: &'a AccountInfo,
     owner_account: &AccountInfo,
     token_mint_account: &AccountInfo,
+    verify_writable: bool,
 ) -> Result<TokenAccount, ProgramError> {
-    assert_account_role(owner_token_account, &[AccountRole::Writable])?;
+    if verify_writable {
+        assert_account_role(owner_token_account, &[AccountRole::Writable])?;
+    }
     assert_account_owner(owner_token_account, &SPL_TOKEN_PROGRAM_ID)?;
     let owner_token_account_data =
         assert_external_account_data::<TokenAccount>(owner_token_account)?;

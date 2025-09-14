@@ -14,7 +14,7 @@ pub enum Event<'a> {
     },
     Unstake {
         xorca_unstake_amount: &'a u64,
-        vault_xorca_amount: &'a u64,
+        vault_orca_amount: &'a u64,
         vault_escrowed_orca_amount: &'a u64,
         xorca_mint_supply: &'a u64,
         withdrawable_orca_amount: &'a u64,

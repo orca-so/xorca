@@ -63,7 +63,7 @@ export type UnstakeInstruction<
         ? WritableAccount<TAccountStateAccount>
         : TAccountStateAccount,
       TAccountVaultAccount extends string
-        ? WritableAccount<TAccountVaultAccount>
+        ? ReadonlyAccount<TAccountVaultAccount>
         : TAccountVaultAccount,
       TAccountPendingWithdrawAccount extends string
         ? WritableAccount<TAccountPendingWithdrawAccount>
@@ -191,7 +191,7 @@ export function getUnstakeInstruction<
   const originalAccounts = {
     unstakerAccount: { value: input.unstakerAccount ?? null, isWritable: true },
     stateAccount: { value: input.stateAccount ?? null, isWritable: true },
-    vaultAccount: { value: input.vaultAccount ?? null, isWritable: true },
+    vaultAccount: { value: input.vaultAccount ?? null, isWritable: false },
     pendingWithdrawAccount: {
       value: input.pendingWithdrawAccount ?? null,
       isWritable: true,
