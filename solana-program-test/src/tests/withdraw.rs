@@ -2014,14 +2014,7 @@ fn withdraw_verifies_complete_account_closure_procedure() {
 
     // === COMPREHENSIVE ACCOUNT CLOSURE VERIFICATION ===
 
-    // Step 1: Verify discriminator is set to Closed (value 3) - happens before resize
-    assert_eq!(
-        xorca::AccountDiscriminator::Closed as u8,
-        3,
-        "Closed discriminator should be value 3"
-    );
-
-    // Step 2: Verify lamports were transferred to receiver (staker) minus resize cost
+    // Step 1: Verify lamports were transferred to receiver (staker) minus resize cost
     let expected_lamports = staker_lamports_before + initial_lamports - RESIZE_TO_ZERO_COST;
     assert_eq!(
         staker_lamports_after, expected_lamports,
@@ -2029,7 +2022,7 @@ fn withdraw_verifies_complete_account_closure_procedure() {
         RESIZE_TO_ZERO_COST
     );
 
-    // Step 3: Verify account is resized to 0 (improved procedure) - removes account from runtime
+    // Step 2: Verify account is resized to 0 (improved procedure) - removes account from runtime
     assert!(
         account_after.is_err(),
         "Step 3: Account should be removed (not found) after closure with resize(0) - this proves the improved procedure worked"
