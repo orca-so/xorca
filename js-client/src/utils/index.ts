@@ -5,7 +5,6 @@ import {
   PENDING_WITHDRAW_DISCRIMINATOR,
   PendingWithdraw,
   State,
-  STATE_DISCRIMINATOR,
   XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 } from '../generated';
 import {
@@ -94,34 +93,20 @@ export async function fetchDecodedProgramAccounts<T extends object>(
   }));
 }
 
-export async function fetchStateAccountData(
-  rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi>
-): Promise<State> {
-  const discriminator = getBase58Decoder().decode(
-    getAccountDiscriminatorEncoder().encode(STATE_DISCRIMINATOR)
-  );
-  let filters: GetProgramAccountsMemcmpFilter[] = [
-    {
-      memcmp: {
-        offset: 0n,
-        bytes: discriminator as Base58EncodedBytes,
-        encoding: 'base58',
-      },
-    },
-  ];
-  const state = (
-    await fetchDecodedProgramAccounts(
-      rpc,
-      XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
-      filters,
-      getStateDecoder()
-    )
-  )[0];
-  return state.data;
+export async function fetchStateAccountData(rpc: Rpc<GetMultipleAccountsApi>): Promise<State> {
+  const [stateAddress] = await findStateAddress();
+  const accounts = await rpc.getMultipleAccounts([stateAddress]).send();
+  if (!accounts.value[0]) {
+    throw new Error('State account not found.');
+  }
+  const encoder = getBase64Encoder();
+  const dataBytes = encoder.encode(accounts.value[0].data[0]);
+  const stateDecoder = getStateDecoder();
+  return stateDecoder.decode(dataBytes);
 }
 
 export async function fetchStateAccountCoolDownPeriodS(
-  rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi>
+  rpc: Rpc<GetMultipleAccountsApi>
 ): Promise<bigint> {
   const state = await fetchStateAccountData(rpc);
   return state.coolDownPeriodS;
@@ -199,7 +184,7 @@ export async function fetchXorcaMintSupply(rpc: Rpc<GetAccountInfoApi>): Promise
 }
 
 export async function getStakingExchangeRate(
-  rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi & GetAccountInfoApi>
+  rpc: Rpc<GetMultipleAccountsApi & GetAccountInfoApi>
 ): Promise<{
   numerator: bigint;
   denominator: bigint;
