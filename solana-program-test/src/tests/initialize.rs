@@ -6,6 +6,7 @@ use solana_sdk::{
     native_token::LAMPORTS_PER_SOL,
     pubkey::Pubkey,
     signature::{Keypair, Signer},
+    system_instruction,
 };
 use xorca::{
     find_orca_vault_address, find_state_address, Initialize, InitializeInstructionArgs, State,
@@ -694,6 +695,11 @@ fn initialize_sets_different_update_authority_success() {
     // Calculate vault account address
     let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
+    // Fund the update authority account so it can pay for the transaction
+    let fund_ix =
+        system_instruction::transfer(&ctx.signer(), &update_authority.pubkey(), 100_000_000); // 0.1 SOL
+    ctx.send(fund_ix).unwrap();
+
     let ix = Initialize {
         payer_account: ctx.signer(), // Deployer as payer (required)
         update_authority_account: update_authority.pubkey(), // Different update authority
@@ -710,7 +716,9 @@ fn initialize_sets_different_update_authority_success() {
     });
 
     // This should succeed because deployer is the payer, even though update_authority is different
-    assert!(ctx.send(ix).is_ok());
+    // Need to sign with both the payer and the update authority
+    let res = ctx.sends_with_signer(&[ix], &update_authority);
+    assert!(res.is_ok());
 
     let state_account = ctx.get_account::<State>(state).unwrap();
     assert_eq!(state_account.data.cool_down_period_s, 100);
@@ -765,12 +773,12 @@ fn initialize_fails_with_wrong_update_authority_account() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: wrong_update,
         state_account: state,
+        vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: wrong_update,
         system_program_account: SYSTEM_PROGRAM_ID,
-        vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
     }
@@ -778,8 +786,5 @@ fn initialize_fails_with_wrong_update_authority_account() {
         cool_down_period_s: 1,
     });
     let res = ctx.send(ix);
-    assert_program_error!(
-        res,
-        xorca::XorcaStakingProgramError::InvalidAccountRole
-    );
+    assert_program_error!(res, xorca::XorcaStakingProgramError::InvalidAccountRole);
 }
