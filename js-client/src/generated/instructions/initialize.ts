@@ -43,11 +43,11 @@ export type InitializeInstruction<
   TProgram extends string = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
   TAccountPayerAccount extends string | AccountMeta<string> = string,
   TAccountStateAccount extends string | AccountMeta<string> = string,
+  TAccountVaultAccount extends string | AccountMeta<string> = string,
   TAccountXorcaMintAccount extends string | AccountMeta<string> = string,
   TAccountOrcaMintAccount extends string | AccountMeta<string> = string,
   TAccountUpdateAuthorityAccount extends string | AccountMeta<string> = string,
   TAccountSystemProgramAccount extends string | AccountMeta<string> = string,
-  TAccountVaultAccount extends string | AccountMeta<string> = string,
   TAccountTokenProgramAccount extends string | AccountMeta<string> = string,
   TAccountAssociatedTokenProgramAccount extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
@@ -61,6 +61,9 @@ export type InitializeInstruction<
       TAccountStateAccount extends string
         ? WritableAccount<TAccountStateAccount>
         : TAccountStateAccount,
+      TAccountVaultAccount extends string
+        ? WritableAccount<TAccountVaultAccount>
+        : TAccountVaultAccount,
       TAccountXorcaMintAccount extends string
         ? ReadonlyAccount<TAccountXorcaMintAccount>
         : TAccountXorcaMintAccount,
@@ -73,9 +76,6 @@ export type InitializeInstruction<
       TAccountSystemProgramAccount extends string
         ? ReadonlyAccount<TAccountSystemProgramAccount>
         : TAccountSystemProgramAccount,
-      TAccountVaultAccount extends string
-        ? WritableAccount<TAccountVaultAccount>
-        : TAccountVaultAccount,
       TAccountTokenProgramAccount extends string
         ? ReadonlyAccount<TAccountTokenProgramAccount>
         : TAccountTokenProgramAccount,
@@ -122,21 +122,21 @@ export function getInitializeInstructionDataCodec(): FixedSizeCodec<
 export type InitializeInput<
   TAccountPayerAccount extends string = string,
   TAccountStateAccount extends string = string,
+  TAccountVaultAccount extends string = string,
   TAccountXorcaMintAccount extends string = string,
   TAccountOrcaMintAccount extends string = string,
   TAccountUpdateAuthorityAccount extends string = string,
   TAccountSystemProgramAccount extends string = string,
-  TAccountVaultAccount extends string = string,
   TAccountTokenProgramAccount extends string = string,
   TAccountAssociatedTokenProgramAccount extends string = string,
 > = {
   payerAccount: TransactionSigner<TAccountPayerAccount>;
   stateAccount: Address<TAccountStateAccount>;
+  vaultAccount: Address<TAccountVaultAccount>;
   xorcaMintAccount: Address<TAccountXorcaMintAccount>;
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   updateAuthorityAccount: Address<TAccountUpdateAuthorityAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
-  vaultAccount: Address<TAccountVaultAccount>;
   tokenProgramAccount: Address<TAccountTokenProgramAccount>;
   associatedTokenProgramAccount: Address<TAccountAssociatedTokenProgramAccount>;
   coolDownPeriodS: InitializeInstructionDataArgs['coolDownPeriodS'];
@@ -145,11 +145,11 @@ export type InitializeInput<
 export function getInitializeInstruction<
   TAccountPayerAccount extends string,
   TAccountStateAccount extends string,
+  TAccountVaultAccount extends string,
   TAccountXorcaMintAccount extends string,
   TAccountOrcaMintAccount extends string,
   TAccountUpdateAuthorityAccount extends string,
   TAccountSystemProgramAccount extends string,
-  TAccountVaultAccount extends string,
   TAccountTokenProgramAccount extends string,
   TAccountAssociatedTokenProgramAccount extends string,
   TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
@@ -157,11 +157,11 @@ export function getInitializeInstruction<
   input: InitializeInput<
     TAccountPayerAccount,
     TAccountStateAccount,
+    TAccountVaultAccount,
     TAccountXorcaMintAccount,
     TAccountOrcaMintAccount,
     TAccountUpdateAuthorityAccount,
     TAccountSystemProgramAccount,
-    TAccountVaultAccount,
     TAccountTokenProgramAccount,
     TAccountAssociatedTokenProgramAccount
   >,
@@ -170,11 +170,11 @@ export function getInitializeInstruction<
   TProgramAddress,
   TAccountPayerAccount,
   TAccountStateAccount,
+  TAccountVaultAccount,
   TAccountXorcaMintAccount,
   TAccountOrcaMintAccount,
   TAccountUpdateAuthorityAccount,
   TAccountSystemProgramAccount,
-  TAccountVaultAccount,
   TAccountTokenProgramAccount,
   TAccountAssociatedTokenProgramAccount
 > {
@@ -185,6 +185,7 @@ export function getInitializeInstruction<
   const originalAccounts = {
     payerAccount: { value: input.payerAccount ?? null, isWritable: true },
     stateAccount: { value: input.stateAccount ?? null, isWritable: true },
+    vaultAccount: { value: input.vaultAccount ?? null, isWritable: true },
     xorcaMintAccount: {
       value: input.xorcaMintAccount ?? null,
       isWritable: false,
@@ -201,7 +202,6 @@ export function getInitializeInstruction<
       value: input.systemProgramAccount ?? null,
       isWritable: false,
     },
-    vaultAccount: { value: input.vaultAccount ?? null, isWritable: true },
     tokenProgramAccount: {
       value: input.tokenProgramAccount ?? null,
       isWritable: false,
@@ -221,11 +221,11 @@ export function getInitializeInstruction<
     accounts: [
       getAccountMeta(accounts.payerAccount),
       getAccountMeta(accounts.stateAccount),
+      getAccountMeta(accounts.vaultAccount),
       getAccountMeta(accounts.xorcaMintAccount),
       getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.updateAuthorityAccount),
       getAccountMeta(accounts.systemProgramAccount),
-      getAccountMeta(accounts.vaultAccount),
       getAccountMeta(accounts.tokenProgramAccount),
       getAccountMeta(accounts.associatedTokenProgramAccount),
     ],
@@ -235,11 +235,11 @@ export function getInitializeInstruction<
     TProgramAddress,
     TAccountPayerAccount,
     TAccountStateAccount,
+    TAccountVaultAccount,
     TAccountXorcaMintAccount,
     TAccountOrcaMintAccount,
     TAccountUpdateAuthorityAccount,
     TAccountSystemProgramAccount,
-    TAccountVaultAccount,
     TAccountTokenProgramAccount,
     TAccountAssociatedTokenProgramAccount
   >);
@@ -253,11 +253,11 @@ export type ParsedInitializeInstruction<
   accounts: {
     payerAccount: TAccountMetas[0];
     stateAccount: TAccountMetas[1];
-    xorcaMintAccount: TAccountMetas[2];
-    orcaMintAccount: TAccountMetas[3];
-    updateAuthorityAccount: TAccountMetas[4];
-    systemProgramAccount: TAccountMetas[5];
-    vaultAccount: TAccountMetas[6];
+    vaultAccount: TAccountMetas[2];
+    xorcaMintAccount: TAccountMetas[3];
+    orcaMintAccount: TAccountMetas[4];
+    updateAuthorityAccount: TAccountMetas[5];
+    systemProgramAccount: TAccountMetas[6];
     tokenProgramAccount: TAccountMetas[7];
     associatedTokenProgramAccount: TAccountMetas[8];
   };
@@ -287,11 +287,11 @@ export function parseInitializeInstruction<
     accounts: {
       payerAccount: getNextAccount(),
       stateAccount: getNextAccount(),
+      vaultAccount: getNextAccount(),
       xorcaMintAccount: getNextAccount(),
       orcaMintAccount: getNextAccount(),
       updateAuthorityAccount: getNextAccount(),
       systemProgramAccount: getNextAccount(),
-      vaultAccount: getNextAccount(),
       tokenProgramAccount: getNextAccount(),
       associatedTokenProgramAccount: getNextAccount(),
     },

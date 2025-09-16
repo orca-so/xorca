@@ -21,17 +21,17 @@ use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
 pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -> ProgramResult {
     let payer_account = get_account_info(accounts, 0)?;
     let state_account = get_account_info(accounts, 1)?;
-    let xorca_mint_account = get_account_info(accounts, 2)?;
-    let orca_mint_account = get_account_info(accounts, 3)?;
-    let update_authority_account = get_account_info(accounts, 4)?;
-    let system_program_account = get_account_info(accounts, 5)?;
-    let vault_account = get_account_info(accounts, 6)?;
+    let vault_account = get_account_info(accounts, 2)?;
+    let xorca_mint_account = get_account_info(accounts, 3)?;
+    let orca_mint_account = get_account_info(accounts, 4)?;
+    let update_authority_account = get_account_info(accounts, 5)?;
+    let system_program_account = get_account_info(accounts, 6)?;
     let token_program_account = get_account_info(accounts, 7)?;
     let associated_token_program_account = get_account_info(accounts, 8)?;
 
     // 1. Payer Account Assertions
     assert_account_role(payer_account, &[AccountRole::Signer, AccountRole::Writable])?;
-    
+
     // 1.1. Deployer Authorization - only the deployer can call initialize
     if payer_account.key() != &DEPLOYER_ADDRESS {
         return Err(ErrorCode::UnauthorizedDeployerAccess.into());

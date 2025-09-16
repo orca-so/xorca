@@ -54,11 +54,11 @@ pub enum Instruction {
 
     #[account(0, writable, signer, name = "payer_account")]
     #[account(1, writable, name = "state_account")]
-    #[account(2, name = "xorca_mint_account")]
-    #[account(3, name = "orca_mint_account")]
-    #[account(4, name = "update_authority_account")]
-    #[account(5, name = "system_program_account")]
-    #[account(6, writable, name = "vault_account")]
+    #[account(2, writable, name = "vault_account")]
+    #[account(3, name = "xorca_mint_account")]
+    #[account(4, name = "orca_mint_account")]
+    #[account(5, name = "update_authority_account")]
+    #[account(6, name = "system_program_account")]
     #[account(7, name = "token_program_account")]
     #[account(8, name = "associated_token_program_account")]
     Initialize { cool_down_period_s: i64 },
