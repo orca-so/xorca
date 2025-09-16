@@ -12,7 +12,9 @@ use crate::{
 use pinocchio::{
     account_info::AccountInfo, instruction::Seed, pubkey::find_program_address, ProgramResult,
 };
-use pinocchio_associated_token_account::ID as ASSOCIATED_TOKEN_PROGRAM_ID;
+use pinocchio_associated_token_account::{
+    instructions::CreateIdempotent as CreateAtaIdempotent, ID as ASSOCIATED_TOKEN_PROGRAM_ID,
+};
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
 
@@ -130,32 +132,16 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
         &state_data,
     )?;
 
-    // Create the vault ATA using CPI
-    let create_ata_ix = pinocchio::instruction::Instruction {
-        program_id: &ASSOCIATED_TOKEN_PROGRAM_ID,
-        accounts: &[
-            pinocchio::instruction::AccountMeta::writable_signer(payer_account.key()),
-            pinocchio::instruction::AccountMeta::writable(vault_account.key()),
-            pinocchio::instruction::AccountMeta::readonly(state_account.key()),
-            pinocchio::instruction::AccountMeta::readonly(orca_mint_account.key()),
-            pinocchio::instruction::AccountMeta::readonly(system_program_account.key()),
-            pinocchio::instruction::AccountMeta::readonly(token_program_account.key()),
-            pinocchio::instruction::AccountMeta::readonly(&ASSOCIATED_TOKEN_PROGRAM_ID),
-        ],
-        data: &[],
-    };
-    pinocchio::program::invoke(
-        &create_ata_ix,
-        &[
-            payer_account,
-            vault_account,
-            state_account,
-            orca_mint_account,
-            system_program_account,
-            token_program_account,
-            associated_token_program_account,
-        ],
-    )?;
+    // Create the vault ATA using pinocchio ATA
+    CreateAtaIdempotent {
+        funding_account: payer_account,
+        account: vault_account,
+        wallet: state_account,
+        mint: orca_mint_account,
+        system_program: system_program_account,
+        token_program: token_program_account,
+    }
+    .invoke()?;
 
     Ok(())
 }
