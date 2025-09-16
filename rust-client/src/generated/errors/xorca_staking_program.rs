@@ -67,6 +67,9 @@ pub enum XorcaStakingProgramError {
     /// 6018 - Insufficient vault backing (vault < escrow)
     #[error("Insufficient vault backing (vault < escrow)")]
     InsufficientVaultBacking = 0x1782,
+    /// 6019 - Unauthorized deployer access
+    #[error("Unauthorized deployer access")]
+    UnauthorizedDeployerAccess = 0x1783,
 }
 
 impl From<XorcaStakingProgramError> for solana_program_error::ProgramError {

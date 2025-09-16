@@ -18,10 +18,12 @@
     "build": "yarn build:contract && yarn generate && yarn build:rs && yarn build:ts && yarn fmt",
     "build:docker": "docker compose --profile build up --build",
     "build:contract": "cargo build-sbf --manifest-path solana-program/Cargo.toml && shank idl -o target/idl -r solana-program",
+    "build:test": "cargo build-sbf --manifest-path solana-program/Cargo.toml --features test",
     "build:ts": "yarn workspace @orca-so/xorca build",
     "build:rs": "cargo build -p xorca --features wasm",
     "clean": "rm -rf js-client/src/generated rust-client/src/generated target/idl rust-client/pkg",
     "fmt": "yarn workspace @orca-so/xorca fmt && cargo fmt",
-    "test": "yarn workspace @orca-so/xorca test && cargo test"
+    "test": "yarn workspace @orca-so/xorca test && cargo test",
+    "test:contract": "cargo build-sbf --manifest-path solana-program/Cargo.toml --features test && cargo test"
   }
 }

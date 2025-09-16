@@ -4,13 +4,10 @@ pub mod stake;
 pub mod unstake;
 pub mod withdraw;
 use pinocchio::pubkey::Pubkey;
-use pinocchio_pubkey::pubkey;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use shank::ShankInstruction;
 use strum::{Display, EnumDiscriminants, FromRepr};
-
-pub const INITIAL_UPGRADE_AUTHORITY_ID: Pubkey = pubkey!("11111111111111111111111111111111"); // TODO: replace with actual initial upgrade authority
 
 #[derive(
     Debug, Clone, BorshSerialize, BorshDeserialize, ShankInstruction, Display, EnumDiscriminants,

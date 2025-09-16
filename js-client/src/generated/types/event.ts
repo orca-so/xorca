@@ -8,6 +8,8 @@
 
 import {
   combineCodec,
+  getAddressDecoder,
+  getAddressEncoder,
   getDiscriminatedUnionDecoder,
   getDiscriminatedUnionEncoder,
   getI64Decoder,
@@ -18,6 +20,7 @@ import {
   getU64Encoder,
   getU8Decoder,
   getU8Encoder,
+  type Address,
   type Codec,
   type Decoder,
   type Encoder,
@@ -50,7 +53,8 @@ export type Event =
       withdrawableOrcaAmount: bigint;
       coolDownPeriodS: bigint;
       withdrawIndex: number;
-    };
+    }
+  | { __kind: 'UpdateAuthoritySet'; newAuthority: Address; setBy: Address };
 
 export type EventArgs =
   | {
@@ -77,7 +81,8 @@ export type EventArgs =
       withdrawableOrcaAmount: number | bigint;
       coolDownPeriodS: number | bigint;
       withdrawIndex: number;
-    };
+    }
+  | { __kind: 'UpdateAuthoritySet'; newAuthority: Address; setBy: Address };
 
 export function getEventEncoder(): Encoder<EventArgs> {
   return getDiscriminatedUnionEncoder([
@@ -110,6 +115,13 @@ export function getEventEncoder(): Encoder<EventArgs> {
         ['withdrawableOrcaAmount', getU64Encoder()],
         ['coolDownPeriodS', getI64Encoder()],
         ['withdrawIndex', getU8Encoder()],
+      ]),
+    ],
+    [
+      'UpdateAuthoritySet',
+      getStructEncoder([
+        ['newAuthority', getAddressEncoder()],
+        ['setBy', getAddressEncoder()],
       ]),
     ],
   ]);
@@ -148,6 +160,13 @@ export function getEventDecoder(): Decoder<Event> {
         ['withdrawIndex', getU8Decoder()],
       ]),
     ],
+    [
+      'UpdateAuthoritySet',
+      getStructDecoder([
+        ['newAuthority', getAddressDecoder()],
+        ['setBy', getAddressDecoder()],
+      ]),
+    ],
   ]);
 }
 
@@ -168,6 +187,10 @@ export function event(
   kind: 'Withdraw',
   data: GetDiscriminatedUnionVariantContent<EventArgs, '__kind', 'Withdraw'>
 ): GetDiscriminatedUnionVariant<EventArgs, '__kind', 'Withdraw'>;
+export function event(
+  kind: 'UpdateAuthoritySet',
+  data: GetDiscriminatedUnionVariantContent<EventArgs, '__kind', 'UpdateAuthoritySet'>
+): GetDiscriminatedUnionVariant<EventArgs, '__kind', 'UpdateAuthoritySet'>;
 export function event<K extends EventArgs['__kind'], Data>(kind: K, data?: Data) {
   return Array.isArray(data) ? { __kind: kind, fields: data } : { __kind: kind, ...(data ?? {}) };
 }

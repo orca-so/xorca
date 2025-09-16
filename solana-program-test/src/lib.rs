@@ -11,7 +11,7 @@ use solana_sdk::{
     packet::PACKET_DATA_SIZE,
     program_error::ProgramError,
     pubkey::Pubkey,
-    signature::{Keypair, Signature},
+    signature::{EncodableKey, Keypair, Signature},
     signer::Signer,
     system_instruction, system_program,
     transaction::VersionedTransaction,
@@ -34,8 +34,9 @@ pub const XORCA_PROGRAM_ID: Pubkey =
     solana_sdk::pubkey!("5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY");
 pub const ATA_PROGRAM_ID: Pubkey =
     solana_sdk::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
-pub const INITIAL_UPDATE_AUTHORITY_ID: Pubkey =
-    solana_sdk::pubkey!("11111111111111111111111111111111");
+// In test mode, we use a different deployer address that we can generate a keypair for
+pub const DEPLOYER_ADDRESS: Pubkey =
+    solana_sdk::pubkey!("9C6hybhQ6Aycep9jaUnP6uL9ZYvDjUp1aSkFWPUFJtpj");
 
 struct TestContext {
     svm: LiteSVM,
@@ -45,16 +46,29 @@ struct TestContext {
 
 impl TestContext {
     pub fn new() -> Self {
-        let signer = Keypair::new();
+        // Create a deterministic keypair for testing
+        // We'll use a deterministic seed to ensure consistent keypair generation
+        let signer_seed = [
+            0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e,
+            0x0f, 0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19, 0x1a, 0x1b, 0x1c,
+            0x1d, 0x1e, 0x1f, 0x20,
+        ];
+        let signer = Keypair::new_from_array(signer_seed);
+
         let mut svm = LiteSVM::new()
             .with_sigverify(false)
             .with_blockhash_check(false)
             .with_log_bytes_limit(Some(100_000));
+
+        // Fund both the test signer and the deployer
         svm.airdrop(&signer.pubkey(), LAMPORTS_PER_SOL).unwrap();
+
+        // Add the program
         svm.add_program(
             XORCA_PROGRAM_ID,
             include_bytes!("../../target/deploy/xorca_staking_program.so"),
         );
+
         Self {
             svm,
             signer,
@@ -136,6 +150,35 @@ impl TestContext {
             ]
             .concat(),
             Some(&self.signer()),
+        );
+        let tx = VersionedTransaction {
+            signatures: vec![Signature::new_unique(); msg.header.num_required_signatures as usize],
+            message: VersionedMessage::Legacy(msg),
+        };
+        let bytes = bincode::serialize(&tx).map_err(|_| ProgramError::Custom(0))?;
+        if self.verify_tx_size {
+            assert!(
+                bytes.len() <= PACKET_DATA_SIZE,
+                "Transaction of {} bytes is too large",
+                bytes.len()
+            );
+        }
+        self.svm.send_transaction(tx)
+    }
+
+    pub fn sends_with_signer(&mut self, ix: &[Instruction], signer: &Keypair) -> TransactionResult {
+        // Add compute budget instructions to make sure the instruction fits in a tx
+        let msg = Message::new(
+            &[
+                &[
+                    ComputeBudgetInstruction::set_compute_unit_limit(1_400_000),
+                    ComputeBudgetInstruction::set_compute_unit_price(0),
+                    system_instruction::transfer(&signer.pubkey(), &JITO_TIP_ADDRESS, 0),
+                ],
+                ix,
+            ]
+            .concat(),
+            Some(&signer.pubkey()),
         );
         let tx = VersionedTransaction {
             signatures: vec![Signature::new_unique(); msg.header.num_required_signatures as usize],

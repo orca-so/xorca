@@ -5,9 +5,9 @@ use crate::{
     },
     cpi::token::{TokenMint, ORCA_MINT_ID, XORCA_MINT_ID},
     error::ErrorCode,
-    instructions::INITIAL_UPGRADE_AUTHORITY_ID,
     state::state::State,
     util::account::{create_program_account_borsh, get_account_info},
+    DEPLOYER_ADDRESS,
 };
 use pinocchio::{
     account_info::AccountInfo, instruction::Seed, pubkey::find_program_address, ProgramResult,
@@ -31,6 +31,11 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
 
     // 1. Payer Account Assertions
     assert_account_role(payer_account, &[AccountRole::Signer, AccountRole::Writable])?;
+    
+    // 1.1. Deployer Authorization - only the deployer can call initialize
+    if payer_account.key() != &DEPLOYER_ADDRESS {
+        return Err(ErrorCode::UnauthorizedDeployerAccess.into());
+    }
 
     // 2. xOrca State Account Assertions
     assert_account_role(state_account, &[AccountRole::Writable])?;
@@ -78,7 +83,7 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
     }
 
     // 5. Update Authority Account Assertions
-    assert_account_address(update_authority_account, &INITIAL_UPGRADE_AUTHORITY_ID)?;
+    assert_account_role(update_authority_account, &[AccountRole::Signer])?;
 
     // 6. System Program Account Assertions
     assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;

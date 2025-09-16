@@ -1,8 +1,12 @@
 use crate::{
-    assert_program_error, TestContext, ATA_PROGRAM_ID, INITIAL_UPDATE_AUTHORITY_ID, ORCA_ID,
-    SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
+    assert_program_error, TestContext, ATA_PROGRAM_ID, ORCA_ID, SYSTEM_PROGRAM_ID,
+    TOKEN_PROGRAM_ID, XORCA_ID,
 };
-use solana_sdk::pubkey::Pubkey;
+use solana_sdk::{
+    native_token::LAMPORTS_PER_SOL,
+    pubkey::Pubkey,
+    signature::{Keypair, Signer},
+};
 use xorca::{
     find_orca_vault_address, find_state_address, Initialize, InitializeInstructionArgs, State,
     TokenMint,
@@ -51,7 +55,7 @@ fn initialize_sets_values_with_standard_values_success() {
         state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -64,17 +68,14 @@ fn initialize_sets_values_with_standard_values_success() {
 
     let state_account = ctx.get_account::<State>(state).unwrap();
     assert_eq!(state_account.data.cool_down_period_s, 100);
-    assert_eq!(
-        state_account.data.update_authority,
-        INITIAL_UPDATE_AUTHORITY_ID
-    );
+    assert_eq!(state_account.data.update_authority, ctx.signer());
     assert_eq!(state_account.account.owner, crate::XORCA_PROGRAM_ID);
     let mint_after = ctx.get_account::<TokenMint>(XORCA_ID).unwrap();
     assert_eq!(mint_after.data.mint_authority, state);
     assert_eq!(mint_after.data.supply, 0);
 }
 
-// Update authority must match the expected constant
+// Update authority must be a signer
 #[test]
 fn initialize_fails_with_wrong_update_authority_account() {
     let mut ctx = TestContext::new();
@@ -128,10 +129,7 @@ fn initialize_fails_with_wrong_update_authority_account() {
         cool_down_period_s: 1,
     });
     let res = ctx.send(ix);
-    assert_program_error!(
-        res,
-        xorca::XorcaStakingProgramError::IncorrectAccountAddress
-    );
+    assert_program_error!(res, xorca::XorcaStakingProgramError::InvalidAccountRole);
 }
 
 // System program must be correct
@@ -178,7 +176,7 @@ fn initialize_fails_with_wrong_system_program_account() {
         state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: ctx.signer(),
         system_program_account: wrong_system,
         vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -198,7 +196,7 @@ fn initialize_fails_with_wrong_system_program_account() {
 #[test]
 fn initialize_fails_with_insufficient_lamports() {
     let mut ctx = TestContext::new();
-    // Drain payer lamports
+    // Drain deployer lamports
     ctx.svm
         .set_account(
             ctx.signer(),
@@ -250,7 +248,7 @@ fn initialize_fails_with_insufficient_lamports() {
         state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -302,7 +300,7 @@ fn initialize_fails_when_xorca_mint_frozen() {
         state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -353,7 +351,7 @@ fn initialize_fails_when_xorca_mint_no_authority_flag() {
         state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -407,7 +405,7 @@ fn initialize_fails_when_xorca_mint_supply_nonzero() {
         state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -460,7 +458,7 @@ fn initialize_fails_when_xorca_mint_wrong_owner() {
         state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -514,7 +512,7 @@ fn initialize_fails_when_xorca_mint_wrong_address() {
         state_account: state,
         xorca_mint_account: wrong_mint,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -574,7 +572,7 @@ fn initialize_fails_when_state_already_initialized() {
         state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -633,7 +631,7 @@ fn initialize_fails_with_wrong_state_owner() {
         state_account: state,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: INITIAL_UPDATE_AUTHORITY_ID,
+        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         vault_account,
         token_program_account: TOKEN_PROGRAM_ID,
@@ -644,4 +642,141 @@ fn initialize_fails_with_wrong_state_owner() {
     });
     let res = ctx.send(ix);
     assert_program_error!(res, xorca::XorcaStakingProgramError::IncorrectOwner);
+}
+
+#[test]
+fn initialize_fails_with_non_deployer_payer() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+
+    // Create a different keypair (not the deployer)
+    let non_deployer = Keypair::new();
+
+    // Airdrop some lamports to the non-deployer account
+    ctx.svm
+        .airdrop(&non_deployer.pubkey(), LAMPORTS_PER_SOL)
+        .unwrap();
+
+    // Seed mints
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+
+    // Calculate vault account address
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
+
+    let ix = Initialize {
+        payer_account: non_deployer.pubkey(), // Use non-deployer as payer
+        state_account: state,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: non_deployer.pubkey(), // Use non-deployer as update authority too
+        system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 100,
+    });
+
+    // This should fail because the payer is not the deployer
+    let res = ctx.sends_with_signer(&[ix], &non_deployer);
+    assert_program_error!(
+        res,
+        xorca::XorcaStakingProgramError::UnauthorizedDeployerAccess
+    );
+}
+
+#[test]
+fn initialize_sets_different_update_authority_success() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+
+    // Create a different keypair for update authority
+    let update_authority = Keypair::new();
+
+    // Seed mints
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+
+    // Calculate vault account address
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
+
+    let ix = Initialize {
+        payer_account: ctx.signer(), // Deployer as payer (required)
+        state_account: state,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: update_authority.pubkey(), // Different update authority
+        system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 100,
+    });
+
+    // This should succeed because deployer is the payer, even though update_authority is different
+    assert!(ctx.send(ix).is_ok());
+
+    let state_account = ctx.get_account::<State>(state).unwrap();
+    assert_eq!(state_account.data.cool_down_period_s, 100);
+    assert_eq!(state_account.data.update_authority, update_authority.pubkey()); // Should be the different authority
+    assert_eq!(state_account.account.owner, crate::XORCA_PROGRAM_ID);
+    let mint_after = ctx.get_account::<TokenMint>(XORCA_ID).unwrap();
+    assert_eq!(mint_after.data.mint_authority, state);
+    assert_eq!(mint_after.data.supply, 0);
 }
