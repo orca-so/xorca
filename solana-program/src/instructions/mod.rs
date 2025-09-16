@@ -33,11 +33,11 @@ pub enum Instruction {
 
     #[account(0, writable, signer, name = "unstaker_account")]
     #[account(1, writable, name = "state_account")]
-    #[account(2, name = "vault_account")]
-    #[account(3, writable, name = "pending_withdraw_account")]
-    #[account(4, writable, name = "unstaker_xorca_ata")]
-    #[account(5, writable, name = "xorca_mint_account")]
-    #[account(6, name = "orca_mint_account")]
+    #[account(2, writable, name = "pending_withdraw_account")]
+    #[account(3, writable, name = "unstaker_xorca_ata")]
+    #[account(4, writable, name = "xorca_mint_account")]
+    #[account(5, name = "orca_mint_account")]
+    #[account(6, name = "vault_account")]
     #[account(7, name = "system_program_account")]
     #[account(8, name = "token_program_account")]
     Unstake {

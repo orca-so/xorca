@@ -17,8 +17,6 @@ pub struct Unstake {
 
     pub state_account: solana_pubkey::Pubkey,
 
-    pub vault_account: solana_pubkey::Pubkey,
-
     pub pending_withdraw_account: solana_pubkey::Pubkey,
 
     pub unstaker_xorca_ata: solana_pubkey::Pubkey,
@@ -26,6 +24,8 @@ pub struct Unstake {
     pub xorca_mint_account: solana_pubkey::Pubkey,
 
     pub orca_mint_account: solana_pubkey::Pubkey,
+
+    pub vault_account: solana_pubkey::Pubkey,
 
     pub system_program_account: solana_pubkey::Pubkey,
 
@@ -52,10 +52,6 @@ impl Unstake {
             self.state_account,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.vault_account,
-            false,
-        ));
         accounts.push(solana_instruction::AccountMeta::new(
             self.pending_withdraw_account,
             false,
@@ -70,6 +66,10 @@ impl Unstake {
         ));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
             self.orca_mint_account,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.vault_account,
             false,
         ));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
@@ -124,22 +124,22 @@ pub struct UnstakeInstructionArgs {
 ///
 ///   0. `[writable, signer]` unstaker_account
 ///   1. `[writable]` state_account
-///   2. `[]` vault_account
-///   3. `[writable]` pending_withdraw_account
-///   4. `[writable]` unstaker_xorca_ata
-///   5. `[writable]` xorca_mint_account
-///   6. `[]` orca_mint_account
+///   2. `[writable]` pending_withdraw_account
+///   3. `[writable]` unstaker_xorca_ata
+///   4. `[writable]` xorca_mint_account
+///   5. `[]` orca_mint_account
+///   6. `[]` vault_account
 ///   7. `[]` system_program_account
 ///   8. `[]` token_program_account
 #[derive(Clone, Debug, Default)]
 pub struct UnstakeBuilder {
     unstaker_account: Option<solana_pubkey::Pubkey>,
     state_account: Option<solana_pubkey::Pubkey>,
-    vault_account: Option<solana_pubkey::Pubkey>,
     pending_withdraw_account: Option<solana_pubkey::Pubkey>,
     unstaker_xorca_ata: Option<solana_pubkey::Pubkey>,
     xorca_mint_account: Option<solana_pubkey::Pubkey>,
     orca_mint_account: Option<solana_pubkey::Pubkey>,
+    vault_account: Option<solana_pubkey::Pubkey>,
     system_program_account: Option<solana_pubkey::Pubkey>,
     token_program_account: Option<solana_pubkey::Pubkey>,
     xorca_unstake_amount: Option<u64>,
@@ -159,11 +159,6 @@ impl UnstakeBuilder {
     #[inline(always)]
     pub fn state_account(&mut self, state_account: solana_pubkey::Pubkey) -> &mut Self {
         self.state_account = Some(state_account);
-        self
-    }
-    #[inline(always)]
-    pub fn vault_account(&mut self, vault_account: solana_pubkey::Pubkey) -> &mut Self {
-        self.vault_account = Some(vault_account);
         self
     }
     #[inline(always)]
@@ -187,6 +182,11 @@ impl UnstakeBuilder {
     #[inline(always)]
     pub fn orca_mint_account(&mut self, orca_mint_account: solana_pubkey::Pubkey) -> &mut Self {
         self.orca_mint_account = Some(orca_mint_account);
+        self
+    }
+    #[inline(always)]
+    pub fn vault_account(&mut self, vault_account: solana_pubkey::Pubkey) -> &mut Self {
+        self.vault_account = Some(vault_account);
         self
     }
     #[inline(always)]
@@ -235,7 +235,6 @@ impl UnstakeBuilder {
         let accounts = Unstake {
             unstaker_account: self.unstaker_account.expect("unstaker_account is not set"),
             state_account: self.state_account.expect("state_account is not set"),
-            vault_account: self.vault_account.expect("vault_account is not set"),
             pending_withdraw_account: self
                 .pending_withdraw_account
                 .expect("pending_withdraw_account is not set"),
@@ -248,6 +247,7 @@ impl UnstakeBuilder {
             orca_mint_account: self
                 .orca_mint_account
                 .expect("orca_mint_account is not set"),
+            vault_account: self.vault_account.expect("vault_account is not set"),
             system_program_account: self
                 .system_program_account
                 .expect("system_program_account is not set"),
@@ -276,8 +276,6 @@ pub struct UnstakeCpiAccounts<'a, 'b> {
 
     pub state_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub vault_account: &'b solana_account_info::AccountInfo<'a>,
-
     pub pending_withdraw_account: &'b solana_account_info::AccountInfo<'a>,
 
     pub unstaker_xorca_ata: &'b solana_account_info::AccountInfo<'a>,
@@ -285,6 +283,8 @@ pub struct UnstakeCpiAccounts<'a, 'b> {
     pub xorca_mint_account: &'b solana_account_info::AccountInfo<'a>,
 
     pub orca_mint_account: &'b solana_account_info::AccountInfo<'a>,
+
+    pub vault_account: &'b solana_account_info::AccountInfo<'a>,
 
     pub system_program_account: &'b solana_account_info::AccountInfo<'a>,
 
@@ -300,8 +300,6 @@ pub struct UnstakeCpi<'a, 'b> {
 
     pub state_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub vault_account: &'b solana_account_info::AccountInfo<'a>,
-
     pub pending_withdraw_account: &'b solana_account_info::AccountInfo<'a>,
 
     pub unstaker_xorca_ata: &'b solana_account_info::AccountInfo<'a>,
@@ -309,6 +307,8 @@ pub struct UnstakeCpi<'a, 'b> {
     pub xorca_mint_account: &'b solana_account_info::AccountInfo<'a>,
 
     pub orca_mint_account: &'b solana_account_info::AccountInfo<'a>,
+
+    pub vault_account: &'b solana_account_info::AccountInfo<'a>,
 
     pub system_program_account: &'b solana_account_info::AccountInfo<'a>,
 
@@ -327,11 +327,11 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
             __program: program,
             unstaker_account: accounts.unstaker_account,
             state_account: accounts.state_account,
-            vault_account: accounts.vault_account,
             pending_withdraw_account: accounts.pending_withdraw_account,
             unstaker_xorca_ata: accounts.unstaker_xorca_ata,
             xorca_mint_account: accounts.xorca_mint_account,
             orca_mint_account: accounts.orca_mint_account,
+            vault_account: accounts.vault_account,
             system_program_account: accounts.system_program_account,
             token_program_account: accounts.token_program_account,
             __args: args,
@@ -369,10 +369,6 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
             *self.state_account.key,
             false,
         ));
-        accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.vault_account.key,
-            false,
-        ));
         accounts.push(solana_instruction::AccountMeta::new(
             *self.pending_withdraw_account.key,
             false,
@@ -387,6 +383,10 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
         ));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
             *self.orca_mint_account.key,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.vault_account.key,
             false,
         ));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
@@ -417,11 +417,11 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
         account_infos.push(self.__program.clone());
         account_infos.push(self.unstaker_account.clone());
         account_infos.push(self.state_account.clone());
-        account_infos.push(self.vault_account.clone());
         account_infos.push(self.pending_withdraw_account.clone());
         account_infos.push(self.unstaker_xorca_ata.clone());
         account_infos.push(self.xorca_mint_account.clone());
         account_infos.push(self.orca_mint_account.clone());
+        account_infos.push(self.vault_account.clone());
         account_infos.push(self.system_program_account.clone());
         account_infos.push(self.token_program_account.clone());
         remaining_accounts
@@ -442,11 +442,11 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
 ///
 ///   0. `[writable, signer]` unstaker_account
 ///   1. `[writable]` state_account
-///   2. `[]` vault_account
-///   3. `[writable]` pending_withdraw_account
-///   4. `[writable]` unstaker_xorca_ata
-///   5. `[writable]` xorca_mint_account
-///   6. `[]` orca_mint_account
+///   2. `[writable]` pending_withdraw_account
+///   3. `[writable]` unstaker_xorca_ata
+///   4. `[writable]` xorca_mint_account
+///   5. `[]` orca_mint_account
+///   6. `[]` vault_account
 ///   7. `[]` system_program_account
 ///   8. `[]` token_program_account
 #[derive(Clone, Debug)]
@@ -460,11 +460,11 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
             __program: program,
             unstaker_account: None,
             state_account: None,
-            vault_account: None,
             pending_withdraw_account: None,
             unstaker_xorca_ata: None,
             xorca_mint_account: None,
             orca_mint_account: None,
+            vault_account: None,
             system_program_account: None,
             token_program_account: None,
             xorca_unstake_amount: None,
@@ -487,14 +487,6 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
         state_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.state_account = Some(state_account);
-        self
-    }
-    #[inline(always)]
-    pub fn vault_account(
-        &mut self,
-        vault_account: &'b solana_account_info::AccountInfo<'a>,
-    ) -> &mut Self {
-        self.instruction.vault_account = Some(vault_account);
         self
     }
     #[inline(always)]
@@ -527,6 +519,14 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
         orca_mint_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
         self.instruction.orca_mint_account = Some(orca_mint_account);
+        self
+    }
+    #[inline(always)]
+    pub fn vault_account(
+        &mut self,
+        vault_account: &'b solana_account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.vault_account = Some(vault_account);
         self
     }
     #[inline(always)]
@@ -614,11 +614,6 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
                 .state_account
                 .expect("state_account is not set"),
 
-            vault_account: self
-                .instruction
-                .vault_account
-                .expect("vault_account is not set"),
-
             pending_withdraw_account: self
                 .instruction
                 .pending_withdraw_account
@@ -638,6 +633,11 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
                 .instruction
                 .orca_mint_account
                 .expect("orca_mint_account is not set"),
+
+            vault_account: self
+                .instruction
+                .vault_account
+                .expect("vault_account is not set"),
 
             system_program_account: self
                 .instruction
@@ -662,11 +662,11 @@ struct UnstakeCpiBuilderInstruction<'a, 'b> {
     __program: &'b solana_account_info::AccountInfo<'a>,
     unstaker_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     state_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-    vault_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     pending_withdraw_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     unstaker_xorca_ata: Option<&'b solana_account_info::AccountInfo<'a>>,
     xorca_mint_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     orca_mint_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    vault_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     system_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     token_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     xorca_unstake_amount: Option<u64>,

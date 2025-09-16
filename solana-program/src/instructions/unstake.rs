@@ -27,11 +27,11 @@ pub fn process_instruction(
 ) -> ProgramResult {
     let unstaker_account = get_account_info(accounts, 0)?;
     let state_account = get_account_info(accounts, 1)?;
-    let vault_account = get_account_info(accounts, 2)?;
-    let pending_withdraw_account = get_account_info(accounts, 3)?;
-    let unstaker_xorca_ata = get_account_info(accounts, 4)?;
-    let xorca_mint_account = get_account_info(accounts, 5)?;
-    let orca_mint_account = get_account_info(accounts, 6)?;
+    let pending_withdraw_account = get_account_info(accounts, 2)?;
+    let unstaker_xorca_ata = get_account_info(accounts, 3)?;
+    let xorca_mint_account = get_account_info(accounts, 4)?;
+    let orca_mint_account = get_account_info(accounts, 5)?;
+    let vault_account = get_account_info(accounts, 6)?;
     let system_program_account = get_account_info(accounts, 7)?;
     let token_program_account = get_account_info(accounts, 8)?;
 
