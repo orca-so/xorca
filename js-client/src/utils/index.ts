@@ -183,7 +183,7 @@ export async function fetchXorcaMintSupply(rpc: Rpc<GetAccountInfoApi>): Promise
   return mintAccount.supply;
 }
 
-export async function getStakingExchangeRate(
+export async function fetchStakingExchangeRate(
   rpc: Rpc<GetMultipleAccountsApi & GetAccountInfoApi>
 ): Promise<{
   numerator: bigint;
