@@ -1,5 +1,4 @@
 use crate::{
-    cpi::system::CreateAccount,
     error::ErrorCode,
     state::{AccountDiscriminator, ProgramAccount},
 };
@@ -12,7 +11,7 @@ use pinocchio::{
     sysvars::{rent::Rent, Sysvar},
     ProgramResult,
 };
-use pinocchio_system::instructions::{Allocate, Assign, Transfer};
+use pinocchio_system::instructions::{Allocate, Assign, CreateAccount, Transfer};
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
 
 pub fn get_account_info(
@@ -25,39 +24,10 @@ pub fn get_account_info(
     Ok(&accounts[index])
 }
 
-/// This function does not do any assertions on the account owner or role.
-/// It is the responsibility of the caller to ensure that the account is owned by the correct program.
-pub fn create_account(
-    system_program: &AccountInfo,
-    funder: &AccountInfo,
-    new_account: &AccountInfo,
-    space: usize,
-    owner: &Pubkey,
-    signers: &[Signer],
-) -> ProgramResult {
-    if new_account.is_owned_by(&SYSTEM_PROGRAM_ID) {
-        let rent = Rent::get()?;
-        let lamports = rent.minimum_balance(space);
-
-        CreateAccount {
-            program: system_program,
-            from: funder,
-            to: new_account,
-            lamports,
-            space: space as u64,
-            owner,
-        }
-        .invoke_signed(signers)?;
-    }
-
-    Ok(())
-}
-
 /// Secure account creation that handles pre-funded accounts to prevent DoS attacks.
 /// If the account already has lamports, uses transfer + allocate + assign pattern.
 /// This prevents attackers from pre-funding accounts to block creation.
 pub fn create_account_secure(
-    system_program: &AccountInfo,
     funder: &AccountInfo,
     new_account: &AccountInfo,
     space: usize,
@@ -76,7 +46,6 @@ pub fn create_account_secure(
     // Early return for empty account - use standard create_account
     if current_lamports == 0 {
         CreateAccount {
-            program: system_program,
             from: funder,
             to: new_account,
             lamports: required_lamports,
@@ -116,60 +85,25 @@ pub fn create_account_secure(
     Ok(())
 }
 
-pub fn create_program_account<'a, T: ProgramAccount>(
-    system_program: &AccountInfo,
-    funder: &AccountInfo,
-    new_account: &'a AccountInfo,
-    signers: &[Signer],
-) -> Result<RefMut<'a, T>, ProgramError> {
-    create_account(
-        system_program,
-        funder,
-        new_account,
-        T::LEN,
-        &crate::ID,
-        signers,
-    )?;
-    let mut data = new_account.try_borrow_mut_data()?;
-    data[0] = T::DISCRIMINATOR as u8;
-    Ok(T::from_bytes_mut(data))
-}
-
 /// Secure version of create_program_account that handles pre-funded accounts to prevent DoS attacks.
 pub fn create_program_account_secure<'a, T: ProgramAccount>(
-    system_program: &AccountInfo,
     funder: &AccountInfo,
     new_account: &'a AccountInfo,
     signers: &[Signer],
 ) -> Result<RefMut<'a, T>, ProgramError> {
-    create_account_secure(
-        system_program,
-        funder,
-        new_account,
-        T::LEN,
-        &crate::ID,
-        signers,
-    )?;
+    create_account_secure(funder, new_account, T::LEN, &crate::ID, signers)?;
     let mut data = new_account.try_borrow_mut_data()?;
     data[0] = T::DISCRIMINATOR as u8;
     Ok(T::from_bytes_mut(data))
 }
 
 pub fn create_program_account_borsh<T: ProgramAccount + BorshSerialize + Default>(
-    system_program: &AccountInfo,
     funder: &AccountInfo,
     new_account: &AccountInfo,
     signers: &[Signer],
     data: &T,
 ) -> Result<(), ProgramError> {
-    create_account(
-        system_program,
-        funder,
-        new_account,
-        T::LEN,
-        &crate::ID,
-        signers,
-    )?;
+    create_account_secure(funder, new_account, T::LEN, &crate::ID, signers)?;
 
     // Create the initial state with Borsh serialization
     let serialized_data = borsh::to_vec(data).map_err(|_| ProgramError::InvalidAccountData)?;

@@ -151,7 +151,6 @@ pub fn process_instruction(
 
     // Create new pending withdraw account (secure against DoS attacks)
     let mut pending_withdraw_data = create_program_account_secure::<PendingWithdraw>(
-        system_program_account,
         unstaker_account,
         pending_withdraw_account,
         &[pending_withdraw_seeds.as_slice().into()],

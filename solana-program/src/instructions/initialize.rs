@@ -124,7 +124,6 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
     state_data.update_authority = *update_authority_account.key();
 
     create_program_account_borsh(
-        system_program_account,
         payer_account,
         state_account,
         &[state_seeds.as_slice().into()],

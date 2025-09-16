@@ -58,4 +58,3 @@ fn test_unstake_dos_protection_various_pre_funding() {
         );
     }
 }
-
