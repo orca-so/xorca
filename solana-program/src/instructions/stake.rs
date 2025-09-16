@@ -125,11 +125,14 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
     };
     mint_to_instruction.invoke_signed(&[state_seeds.as_slice().into()])?;
 
+    let final_vault_amount = vault_account_data.amount + *orca_stake_amount;
+    let final_xorca_supply = xorca_mint_data.supply + xorca_to_mint;
+
     Event::Stake {
         orca_stake_amount: orca_stake_amount,
-        vault_orca_amount: &vault_account_data.amount,
+        vault_orca_amount: &final_vault_amount,
         vault_escrowed_orca_amount: &state.escrowed_orca_amount,
-        xorca_mint_supply: &xorca_mint_data.supply,
+        xorca_mint_supply: &final_xorca_supply,
         xorca_to_mint: &xorca_to_mint,
     }
     .emit()?;

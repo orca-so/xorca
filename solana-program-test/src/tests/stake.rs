@@ -1485,15 +1485,10 @@ fn stake_event_emission_verification() {
             assert_eq!(orca_stake_amount, 1_000_000);
             assert_eq!(xorca_to_mint, 1_000_000);
             assert_eq!(vault_escrowed_orca_amount, 0);
-            // Event reports pre-stake vault amount
-            assert_eq!(vault_orca_amount, 0);
-            // Validate that on-chain xORCA mint supply equals event supply + minted amount
-            // (event may report supply-before or supply-after depending on program timing)
+            assert_eq!(vault_orca_amount, 1_000_000);
+
             let supply_after = ctx2.get_account::<TokenMint>(XORCA_ID).unwrap().data.supply;
-            assert_eq!(
-                supply_after,
-                xorca_mint_supply.saturating_add(xorca_to_mint)
-            );
+            assert_eq!(supply_after, xorca_mint_supply);
             found = true;
             break;
         }

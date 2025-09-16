@@ -168,11 +168,14 @@ pub fn process_instruction(
         .ok_or(ErrorCode::CoolDownOverflow)?;
     pending_withdraw_data.withdrawable_timestamp = withdrawable_timestamp;
 
+    let final_vault_amount = vault_account_data.amount;
+    let final_xorca_supply = xorca_mint_data.supply - *xorca_unstake_amount;
+
     Event::Unstake {
         xorca_unstake_amount: xorca_unstake_amount,
-        vault_orca_amount: &vault_account_data.amount,
+        vault_orca_amount: &final_vault_amount,
         vault_escrowed_orca_amount: &state.escrowed_orca_amount,
-        xorca_mint_supply: &xorca_mint_data.supply,
+        xorca_mint_supply: &final_xorca_supply,
         withdrawable_orca_amount: &withdrawable_orca_amount,
         cool_down_period_s: &state.cool_down_period_s,
         withdraw_index: withdraw_index,
