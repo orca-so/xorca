@@ -105,17 +105,17 @@ pub fn close_program_account(
     account_to_close: &AccountInfo,
     receiver: &AccountInfo,
 ) -> ProgramResult {
-    // Set discriminator to Closed
     let mut account_to_close_data = account_to_close.try_borrow_mut_data()?;
     account_to_close_data[0] = AccountDiscriminator::Closed as u8;
-    drop(account_to_close_data);
 
-    // Transfer lamports to receiver
     *receiver.try_borrow_mut_lamports()? += account_to_close.lamports();
     *account_to_close.try_borrow_mut_lamports()? = 0;
 
-    // Resize account to 0 to ensure it's removed from runtime
+    drop(account_to_close_data);
     account_to_close.resize(0)?;
+    unsafe {
+        account_to_close.assign(&SYSTEM_PROGRAM_ID);
+    }
 
     Ok(())
 }
