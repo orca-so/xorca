@@ -50,7 +50,7 @@ impl Initialize {
         ));
         accounts.push(solana_instruction::AccountMeta::new(
             self.update_authority_account,
-            true,
+            false,
         ));
         accounts.push(solana_instruction::AccountMeta::new(
             self.state_account,
@@ -122,7 +122,7 @@ pub struct InitializeInstructionArgs {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer_account
-///   1. `[writable, signer]` update_authority_account
+///   1. `[writable]` update_authority_account
 ///   2. `[writable]` state_account
 ///   3. `[writable]` vault_account
 ///   4. `[]` xorca_mint_account
@@ -359,7 +359,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
         ));
         accounts.push(solana_instruction::AccountMeta::new(
             *self.update_authority_account.key,
-            true,
+            false,
         ));
         accounts.push(solana_instruction::AccountMeta::new(
             *self.state_account.key,
@@ -433,7 +433,7 @@ impl<'a, 'b> InitializeCpi<'a, 'b> {
 /// ### Accounts:
 ///
 ///   0. `[writable, signer]` payer_account
-///   1. `[writable, signer]` update_authority_account
+///   1. `[writable]` update_authority_account
 ///   2. `[writable]` state_account
 ///   3. `[writable]` vault_account
 ///   4. `[]` xorca_mint_account

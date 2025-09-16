@@ -59,8 +59,7 @@ export type InitializeInstruction<
         ? WritableSignerAccount<TAccountPayerAccount> & AccountSignerMeta<TAccountPayerAccount>
         : TAccountPayerAccount,
       TAccountUpdateAuthorityAccount extends string
-        ? WritableSignerAccount<TAccountUpdateAuthorityAccount> &
-            AccountSignerMeta<TAccountUpdateAuthorityAccount>
+        ? WritableAccount<TAccountUpdateAuthorityAccount>
         : TAccountUpdateAuthorityAccount,
       TAccountStateAccount extends string
         ? WritableAccount<TAccountStateAccount>
@@ -132,7 +131,7 @@ export type InitializeInput<
   TAccountAssociatedTokenProgramAccount extends string = string,
 > = {
   payerAccount: TransactionSigner<TAccountPayerAccount>;
-  updateAuthorityAccount: TransactionSigner<TAccountUpdateAuthorityAccount>;
+  updateAuthorityAccount: Address<TAccountUpdateAuthorityAccount>;
   stateAccount: Address<TAccountStateAccount>;
   vaultAccount: Address<TAccountVaultAccount>;
   xorcaMintAccount: Address<TAccountXorcaMintAccount>;

@@ -9,7 +9,7 @@ use solana_sdk::{
 };
 use xorca::{
     find_orca_vault_address, find_state_address, Initialize, InitializeInstructionArgs, State,
-    TokenMint,
+    TokenMint, XorcaStakingProgramError,
 };
 
 #[test]
@@ -650,10 +650,7 @@ fn initialize_fails_when_payer_is_not_deployer() {
 
     // This should fail because the payer is not the deployer
     let res = ctx.sends_with_signer(&[ix], &non_deployer);
-    assert_program_error!(
-        res,
-        xorca::XorcaStakingProgramError::UnauthorizedDeployerAccess
-    );
+    assert_program_error!(res, XorcaStakingProgramError::UnauthorizedDeployerAccess);
 }
 
 #[test]
@@ -725,4 +722,64 @@ fn initialize_sets_different_update_authority_success() {
     let mint_after = ctx.get_account::<TokenMint>(XORCA_ID).unwrap();
     assert_eq!(mint_after.data.mint_authority, state);
     assert_eq!(mint_after.data.supply, 0);
+}
+
+// Update authority must match the expected constant
+#[test]
+fn initialize_fails_with_wrong_update_authority_account() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    // Seed mints
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    let wrong_update = Pubkey::new_unique();
+
+    // Calculate vault account address
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
+
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        state_account: state,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        update_authority_account: wrong_update,
+        system_program_account: SYSTEM_PROGRAM_ID,
+        vault_account,
+        token_program_account: TOKEN_PROGRAM_ID,
+        associated_token_program_account: ATA_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.send(ix);
+    assert_program_error!(
+        res,
+        xorca::XorcaStakingProgramError::InvalidAccountRole
+    );
 }

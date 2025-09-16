@@ -53,7 +53,7 @@ pub enum Instruction {
     Withdraw { withdraw_index: u8 },
 
     #[account(0, writable, signer, name = "payer_account")]
-    #[account(1, writable, signer, name = "update_authority_account")]
+    #[account(1, writable, name = "update_authority_account")]
     #[account(2, writable, name = "state_account")]
     #[account(3, writable, name = "vault_account")]
     #[account(4, name = "xorca_mint_account")]
