@@ -82,20 +82,17 @@ pub fn process_instruction(accounts: &[AccountInfo], cool_down_period_s: &i64) -
         return Err(ErrorCode::InvalidAccountData.into());
     }
 
-    // 5. Update Authority Account Assertions
-    assert_account_role(update_authority_account, &[AccountRole::Signer])?;
-
-    // 6. System Program Account Assertions
+    // 5. System Program Account Assertions
     assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;
 
-    // 7. Vault Account Assertions
+    // 6. Vault Account Assertions
     assert_account_role(vault_account, &[AccountRole::Writable])?;
     assert_account_owner(vault_account, &SYSTEM_PROGRAM_ID)?;
 
-    // 8. Token Program Account Assertions
+    // 7. Token Program Account Assertions
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
-    // 9. Associated Token Program Account Assertions
+    // 8. Associated Token Program Account Assertions
     assert_account_address(
         associated_token_program_account,
         &ASSOCIATED_TOKEN_PROGRAM_ID,
