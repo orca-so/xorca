@@ -88,11 +88,16 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     };
 
     // 5. Unstaker Stake Token Account Assertions
-    make_owner_token_account_assertions(unstaker_orca_ata, unstaker_account, orca_mint_account)?;
+    make_owner_token_account_assertions(
+        unstaker_orca_ata,
+        unstaker_account,
+        orca_mint_account,
+        true,
+    )?;
 
     // 6. Vault Account Assertions
     // Use stored vault_bump for verification - more efficient than assert_account_seeds
-    make_owner_token_account_assertions(vault_account, state_account, orca_mint_account)?;
+    make_owner_token_account_assertions(vault_account, state_account, orca_mint_account, true)?;
 
     // 7. System Program Account Assertions
     assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;

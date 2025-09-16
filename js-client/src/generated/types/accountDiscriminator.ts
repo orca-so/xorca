@@ -16,6 +16,7 @@ import {
 } from '@solana/kit';
 
 export enum AccountDiscriminator {
+  Uninitialized,
   State,
   PendingWithdraw,
   Closed,

@@ -17,6 +17,9 @@ use xorca::{
 };
 use xorca::{Set, SetInstructionArgs, StateUpdateInstruction};
 
+// Cost for resizing an account to 0 in Solana runtime
+const RESIZE_TO_ZERO_COST: u64 = 5000;
+
 // Mirror structure of stake tests: success, edge cases, account validation
 
 // === 1) Success behavior ===
@@ -1963,4 +1966,119 @@ fn withdraw_index_reuse_lifecycle() {
     let res2 = do_withdraw(&mut env, pending2, idx);
     assert!(res2.is_ok());
     assert_account_closed(&env.ctx, pending2, "pending2 closed");
+}
+
+// === 4) Account Closure Verification Tests ===
+
+#[test]
+fn withdraw_verifies_complete_account_closure_procedure() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 2_000_000_000,
+        vault_orca: 2_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 1,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 2_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let idx = 50u8;
+    let pending_withdraw_account = unstake_and_advance(&mut env, idx, 2_000_000, 2);
+
+    // Capture complete account state before withdraw
+    let account_before = env.ctx.get_raw_account(pending_withdraw_account).unwrap();
+    let initial_lamports = account_before.lamports;
+    let initial_data_size = account_before.data.len();
+    let staker_lamports_before = env.ctx.get_raw_account(env.staker).unwrap().lamports;
+
+    // Verify account has data and lamports before closure
+    assert!(
+        initial_data_size > 0,
+        "Account should have data before closure"
+    );
+    assert!(
+        initial_lamports > 0,
+        "Account should have lamports before closure"
+    );
+
+    // Perform withdraw
+    let res = do_withdraw(&mut env, pending_withdraw_account, idx);
+    assert!(res.is_ok(), "withdraw should succeed");
+
+    // Verify all aspects of the improved closure procedure
+    // When an account is resized to 0, it's effectively removed from the runtime
+    let account_after = env.ctx.get_raw_account(pending_withdraw_account);
+    let staker_lamports_after = env.ctx.get_raw_account(env.staker).unwrap().lamports;
+
+    // === COMPREHENSIVE ACCOUNT CLOSURE VERIFICATION ===
+
+    // Step 1: Verify lamports were transferred to receiver (staker) minus resize cost
+    let expected_lamports = staker_lamports_before + initial_lamports - RESIZE_TO_ZERO_COST;
+    assert_eq!(
+        staker_lamports_after, expected_lamports,
+        "Step 2: Staker should have received the lamports minus resize cost of {}",
+        RESIZE_TO_ZERO_COST
+    );
+
+    // Step 2: Verify account is resized to 0 (improved procedure) - removes account from runtime
+    assert!(
+        account_after.is_err(),
+        "Step 3: Account should be removed (not found) after closure with resize(0) - this proves the improved procedure worked"
+    );
+}
+
+#[test]
+fn withdraw_verifies_account_closure_with_zero_lamports() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000_000,
+        vault_orca: 1_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 1,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let idx = 54u8;
+    let pending_withdraw_account = unstake_and_advance(&mut env, idx, 1_000_000, 2);
+
+    // Manually set pending account lamports to 0 to test zero-lamport closure
+    let account_before = env.ctx.get_raw_account(pending_withdraw_account).unwrap();
+    let mut modified_account = account_before.clone();
+    modified_account.lamports = 0;
+    env.ctx
+        .svm
+        .set_account(pending_withdraw_account, modified_account)
+        .unwrap();
+
+    let staker_lamports_before = env.ctx.get_raw_account(env.staker).unwrap().lamports;
+
+    // Perform withdraw
+    let res = do_withdraw(&mut env, pending_withdraw_account, idx);
+    assert!(
+        res.is_ok(),
+        "withdraw should succeed even with zero lamports"
+    );
+
+    // Verify account closure with zero lamports
+    // When an account is resized to 0, it's effectively removed from the runtime
+    let account_after = env.ctx.get_raw_account(pending_withdraw_account);
+    let staker_lamports_after = env.ctx.get_raw_account(env.staker).unwrap().lamports;
+
+    // Staker lamports should decrease by the resize cost (since account has 0 lamports)
+    let expected_lamports = staker_lamports_before - RESIZE_TO_ZERO_COST;
+    assert_eq!(
+        staker_lamports_after, expected_lamports,
+        "Staker lamports should decrease by resize cost when closing account with zero lamports"
+    );
+
+    // Account should still be resized to 0 (improved procedure works even with zero lamports)
+    assert!(
+        account_after.is_err(),
+        "Account should be removed (not found) after closure with resize(0) even with zero lamports"
+    );
 }

@@ -37,14 +37,23 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     // 3. Staker Orca ATA Assertions
-    let staker_orca_ata_data =
-        make_owner_token_account_assertions(staker_orca_ata, staker_account, orca_mint_account)?;
+    let staker_orca_ata_data = make_owner_token_account_assertions(
+        staker_orca_ata,
+        staker_account,
+        orca_mint_account,
+        true,
+    )?;
     if staker_orca_ata_data.amount < *orca_stake_amount {
         return Err(ErrorCode::InsufficientFunds.into());
     }
 
     // 4. Staker xORCA ATA Assertions
-    make_owner_token_account_assertions(staker_xorca_ata, staker_account, xorca_mint_account)?;
+    make_owner_token_account_assertions(
+        staker_xorca_ata,
+        staker_account,
+        xorca_mint_account,
+        true,
+    )?;
 
     // 5. xOrca Mint Account Assertions
     assert_account_role(xorca_mint_account, &[AccountRole::Writable])?;
@@ -79,7 +88,7 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
 
     // 2. Vault Account Assertions
     let vault_account_data =
-        make_owner_token_account_assertions(vault_account, state_account, orca_mint_account)?;
+        make_owner_token_account_assertions(vault_account, state_account, orca_mint_account, true)?;
 
     // Calculate xOrca to mint
     // Use checked math to guard against vault < escrow (should not happen, but defensive)
@@ -116,11 +125,14 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
     };
     mint_to_instruction.invoke_signed(&[state_seeds.as_slice().into()])?;
 
+    let final_vault_amount = vault_account_data.amount + *orca_stake_amount;
+    let final_xorca_supply = xorca_mint_data.supply + xorca_to_mint;
+
     Event::Stake {
         orca_stake_amount: orca_stake_amount,
-        vault_orca_amount: &vault_account_data.amount,
+        vault_orca_amount: &final_vault_amount,
         vault_escrowed_orca_amount: &state.escrowed_orca_amount,
-        xorca_mint_supply: &xorca_mint_data.supply,
+        xorca_mint_supply: &final_xorca_supply,
         xorca_to_mint: &xorca_to_mint,
     }
     .emit()?;
