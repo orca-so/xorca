@@ -52,11 +52,11 @@ fn initialize_sets_values_with_standard_values_success() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -116,11 +116,11 @@ fn initialize_fails_with_wrong_system_program_account() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: ctx.signer(),
         system_program_account: wrong_system,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -188,11 +188,11 @@ fn initialize_fails_with_insufficient_lamports() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -240,11 +240,11 @@ fn initialize_fails_when_xorca_mint_frozen() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -291,11 +291,11 @@ fn initialize_fails_when_xorca_mint_no_authority_flag() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -345,11 +345,11 @@ fn initialize_fails_when_xorca_mint_supply_nonzero() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -398,11 +398,11 @@ fn initialize_fails_when_xorca_mint_wrong_owner() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -452,11 +452,11 @@ fn initialize_fails_when_xorca_mint_wrong_address() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
         state_account: state,
         vault_account,
         xorca_mint_account: wrong_mint,
         orca_mint_account: ORCA_ID,
-        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -512,11 +512,11 @@ fn initialize_fails_when_state_already_initialized() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -571,11 +571,11 @@ fn initialize_fails_with_wrong_state_owner() {
 
     let ix = Initialize {
         payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: ctx.signer(),
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -635,11 +635,11 @@ fn initialize_fails_when_payer_is_not_deployer() {
 
     let ix = Initialize {
         payer_account: non_deployer.pubkey(), // Use non-deployer as payer
+        update_authority_account: non_deployer.pubkey(), // Use non-deployer as update authority too
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: non_deployer.pubkey(), // Use non-deployer as update authority too
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
@@ -699,11 +699,11 @@ fn initialize_sets_different_update_authority_success() {
 
     let ix = Initialize {
         payer_account: ctx.signer(), // Deployer as payer (required)
+        update_authority_account: update_authority.pubkey(), // Different update authority
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        update_authority_account: update_authority.pubkey(), // Different update authority
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
         associated_token_program_account: ATA_PROGRAM_ID,
