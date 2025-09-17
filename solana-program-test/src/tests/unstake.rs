@@ -42,7 +42,7 @@ fn test_unstake_success_at_initial_rate() {
         XORCA_ID,
     );
     assert!(do_unstake(&mut env, withdraw_index, 10_000_000_000).is_ok());
-    let now = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     assert_pending_withdraw(
         &env.ctx,
         pending_withdraw_account,
@@ -94,14 +94,15 @@ fn test_unstake_succeeds_at_high_exchange_rate() {
     let xorca_burn = 1_000_000u64;
     assert!(do_unstake(&mut env, idx, xorca_burn).is_ok());
     let non_escrowed = snap.vault_before.saturating_sub(snap.escrow_before);
+    // Account for virtual amounts
     let expected = xorca_burn
-        .saturating_mul(non_escrowed)
-        .saturating_div(snap.xorca_supply_before);
+        .saturating_mul(non_escrowed.saturating_add(1))
+        .saturating_div(snap.xorca_supply_before.saturating_add(1));
     let pend = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
         .unwrap();
-    let now = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     assert_pending_withdraw(
         &env.ctx,
         pending_withdraw_account,
@@ -113,7 +114,7 @@ fn test_unstake_succeeds_at_high_exchange_rate() {
     );
     assert_eq!(pend.data.withdrawable_orca_amount, expected);
     assert_eq!(pend.data.withdraw_index, idx, "withdraw index should match");
-    assert!(expected >= 5 * xorca_burn / 1); // lower bound sanity
+    assert!(expected as f64 >= 5.000_001 * xorca_burn as f64 / 1.000_001); // lower bound sanity (accounting for virtual amounts)
     assert_unstake_effects(
         &env.ctx,
         env.state,
@@ -156,14 +157,15 @@ fn test_unstake_succeeds_at_low_exchange_rate() {
     let xorca_burn = 50_000_000u64;
     assert!(do_unstake(&mut env, idx, xorca_burn).is_ok());
     let non_escrowed = snap.vault_before.saturating_sub(snap.escrow_before);
+    // Account for virtual amounts
     let expected = xorca_burn
-        .saturating_mul(non_escrowed)
-        .saturating_div(snap.xorca_supply_before);
+        .saturating_mul(non_escrowed.saturating_add(1))
+        .saturating_div(snap.xorca_supply_before.saturating_add(1));
     let pend = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
         .unwrap();
-    let now = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     assert_pending_withdraw(
         &env.ctx,
         pending_withdraw_account,
@@ -221,7 +223,7 @@ fn test_unstake_succeeds_with_existing_escrow() {
         .saturating_mul(non_escrowed)
         .saturating_div(snap.xorca_supply_before);
     let pend = env.ctx.get_account::<PendingWithdraw>(p).unwrap();
-    let now = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     assert_pending_withdraw(
         &env.ctx,
         p,
@@ -276,7 +278,7 @@ fn test_unstake_multiple_indices_success() {
         XORCA_ID,
     );
     assert!(do_unstake(&mut env, idx_a, 1_000_000).is_ok());
-    let now_a = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now_a = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let a = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_a)
@@ -313,7 +315,7 @@ fn test_unstake_multiple_indices_success() {
         XORCA_ID,
     );
     assert!(do_unstake(&mut env, idx_b, 2_000_000).is_ok());
-    let now_b = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now_b = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let b = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_b)
@@ -383,7 +385,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         XORCA_ID,
     );
     assert!(do_unstake(&mut env, idx1, 1_000_000).is_ok());
-    let now1 = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now1 = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let pending_orca_amount_1 = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_1)
@@ -421,7 +423,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         XORCA_ID,
     );
     assert!(do_unstake(&mut env, idx2, 1_500_000).is_ok());
-    let now2 = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now2 = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let pending_orca_amount_2 = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_2)
@@ -524,7 +526,7 @@ fn test_unstake_partial_with_existing_escrow_low_rate() {
         .get_account::<PendingWithdraw>(pending_withdraw_account_1)
         .unwrap();
     let pending_orca_amount_1 = pend1_acc.data.withdrawable_orca_amount;
-    let now1 = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now1 = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     assert_pending_withdraw(
         &env.ctx,
         pending_withdraw_account_1,
@@ -553,7 +555,7 @@ fn test_unstake_partial_with_existing_escrow_low_rate() {
         .get_account::<PendingWithdraw>(pending_withdraw_account_2)
         .unwrap();
     let pending_orca_amount_2 = pend2_acc.data.withdrawable_orca_amount;
-    let now2 = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now2 = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     assert_pending_withdraw(
         &env.ctx,
         pending_withdraw_account_2,
@@ -604,7 +606,7 @@ fn test_unstake_partial_all_but_one_then_last() {
         XORCA_ID,
     );
     assert!(do_unstake(&mut env, idx_a, 10_000).is_ok());
-    let now_a = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now_a = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let a = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_a)
@@ -643,7 +645,7 @@ fn test_unstake_partial_all_but_one_then_last() {
     );
     assert!(do_unstake(&mut env, idx_b, 1).is_ok());
     let total_burned = 10_001u64;
-    let now_b = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now_b = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let b = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_b)
@@ -770,9 +772,9 @@ fn test_unstake_cool_down_period_overflow() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Set the current timestamp to a value that will cause overflow when adding i64::MAX
-    let mut clock = env.ctx.svm.get_sysvar::<Clock>();
+    let mut clock = env.ctx.get_sysvar::<Clock>();
     clock.unix_timestamp = 1; // Set to 1 so that 1 + i64::MAX will overflow
-    env.ctx.svm.set_sysvar::<Clock>(&clock);
+    env.ctx.set_sysvar::<Clock>(&clock);
 
     let idx = 43u8;
     let res = do_unstake(&mut env, idx, 1_000_000);
@@ -1148,7 +1150,7 @@ fn test_unstake_precision_loss_attack() {
         XORCA_ID,
     );
     assert!(do_unstake(&mut env, idx, 1).is_ok());
-    let now = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let p = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
@@ -1473,7 +1475,7 @@ fn test_unstake_at_available_amount() {
         XORCA_ID,
     );
     assert!(do_unstake(&mut env, idx, user.staker_xorca).is_ok());
-    let now = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let pend = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
@@ -1512,7 +1514,7 @@ fn test_unstake_cool_down_period_calculation_correct() {
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 17u8;
     let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
-    let now = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     assert!(do_unstake(&mut env, idx, 1_000_000).is_ok());
     let pend = env
         .ctx
@@ -1605,7 +1607,7 @@ fn test_unstake_account_creation_failure_insufficient_lamports() {
     // Drain unstaker SOL to 0
     let mut signer_acc = env.ctx.get_raw_account(env.staker).unwrap();
     signer_acc.lamports = 0;
-    env.ctx.svm.set_account(env.staker, signer_acc).unwrap();
+    env.ctx.set_account(env.staker, signer_acc).unwrap();
     let idx = 21u8;
     let res = do_unstake(&mut env, idx, 1_000_000);
     assert!(
@@ -1756,7 +1758,7 @@ fn test_unstake_withdraw_index_max_value_255_success() {
     );
     let burn = 1_000_000u64;
     assert!(do_unstake(&mut env, idx, burn).is_ok());
-    let now = env.ctx.svm.get_sysvar::<Clock>().unix_timestamp;
+    let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let pend = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
@@ -1807,7 +1809,7 @@ fn test_unstake_withdraw_index_over_limit_behaviour() {
     // Ensure the signer has ample lamports to fund 256 PDA creations
     let mut signer_acc = env.ctx.get_raw_account(env.staker).unwrap();
     signer_acc.lamports = 10_000_000_000; // top-up
-    env.ctx.svm.set_account(env.staker, signer_acc).unwrap();
+    env.ctx.set_account(env.staker, signer_acc).unwrap();
 
     for i in 0u8..=u8::MAX {
         assert!(
@@ -1909,7 +1911,7 @@ fn test_unstake_account_too_small() {
     // Make the state account too small by truncating its data
     let mut state_acc = env.ctx.get_raw_account(env.state).unwrap();
     state_acc.data.truncate(10); // Make it much smaller than expected State size
-    env.ctx.svm.set_account(env.state, state_acc).unwrap();
+    env.ctx.set_account(env.state, state_acc).unwrap();
 
     let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);

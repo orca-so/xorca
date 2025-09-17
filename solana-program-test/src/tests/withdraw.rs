@@ -75,6 +75,7 @@ fn withdraw_transfers_funds_and_clears_escrow() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw basic",
@@ -130,6 +131,7 @@ fn withdraw_succeeds_when_escrow_already_nonzero() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -189,6 +191,7 @@ fn withdraw_succeeds_with_zero_cooldown() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw zero cooldown",
@@ -245,6 +248,7 @@ fn withdraw_succeeds_at_high_exchange_rate_small_withdraw() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw high rate (small amount)",
@@ -299,6 +303,7 @@ fn withdraw_succeeds_at_low_exchange_rate_large_withdraw() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -357,6 +362,7 @@ fn withdraw_zero_index_path() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw zero index",
@@ -410,6 +416,7 @@ fn withdraw_with_zero_escrow_state_no_underflow() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -483,6 +490,7 @@ fn withdraw_increases_staker_orca_balance_from_nonzero() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw increases user ORCA from nonzero",
@@ -542,6 +550,7 @@ fn withdraw_extreme_large_values() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         (u64::MAX / 8).min(10_000_000_000),
@@ -799,6 +808,7 @@ fn withdraw_succeeds_at_cooldown_boundary() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         1_000_000,
         "withdraw at cooldown boundary",
@@ -886,6 +896,7 @@ fn withdraw_succeeds_one_second_after_boundary() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -978,6 +989,7 @@ fn withdraw_duplicate_withdraw_index() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -1080,6 +1092,7 @@ fn withdraw_concurrent_two_indices_in_one_tx() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         total_withdrawable,
         total_xorca_burn,
         "two withdraws in one tx",
@@ -1135,6 +1148,7 @@ fn withdraw_zero_amount_pending() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         1,
         "zero-amount withdraw",
@@ -1189,6 +1203,7 @@ fn withdraw_overflow_attack_large_numbers_probe() {
             env.staker_xorca_ata,
             XORCA_ID,
             &snap,
+            &snap,
             withdrawable_orca_before,
             xorca_unstake_amount,
             "large-numbers withdraw",
@@ -1242,6 +1257,7 @@ fn withdraw_index_max_value_255_success() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -1705,9 +1721,9 @@ fn test_withdraw_timestamp_overflow() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Set the current timestamp to a value that will cause overflow when adding i64::MAX
-    let mut clock = env.ctx.svm.get_sysvar::<Clock>();
+    let mut clock = env.ctx.get_sysvar::<Clock>();
     clock.unix_timestamp = 1; // Set to 1 so that 1 + i64::MAX will overflow
-    env.ctx.svm.set_sysvar::<Clock>(&clock);
+    env.ctx.set_sysvar::<Clock>(&clock);
 
     let idx = 24u8;
     let res = do_unstake(&mut env, idx, 1_000_000);
@@ -2051,7 +2067,6 @@ fn withdraw_verifies_account_closure_with_zero_lamports() {
     let mut modified_account = account_before.clone();
     modified_account.lamports = 0;
     env.ctx
-        .svm
         .set_account(pending_withdraw_account, modified_account)
         .unwrap();
 
