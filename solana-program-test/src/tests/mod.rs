@@ -3,5 +3,6 @@ mod initialize;
 mod set;
 mod stake;
 mod unstake;
+mod vault_inflation;
 mod withdraw;
 mod yield_operations;
