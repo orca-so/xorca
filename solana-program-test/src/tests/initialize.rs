@@ -200,16 +200,16 @@ fn initialize_fails_with_insufficient_lamports() {
     let mut ctx = TestContext::new();
     // Drain payer lamports
     ctx.set_account(
-            ctx.signer(),
-            solana_sdk::account::Account {
-                lamports: 1000,
-                owner: solana_sdk::system_program::ID,
-                executable: false,
-                rent_epoch: 0,
-                data: vec![],
-            },
-        )
-        .unwrap();
+        ctx.signer(),
+        solana_sdk::account::Account {
+            lamports: 1000,
+            owner: solana_sdk::system_program::ID,
+            executable: false,
+            rent_epoch: 0,
+            data: vec![],
+        },
+    )
+    .unwrap();
     let (state, _) = find_state_address().unwrap();
     // Seed mints minimally
     ctx.write_account(
