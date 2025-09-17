@@ -107,6 +107,10 @@ pub fn process_instruction(
     let initial_escrowed_orca_amount = {
         let state_view = assert_account_data::<State>(state_account)?;
 
+        // Verify state address using stored bump
+        State::verify_address_with_bump(state_account, &crate::ID, state_view.bump)
+            .map_err(|_| ErrorCode::InvalidSeeds)?;
+
         // Verify vault address using stored vault_bump
         State::verify_vault_address_with_bump(
             state_account,
