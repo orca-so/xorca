@@ -7,19 +7,19 @@ use xorca::find_pending_withdraw_pda;
 fn test_unstake_dos_protection_various_pre_funding() {
     let ctx = TestContext::new();
     let pool = PoolSetup {
-        xorca_supply: 4_000_000,
+        xorca_supply: 5_000_000, // Match user's xORCA balance
         vault_orca: 4_000_000,
         escrowed_orca: 0,
         cool_down_period_s: 7 * 24 * 60 * 60,
     };
     let user = UserSetup {
         staker_orca: 0,
-        staker_xorca: 4_000_000, // Enough for 4 unstake operations
+        staker_xorca: 5_000_000, // Enough for 5 unstake operations (1M each)
     };
     let mut env = Env::new(ctx, &pool, &user);
 
     // Test with different amounts of pre-funding
-    let pre_funding_amounts = [1, 100, 1000, 10000]; // Various lamport amounts
+    let pre_funding_amounts = [0, 1, 100, 1000, 10000]; // Various lamport amounts
 
     for (i, &amount) in pre_funding_amounts.iter().enumerate() {
         let withdraw_index = (i as u8) + 1;
