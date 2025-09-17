@@ -1,24 +1,15 @@
 import {
-  getAccountDiscriminatorEncoder,
   getPendingWithdrawDecoder,
   getStateDecoder,
-  PENDING_WITHDRAW_DISCRIMINATOR,
   PendingWithdraw,
   State,
-  STATE_DISCRIMINATOR,
   XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 } from '../generated';
 import {
   getBase64Encoder,
   Rpc,
   Address,
-  GetProgramAccountsMemcmpFilter,
-  VariableSizeDecoder,
-  Account,
   GetMultipleAccountsApi,
-  getBase58Decoder,
-  Base58EncodedBytes,
-  GetProgramAccountsApi,
   getProgramDerivedAddress,
   ProgramDerivedAddress,
   GetAccountInfoApi,
@@ -30,6 +21,9 @@ const TOKEN_PROGRAM_ADDRESS = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as A
 const ASSOCIATED_TOKEN_PROGRAM_ADDRESS = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address;
 const ORCA_MINT_ADDRESS = 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE' as Address;
 const XORCA_MINT_ADDRESS = 'xorcaYqbXUNz3474ubUMJAdu2xgPsew3rUCe5ughT3N' as Address; // TODO: update this
+
+const DEFAULT_MAX_WITHDRAWALS_TO_SEARCH = 15;
+const WITHDRAW_INDEX_MAX_UINT = 255;
 
 export async function findStateAddress(): Promise<ProgramDerivedAddress> {
   return await getProgramDerivedAddress({
@@ -44,7 +38,6 @@ export async function findPendingWithdrawAddress(
 ): Promise<ProgramDerivedAddress> {
   const addressEncoder = getAddressEncoder();
   const unstakerBytes = addressEncoder.encode(unstaker);
-
   return await getProgramDerivedAddress({
     programAddress: XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
     seeds: [
@@ -71,93 +64,65 @@ export async function findVaultAddress(
   });
 }
 
-export async function fetchDecodedProgramAccounts<T extends object>(
-  rpc: Rpc<GetProgramAccountsApi>,
-  programAddress: Address,
-  filters: GetProgramAccountsMemcmpFilter[],
-  decoder: VariableSizeDecoder<T>
-): Promise<Account<T>[]> {
-  const accountInfos = await rpc
-    .getProgramAccounts(programAddress, {
-      encoding: 'base64',
-      filters,
-    })
-    .send();
+export async function fetchStateAccountData(rpc: Rpc<GetMultipleAccountsApi>): Promise<State> {
+  const [stateAddress] = await findStateAddress();
+  const accounts = await rpc.getMultipleAccounts([stateAddress]).send();
+  if (!accounts.value[0]) {
+    throw new Error('State account not found.');
+  }
   const encoder = getBase64Encoder();
-  const datas = accountInfos.map((x) => encoder.encode(x.account.data[0]));
-  const decoded = datas.map((x) => decoder.decode(x));
-  return decoded.map((data, i) => ({
-    ...accountInfos[i].account,
-    address: accountInfos[i].pubkey,
-    programAddress: programAddress,
-    data,
-  }));
-}
-
-export async function fetchStateAccountData(
-  rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi>
-): Promise<State> {
-  const discriminator = getBase58Decoder().decode(
-    getAccountDiscriminatorEncoder().encode(STATE_DISCRIMINATOR)
-  );
-  let filters: GetProgramAccountsMemcmpFilter[] = [
-    {
-      memcmp: {
-        offset: 0n,
-        bytes: discriminator as Base58EncodedBytes,
-        encoding: 'base58',
-      },
-    },
-  ];
-  const state = (
-    await fetchDecodedProgramAccounts(
-      rpc,
-      XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
-      filters,
-      getStateDecoder()
-    )
-  )[0];
-  return state.data;
+  const dataBytes = encoder.encode(accounts.value[0].data[0]);
+  const stateDecoder = getStateDecoder();
+  return stateDecoder.decode(dataBytes);
 }
 
 export async function fetchStateAccountCoolDownPeriodS(
-  rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi>
+  rpc: Rpc<GetMultipleAccountsApi>
 ): Promise<bigint> {
   const state = await fetchStateAccountData(rpc);
   return state.coolDownPeriodS;
 }
 
 export async function fetchPendingWithdrawsForStaker(
-  rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi>,
-  staker: Address
+  rpc: Rpc<GetMultipleAccountsApi>,
+  staker: Address,
+  maxWithdrawalsToSearch: number = DEFAULT_MAX_WITHDRAWALS_TO_SEARCH
 ): Promise<PendingWithdraw[]> {
-  const discriminator = getBase58Decoder().decode(
-    getAccountDiscriminatorEncoder().encode(PENDING_WITHDRAW_DISCRIMINATOR)
+  validateMaxWithdrawalsToSearch(maxWithdrawalsToSearch);
+  const pendingWithdrawAddresses: Address[] = await Promise.all(
+    Array.from({ length: maxWithdrawalsToSearch }, (_, index) =>
+      findPendingWithdrawAddress(staker, index).then(([address]) => address)
+    )
   );
-  const encodedStaker = staker as unknown as Base58EncodedBytes;
-  let filters: GetProgramAccountsMemcmpFilter[] = [
-    {
-      memcmp: {
-        offset: 0n,
-        bytes: discriminator as Base58EncodedBytes,
-        encoding: 'base58',
-      },
-    },
-    {
-      memcmp: {
-        offset: 8n,
-        bytes: encodedStaker,
-        encoding: 'base58',
-      },
-    },
-  ];
-  const pendingWithdraws = await fetchDecodedProgramAccounts(
-    rpc,
-    XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
-    filters,
-    getPendingWithdrawDecoder()
-  );
-  return pendingWithdraws.map((x) => x.data);
+  const accounts = await rpc
+    .getMultipleAccounts(pendingWithdrawAddresses, { encoding: 'base64' })
+    .send();
+  const [pendingWithdrawDecoder, base64Encoder] = [getPendingWithdrawDecoder(), getBase64Encoder()];
+  const pendingWithdraws = accounts.value
+    .filter((account): account is NonNullable<typeof account> => Boolean(account))
+    .map((account) => {
+      const dataBytes = base64Encoder.encode(account.data[0]);
+      try {
+        return pendingWithdrawDecoder.decode(dataBytes);
+      } catch (error) {
+        console.error('Error decoding account data:', error);
+        return null;
+      }
+    })
+    .filter((data): data is PendingWithdraw => Boolean(data));
+  return pendingWithdraws;
+}
+
+function validateMaxWithdrawalsToSearch(maxWithdrawalsToSearch: number): void {
+  if (
+    maxWithdrawalsToSearch < 0 ||
+    maxWithdrawalsToSearch > WITHDRAW_INDEX_MAX_UINT ||
+    maxWithdrawalsToSearch % 1 !== 0
+  ) {
+    throw new Error(
+      `maxWithdrawalsToSearch must be between 0 and ${WITHDRAW_INDEX_MAX_UINT} and an integer`
+    );
+  }
 }
 
 export async function fetchVaultState(rpc: Rpc<GetAccountInfoApi>): Promise<{
@@ -198,8 +163,8 @@ export async function fetchXorcaMintSupply(rpc: Rpc<GetAccountInfoApi>): Promise
   return mintAccount.supply;
 }
 
-export async function getStakingExchangeRate(
-  rpc: Rpc<GetMultipleAccountsApi & GetProgramAccountsApi & GetAccountInfoApi>
+export async function fetchStakingExchangeRate(
+  rpc: Rpc<GetMultipleAccountsApi & GetAccountInfoApi>
 ): Promise<{
   numerator: bigint;
   denominator: bigint;
