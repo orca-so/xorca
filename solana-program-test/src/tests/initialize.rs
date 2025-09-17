@@ -199,8 +199,7 @@ fn initialize_fails_with_wrong_system_program_account() {
 fn initialize_fails_with_insufficient_lamports() {
     let mut ctx = TestContext::new();
     // Drain payer lamports
-    ctx.svm
-        .set_account(
+    ctx.set_account(
             ctx.signer(),
             solana_sdk::account::Account {
                 lamports: 1000,

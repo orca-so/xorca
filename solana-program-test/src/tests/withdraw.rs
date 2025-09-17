@@ -1705,9 +1705,9 @@ fn test_withdraw_timestamp_overflow() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Set the current timestamp to a value that will cause overflow when adding i64::MAX
-    let mut clock = env.ctx.svm.get_sysvar::<Clock>();
+    let mut clock = env.ctx.get_sysvar::<Clock>();
     clock.unix_timestamp = 1; // Set to 1 so that 1 + i64::MAX will overflow
-    env.ctx.svm.set_sysvar::<Clock>(&clock);
+    env.ctx.set_sysvar::<Clock>(&clock);
 
     let idx = 24u8;
     let res = do_unstake(&mut env, idx, 1_000_000);
@@ -2051,7 +2051,6 @@ fn withdraw_verifies_account_closure_with_zero_lamports() {
     let mut modified_account = account_before.clone();
     modified_account.lamports = 0;
     env.ctx
-        .svm
         .set_account(pending_withdraw_account, modified_account)
         .unwrap();
 

@@ -85,9 +85,9 @@ pub fn advance_clock_env(env: &mut Env, advance_secs: i64) {
     if advance_secs == 0 {
         return;
     }
-    let mut clock = env.ctx.svm.get_sysvar::<Clock>();
+    let mut clock = env.ctx.get_sysvar::<Clock>();
     clock.unix_timestamp += advance_secs;
-    env.ctx.svm.set_sysvar::<Clock>(&clock);
+    env.ctx.set_sysvar::<Clock>(&clock);
 }
 
 pub fn stake_orca(env: &mut Env, orca_amount: u64, label: &str) {

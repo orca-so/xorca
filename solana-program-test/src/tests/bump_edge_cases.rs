@@ -102,9 +102,9 @@ fn test_withdraw_pending_withdraw_wrong_bump_in_data() {
         .unwrap();
 
     // Advance time to allow withdrawal
-    let mut clock = env.ctx.svm.get_sysvar::<solana_sdk::clock::Clock>();
+    let mut clock = env.ctx.get_sysvar::<solana_sdk::clock::Clock>();
     clock.unix_timestamp = 1000;
-    env.ctx.svm.set_sysvar::<solana_sdk::clock::Clock>(&clock);
+    env.ctx.set_sysvar::<solana_sdk::clock::Clock>(&clock);
 
     let ix = xorca::Withdraw {
         unstaker_account: env.staker,
@@ -338,7 +338,7 @@ fn test_stake_state_account_too_small() {
     // Make the state account too small
     let mut state_acc = env.ctx.get_raw_account(env.state).unwrap();
     state_acc.data.truncate(10); // Make it much smaller than expected State size
-    env.ctx.svm.set_account(env.state, state_acc).unwrap();
+    env.ctx.set_account(env.state, state_acc).unwrap();
 
     let ix = xorca::Stake {
         staker_account: env.staker,

@@ -16,7 +16,7 @@ use solana_sdk::{
     system_instruction, system_program,
     transaction::VersionedTransaction,
 };
-use std::error::Error;
+use std::{cell::RefCell, error::Error, rc::Rc};
 use xorca::DecodedAccount;
 
 mod assertions;
@@ -38,14 +38,14 @@ pub const INITIAL_UPDATE_AUTHORITY_ID: Pubkey =
     solana_sdk::pubkey!("11111111111111111111111111111111");
 
 struct TestContext {
-    svm: LiteSVM,
+    svm: Rc<RefCell<LiteSVM>>,
     signer: Keypair,
     verify_tx_size: bool,
 }
 
 impl TestContext {
     pub fn new() -> Self {
-        let signer = Keypair::new();
+        let signer: Keypair = Keypair::new();
         let mut svm = LiteSVM::new()
             .with_sigverify(false)
             .with_blockhash_check(false)
@@ -54,7 +54,20 @@ impl TestContext {
         svm.add_program(
             XORCA_PROGRAM_ID,
             include_bytes!("../../target/deploy/xorca_staking_program.so"),
-        );
+        )
+        .unwrap();
+        Self {
+            svm: Rc::new(RefCell::new(svm)),
+            signer,
+            verify_tx_size: true,
+        }
+    }
+
+    pub fn new_signer(svm: Rc<RefCell<LiteSVM>>) -> Self {
+        let signer: Keypair = Keypair::new();
+        svm.borrow_mut()
+            .airdrop(&signer.pubkey(), LAMPORTS_PER_SOL)
+            .unwrap();
         Self {
             svm,
             signer,
@@ -82,7 +95,7 @@ impl TestContext {
         owner: Pubkey,
         data: Vec<u8>,
     ) -> Result<(), Box<dyn Error>> {
-        self.svm.set_account(
+        self.svm.borrow_mut().set_account(
             address,
             Account {
                 data,
@@ -149,7 +162,7 @@ impl TestContext {
                 bytes.len()
             );
         }
-        self.svm.send_transaction(tx)
+        self.svm.borrow_mut().send_transaction(tx)
     }
 
     pub fn get_account<T: BorshDeserialize>(
@@ -168,8 +181,23 @@ impl TestContext {
     pub fn get_raw_account(&self, address: Pubkey) -> Result<Account, Box<dyn Error>> {
         let account = self
             .svm
+            .borrow()
             .get_account(&address)
             .ok_or(format!("Account not found: {}", address))?;
         Ok(account)
+    }
+
+    // Helper methods to expose SVM functionality
+    pub fn get_sysvar<T: solana_sdk::sysvar::Sysvar>(&self) -> T {
+        self.svm.borrow().get_sysvar::<T>()
+    }
+
+    pub fn set_sysvar<T: solana_sdk::sysvar::Sysvar>(&self, sysvar: &T) {
+        self.svm.borrow_mut().set_sysvar::<T>(sysvar);
+    }
+
+    pub fn set_account(&self, address: Pubkey, account: Account) -> Result<(), Box<dyn Error>> {
+        self.svm.borrow_mut().set_account(address, account)?;
+        Ok(())
     }
 }
