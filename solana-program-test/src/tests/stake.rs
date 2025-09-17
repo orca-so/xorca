@@ -416,6 +416,7 @@ fn stake_success_with_large_escrow_still_uses_non_escrowed_rate() {
         staker_xorca: 0,
     };
     let mut env = Env::new(ctx, &pool, &user);
+    let stake_amount = 1_000_000;
     let ix = Stake {
         staker_account: env.staker,
         state_account: env.state,
@@ -427,7 +428,7 @@ fn stake_success_with_large_escrow_still_uses_non_escrowed_rate() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
-        orca_stake_amount: 1_000_000,
+        orca_stake_amount: stake_amount,
     });
     let snap = take_stake_snapshot(
         &env.ctx,
@@ -438,8 +439,14 @@ fn stake_success_with_large_escrow_still_uses_non_escrowed_rate() {
         XORCA_ID,
     );
     assert!(env.ctx.send(ix).is_ok());
-    // Exchange rate r = xorca_supply / non_escrowed = 1_000_000_000 / 500_000_000 = 2
-    let expected_minted = 2_000_000u64;
+    // Account for virtual amounts
+    let expected_minted = stake_amount
+        .saturating_mul(pool.xorca_supply.saturating_add(1))
+        .saturating_div(
+            pool.vault_orca
+                .saturating_sub(pool.escrowed_orca)
+                .saturating_add(1),
+        );
     assert_stake_effects(
         &env.ctx,
         env.state,

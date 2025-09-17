@@ -321,7 +321,8 @@ pub fn assert_withdraw_effects(
     user_orca: Pubkey,
     user_xorca: Pubkey,
     xorca_mint: Pubkey,
-    snap: &WithdrawSnapshot,
+    pre_withdraw_snapshot: &WithdrawSnapshot,
+    post_unstake_snapshot: &WithdrawSnapshot,
     pending_orca_amount: u64,
     xorca_unstake_amount: u64,
     label: &str,
@@ -334,7 +335,9 @@ pub fn assert_withdraw_effects(
         .escrowed_orca_amount;
     assert_eq!(
         escrow_after,
-        snap.escrow_before.saturating_sub(pending_orca_amount),
+        pre_withdraw_snapshot
+            .escrow_before
+            .saturating_sub(pending_orca_amount),
         "{}: state escrow after",
         label
     );
@@ -343,7 +346,9 @@ pub fn assert_withdraw_effects(
     let vault_after = ctx.get_account::<TokenAccount>(vault).unwrap().data.amount;
     assert_eq!(
         vault_after,
-        snap.vault_before.saturating_sub(pending_orca_amount),
+        pre_withdraw_snapshot
+            .vault_before
+            .saturating_sub(pending_orca_amount),
         "{}: vault after",
         label
     );
@@ -356,7 +361,9 @@ pub fn assert_withdraw_effects(
         .amount;
     assert_eq!(
         user_orca_after,
-        snap.user_orca_before.saturating_add(pending_orca_amount),
+        pre_withdraw_snapshot
+            .user_orca_before
+            .saturating_add(pending_orca_amount),
         "{}: user ORCA after",
         label
     );
@@ -368,7 +375,7 @@ pub fn assert_withdraw_effects(
         .data
         .supply;
     assert_eq!(
-        xorca_supply_after, snap.xorca_supply_before,
+        xorca_supply_after, pre_withdraw_snapshot.xorca_supply_before,
         "{}: xORCA supply after",
         label
     );
@@ -380,7 +387,7 @@ pub fn assert_withdraw_effects(
         .data
         .amount;
     assert_eq!(
-        user_xorca_after, snap.user_xorca_before,
+        user_xorca_after, pre_withdraw_snapshot.user_xorca_before,
         "{}: user xORCA after",
         label
     );
@@ -389,15 +396,18 @@ pub fn assert_withdraw_effects(
     // using the program's exchange formula with pre-unstake values.
     // At withdraw-snapshot time, vault_before is unchanged since unstake; escrow_before already includes
     // the newly created pending amount; and xorca_supply_before is AFTER the burn. So reconstruct the
-    // pre-unstake values:
-    let non_escrowed_pre_unstake_u128 = (snap.vault_before as u128)
-        .saturating_sub((snap.escrow_before as u128).saturating_sub(pending_orca_amount as u128));
-    let supply_pre_unstake_u128 =
-        (snap.xorca_supply_before as u128).saturating_add(xorca_unstake_amount as u128);
+    // pre-unstake values from the post-unstake snapshot:
+    let non_escrowed_pre_unstake_u128 = (post_unstake_snapshot.vault_before as u128)
+        .saturating_sub(
+            (post_unstake_snapshot.escrow_before as u128)
+                .saturating_sub(pending_orca_amount as u128),
+        );
+    let supply_pre_unstake_u128 = (post_unstake_snapshot.xorca_supply_before as u128)
+        .saturating_add(xorca_unstake_amount as u128);
     if supply_pre_unstake_u128 > 0 {
         let expected_pending_u128 = (xorca_unstake_amount as u128)
-            .saturating_mul(non_escrowed_pre_unstake_u128)
-            / supply_pre_unstake_u128;
+            .saturating_mul(non_escrowed_pre_unstake_u128.saturating_add(1))
+            / supply_pre_unstake_u128.saturating_add(1);
         let expected_pending = expected_pending_u128 as u64;
         assert_eq!(
             expected_pending, pending_orca_amount,

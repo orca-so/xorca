@@ -94,9 +94,10 @@ fn test_unstake_succeeds_at_high_exchange_rate() {
     let xorca_burn = 1_000_000u64;
     assert!(do_unstake(&mut env, idx, xorca_burn).is_ok());
     let non_escrowed = snap.vault_before.saturating_sub(snap.escrow_before);
+    // Account for virtual amounts
     let expected = xorca_burn
-        .saturating_mul(non_escrowed)
-        .saturating_div(snap.xorca_supply_before);
+        .saturating_mul(non_escrowed.saturating_add(1))
+        .saturating_div(snap.xorca_supply_before.saturating_add(1));
     let pend = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
@@ -113,7 +114,7 @@ fn test_unstake_succeeds_at_high_exchange_rate() {
     );
     assert_eq!(pend.data.withdrawable_orca_amount, expected);
     assert_eq!(pend.data.withdraw_index, idx, "withdraw index should match");
-    assert!(expected >= 5 * xorca_burn / 1); // lower bound sanity
+    assert!(expected as f64 >= 5.000_001 * xorca_burn as f64 / 1.000_001); // lower bound sanity (accounting for virtual amounts)
     assert_unstake_effects(
         &env.ctx,
         env.state,
@@ -156,9 +157,10 @@ fn test_unstake_succeeds_at_low_exchange_rate() {
     let xorca_burn = 50_000_000u64;
     assert!(do_unstake(&mut env, idx, xorca_burn).is_ok());
     let non_escrowed = snap.vault_before.saturating_sub(snap.escrow_before);
+    // Account for virtual amounts
     let expected = xorca_burn
-        .saturating_mul(non_escrowed)
-        .saturating_div(snap.xorca_supply_before);
+        .saturating_mul(non_escrowed.saturating_add(1))
+        .saturating_div(snap.xorca_supply_before.saturating_add(1));
     let pend = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
