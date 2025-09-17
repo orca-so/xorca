@@ -1,6 +1,6 @@
 use crate::error::ErrorCode;
 use borsh::{BorshDeserialize, BorshSerialize};
-use pinocchio::ProgramResult;
+use pinocchio::{pubkey::Pubkey, ProgramResult};
 use shank::ShankType;
 
 #[derive(Debug, Clone, BorshSerialize, BorshDeserialize, ShankType)]
@@ -26,6 +26,10 @@ pub enum Event<'a> {
         withdrawable_orca_amount: &'a u64,
         cool_down_period_s: &'a i64,
         withdraw_index: &'a u8,
+    },
+    UpdateAuthoritySet {
+        new_authority: &'a Pubkey,
+        set_by: &'a Pubkey,
     },
 }
 
