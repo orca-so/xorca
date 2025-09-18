@@ -3,6 +3,7 @@ use crate::utils::assert::{
     take_stake_snapshot, ExpectedState, ExpectedTokenAccount,
 };
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
+use crate::utils::flows::stake_orca;
 use crate::{
     assert_program_error, TestContext, ORCA_ID, TOKEN_PROGRAM_ID, XORCA_ID, XORCA_PROGRAM_ID,
 };
@@ -11,7 +12,6 @@ use xorca::{
     find_state_address, Event, Stake, StakeInstructionArgs, TokenAccount, TokenMint,
     XorcaStakingProgramError,
 };
-use xorca_staking_program::assertions::account::assert_account_data;
 use xorca_staking_program::state::state::State;
 
 // Fresh deployment path: supply=0, non_escrowed=0 → initial exchange rate
@@ -1165,6 +1165,42 @@ fn stake_invalid_state_account_seeds() {
         orca_stake_amount: 1_000_000,
     });
     let result = env.ctx.send(ix);
+    assert_program_error!(result, XorcaStakingProgramError::InvalidSeeds);
+}
+
+// Tests that state account is verified against the bump on the state account data
+#[test]
+fn stake_invalid_state_account_bump() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup::default();
+    let user = UserSetup {
+        staker_orca: 1_000_000,
+        staker_xorca: 0,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+
+    let state_data = env.ctx.get_account::<State>(env.state).unwrap();
+    let vault_bump = state_data.data.vault_bump;
+
+    // Corrupt the bump in the state account data to a wrong value
+    // Stake will expect this "correct value"
+    let wrong_bump = 254;
+    env.ctx
+        .write_account(
+            env.state,
+            XORCA_PROGRAM_ID,
+            crate::state_data!(
+                escrowed_orca_amount => 0,
+                update_authority => Pubkey::default(),
+                cool_down_period_s => 7*24*60*60,
+                bump => wrong_bump, // Wrong bump
+                vault_bump => vault_bump,
+            ),
+        )
+        .unwrap();
+
+    // Use utility function to attempt stake - should fail due to invalid bump
+    let result = stake_orca(&mut env, 1_000_000, "stake with wrong bump");
     assert_program_error!(result, XorcaStakingProgramError::InvalidSeeds);
 }
 
