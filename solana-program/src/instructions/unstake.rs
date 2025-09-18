@@ -41,17 +41,12 @@ pub fn process_instruction(
         &[AccountRole::Signer, AccountRole::Writable],
     )?;
 
-    // 2. Account Address Assertions
-    assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
-    assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
-    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
-    assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;
-
     // 2. xOrca State Account Assertions
     assert_account_role(state_account, &[AccountRole::Writable])?;
     assert_account_owner(state_account, &crate::ID)?;
-    // No CPI signed by state in this instruction; only verify owner
-    // We'll read the state data later when we need it
+    let state_view = assert_account_data::<State>(state_account)?;
+    State::verify_address_with_bump(state_account, &crate::ID, state_view.bump)
+        .map_err(|_| ErrorCode::InvalidSeeds)?;
 
     // 3. Vault Account Assertions
     let vault_account_data = make_owner_token_account_assertions(
@@ -60,6 +55,13 @@ pub fn process_instruction(
         orca_mint_account,
         false,
     )?;
+    State::verify_vault_address_with_bump(
+        state_account,
+        vault_account,
+        orca_mint_account,
+        state_view.vault_bump,
+    )
+    .map_err(|_| ErrorCode::InvalidSeeds)?;
 
     // 4. Pending Withdraw Account Assertions
     assert_account_role(pending_withdraw_account, &[AccountRole::Writable])?;
@@ -86,6 +88,7 @@ pub fn process_instruction(
     }
 
     // 6. xOrca Mint Account Assertions
+    assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
     assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
     assert_account_role(xorca_mint_account, &[AccountRole::Writable])?;
     let xorca_mint_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
@@ -100,24 +103,18 @@ pub fn process_instruction(
     }
 
     // 7. Orca Mint Account Assertions
+    assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
     assert_account_owner(orca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
     assert_external_account_data::<TokenMint>(orca_mint_account)?;
 
+    // 8. System Program Account Assertions
+    assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;
+
+    // 9. Token Program Account Assertions
+    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+
     // Calculate withdrawable ORCA amount using checked math
-    let initial_escrowed_orca_amount = {
-        let state_view = assert_account_data::<State>(state_account)?;
-
-        // Verify vault address using stored vault_bump
-        State::verify_vault_address_with_bump(
-            state_account,
-            vault_account,
-            orca_mint_account,
-            state_view.vault_bump,
-        )
-        .map_err(|_| ErrorCode::InvalidSeeds)?;
-
-        state_view.escrowed_orca_amount
-    };
+    let initial_escrowed_orca_amount = state_view.escrowed_orca_amount;
 
     let non_escrowed_orca_amount = vault_account_data
         .amount
