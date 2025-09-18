@@ -553,7 +553,7 @@ fn stake_precision_loss_rounds_down_to_zero() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 10,
     });
-    let snap = take_stake_snapshot(
+    let _snap = take_stake_snapshot(
         &env.ctx,
         env.state,
         env.vault,
@@ -612,7 +612,8 @@ fn stake_rounding_many_small_vs_one_large() {
 
     // SMALL_COUNT small stakes of 1 lamport
     for i in 0..SMALL_COUNT {
-        stake_orca_with_unique(&mut env_small, 1, "stake iteration", i);
+        let res = stake_orca_with_unique(&mut env_small, 1, i);
+        assert!(res.is_ok(), "loop {i}: stake should succeed");
     }
     let xorca_small = env_small
         .ctx
@@ -1194,7 +1195,7 @@ fn stake_invalid_state_account_bump() {
         .unwrap();
 
     // Use utility function to attempt stake - should fail due to invalid bump
-    let result = stake_orca_with_unique(&mut env, 1_000_000, "stake with wrong bump", 0);
+    let result = stake_orca_with_unique(&mut env, 1_000_000, 0);
     assert_program_error!(result, XorcaStakingProgramError::InvalidSeeds);
 }
 
@@ -1421,7 +1422,7 @@ fn stake_concurrent_stakes_same_user_in_one_tx() {
         staker_orca: 2_000_000,
         staker_xorca: 0,
     };
-    let mut env = Env::new(ctx, &pool, &user);
+    let env = Env::new(ctx, &pool, &user);
     let ix1 = Stake {
         staker_account: env.staker,
         state_account: env.state,

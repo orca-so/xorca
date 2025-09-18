@@ -6,7 +6,6 @@ use solana_sdk::{
     native_token::LAMPORTS_PER_SOL,
     pubkey::Pubkey,
     signature::{Keypair, Signer},
-    system_instruction,
 };
 use xorca::{
     find_orca_vault_address, find_state_address, Initialize, InitializeInstructionArgs, State,

@@ -1883,7 +1883,7 @@ fn withdraw_cooldown_update_mid_flight_policy_change() {
         .unwrap();
 
     // Stake to get xORCA tokens first
-    stake_orca(&mut env, 2_000_000, "initial stake for cooldown test");
+    let _ = stake_orca(&mut env, 2_000_000);
 
     // Create a pending withdraw at old cooldown (10s)
     let idx_old = 40u8;
@@ -1958,7 +1958,7 @@ fn withdraw_index_reuse_lifecycle() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Stake to get xORCA tokens first
-    stake_orca(&mut env, 2_000_000, "initial stake for index reuse test");
+    let _ = stake_orca(&mut env, 2_000_000);
 
     let idx = 42u8;
 

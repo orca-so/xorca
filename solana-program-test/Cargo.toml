@@ -9,6 +9,9 @@ authors = ["team@orca.so"]
 publish = false
 edition = "2021"
 
+[lints.rust]
+deprecated = "allow"
+
 [dev-dependencies]
 xorca-staking-program = { path = "../solana-program", features = ["test"] }
 xorca = { path = "../rust-client", features = ["fetch"] }

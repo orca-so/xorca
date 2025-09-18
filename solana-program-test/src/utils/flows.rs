@@ -116,11 +116,15 @@ pub fn advance_clock_env(env: &mut Env, advance_secs: i64) {
     env.ctx.set_sysvar::<Clock>(&clock);
 }
 
-pub fn stake_orca(env: &mut Env, orca_amount: u64, label: &str) {
-    stake_orca_with_unique(env, orca_amount, label, 0);
+pub fn stake_orca(env: &mut Env, orca_amount: u64) -> TransactionResult {
+    stake_orca_with_unique(env, orca_amount, 0)
 }
 
-pub fn stake_orca_with_unique(env: &mut Env, orca_amount: u64, label: &str, unique_id: u64) {
+pub fn stake_orca_with_unique(
+    env: &mut Env,
+    orca_amount: u64,
+    unique_id: u64,
+) -> TransactionResult {
     let ix = Stake {
         staker_account: env.staker,
         state_account: env.state,
@@ -138,11 +142,7 @@ pub fn stake_orca_with_unique(env: &mut Env, orca_amount: u64, label: &str, uniq
     // Add a unique no-op instruction to make each transaction unique
     let noop_ix = system_instruction::transfer(&env.staker, &env.staker, unique_id);
 
-    assert!(
-        env.ctx.sends(&[ix, noop_ix]).is_ok(),
-        "{}: stake should succeed",
-        label
-    );
+    env.ctx.sends(&[ix, noop_ix])
 }
 
 pub fn deposit_yield_into_vault(env: &mut Env, orca_amount: u64, label: &str) {

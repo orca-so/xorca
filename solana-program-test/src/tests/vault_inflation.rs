@@ -45,7 +45,7 @@ fn test_vault_inflation_vulnerability() {
     );
 
     // Act: attacker stakes 0.000001 ORCA to mint xORCA at fresh deploy
-    stake_orca(&mut attacker_env, 1, "attacker seed");
+    let _ = stake_orca(&mut attacker_env, 1);
 
     assert_token_account(
         &attacker_env.ctx,
@@ -105,7 +105,7 @@ fn test_vault_inflation_vulnerability() {
 
     // Act: staker (victim) stakes 1.000001 ORCA that maximizes his loss due to vault inflation.
     // 0.000001 ORCA more and this staker would have minted 2 xORCA instead.
-    stake_orca(&mut staker_env, 1_000_001, "staker attempts to stake");
+    let _ = stake_orca(&mut staker_env, 1_000_001);
     assert_token_account(
         &staker_env.ctx,
         staker_env.staker_xorca_ata,
