@@ -1200,7 +1200,7 @@ fn stake_invalid_state_account_bump() {
         .unwrap();
 
     // Use utility function to attempt stake - should fail due to invalid bump
-    let result = stake_orca(&mut env, 1_000_000, "stake with wrong bump");
+    stake_orca(&mut env, 1_000_000, "stake with wrong bump");
     assert_program_error!(result, XorcaStakingProgramError::InvalidSeeds);
 }
 
