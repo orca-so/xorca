@@ -98,7 +98,7 @@ fn yield_fresh_deploy_stake_unstake_withdraw_flow() {
         XORCA_ID,
     );
     let xorca_to_burn = 100_000;
-    assert!(do_unstake(&mut env, withdraw_index, xorca_to_burn, 0).is_ok());
+    assert!(do_unstake(&mut env, withdraw_index, xorca_to_burn).is_ok());
     let pending_withdraw_account_data = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
@@ -218,7 +218,7 @@ fn yield_operational_multi_user_mixed_flow() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    let pending_withdraw_account_a = unstake_and_advance(&mut env, withdraw_index_a, 1_000_000, 0);
+    let pending_withdraw_account_a = unstake_and_advance(&mut env, withdraw_index_a, 1_000_000, 2);
     let withdrawable_orca_a = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_a)
@@ -249,7 +249,7 @@ fn yield_operational_multi_user_mixed_flow() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    let pending_withdraw_account_b = unstake_and_advance(&mut env, withdraw_index_b, 2_000_000, 0);
+    let pending_withdraw_account_b = unstake_and_advance(&mut env, withdraw_index_b, 2_000_000, 2);
     let withdrawable_orca_b = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_b)
@@ -351,7 +351,7 @@ fn yield_operational_large_escrow_carries_through() {
 
     // Act: user unstakes to create pending
     let idx = 42u8;
-    let pending_withdraw_account = unstake_and_advance(&mut env, idx, 2_000_000, 0);
+    let pending_withdraw_account = unstake_and_advance(&mut env, idx, 2_000_000, 2);
     let withdrawable_orca_amount = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
@@ -886,7 +886,7 @@ fn yield_prefunded_vault_fresh_deploy_stake_then_withdraw() {
 
     // Act: unstake full balance and withdraw
     let idx = 77u8;
-    assert!(do_unstake(&mut env, idx, user_xorca, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, user_xorca).is_ok());
     advance_clock_env(&mut env, pool.cool_down_period_s + 1);
     let snap_w = take_withdraw_snapshot(
         &env.ctx,
@@ -1059,7 +1059,7 @@ fn yield_deposit_before_unstake_increases_withdrawable() {
         XORCA_ID,
     );
     let xorca_to_burn_for_unstake = user_xorca / 2;
-    assert!(do_unstake(&mut env, idx, xorca_to_burn_for_unstake, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, xorca_to_burn_for_unstake).is_ok());
     let non_escrowed = snapshot_before_unstake
         .vault_before
         .saturating_sub(snapshot_before_unstake.escrow_before);
@@ -1122,7 +1122,7 @@ fn yield_deposit_after_unstake_does_not_change_pending() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx, xorca_to_burn_for_unstake, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, xorca_to_burn_for_unstake).is_ok());
     let non_escrowed_pre = snapshot_before_unstake
         .vault_before
         .saturating_sub(snapshot_before_unstake.escrow_before);

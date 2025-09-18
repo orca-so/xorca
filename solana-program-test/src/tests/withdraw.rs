@@ -1727,7 +1727,7 @@ fn test_withdraw_timestamp_overflow() {
     env.ctx.set_sysvar::<Clock>(&clock);
 
     let idx = 24u8;
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     // This should fail with CoolDownOverflow due to timestamp overflow
     assert_program_error!(res, XorcaStakingProgramError::CoolDownOverflow);
 }

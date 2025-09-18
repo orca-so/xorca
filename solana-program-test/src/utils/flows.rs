@@ -72,6 +72,14 @@ pub fn do_unstake(
     env: &mut Env,
     withdraw_index: u8,
     xorca_unstake_amount: u64,
+) -> TransactionResult {
+    do_unstake_with_unique(env, withdraw_index, xorca_unstake_amount, 0)
+}
+
+pub fn do_unstake_with_unique(
+    env: &mut Env,
+    withdraw_index: u8,
+    xorca_unstake_amount: u64,
     unique_id: u64,
 ) -> TransactionResult {
     let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &withdraw_index)

@@ -3,14 +3,14 @@ use crate::utils::assert::{
     take_withdraw_snapshot,
 };
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
-use crate::utils::flows::do_unstake;
+use crate::utils::flows::{do_unstake, do_unstake_with_unique};
 use crate::{
     assert_program_error, TestContext, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
 };
-use solana_sdk::{clock::Clock, pubkey::Pubkey, system_instruction};
+use solana_sdk::{clock::Clock, pubkey::Pubkey};
 use xorca::{
-    find_pending_withdraw_pda, find_state_address, Event, PendingWithdraw, State, Unstake,
-    UnstakeInstructionArgs, XorcaStakingProgramError,
+    find_pending_withdraw_pda, find_state_address, Event, PendingWithdraw, State,
+    XorcaStakingProgramError,
 };
 
 // Happy path: burns xORCA, increases escrow by withdrawable ORCA, and creates a pending withdraw account
@@ -40,7 +40,7 @@ fn test_unstake_success_at_initial_rate() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, withdraw_index, 10_000_000_000, 0).is_ok());
+    assert!(do_unstake(&mut env, withdraw_index, 10_000_000_000).is_ok());
     let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     assert_pending_withdraw(
         &env.ctx,
@@ -91,7 +91,7 @@ fn test_unstake_succeeds_at_high_exchange_rate() {
         XORCA_ID,
     );
     let xorca_burn = 1_000_000u64;
-    assert!(do_unstake(&mut env, idx, xorca_burn, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, xorca_burn).is_ok());
     let non_escrowed = snap.vault_before.saturating_sub(snap.escrow_before);
     // Account for virtual amounts
     let expected = xorca_burn
@@ -154,7 +154,7 @@ fn test_unstake_succeeds_at_low_exchange_rate() {
         XORCA_ID,
     );
     let xorca_burn = 50_000_000u64;
-    assert!(do_unstake(&mut env, idx, xorca_burn, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, xorca_burn).is_ok());
     let non_escrowed = snap.vault_before.saturating_sub(snap.escrow_before);
     // Account for virtual amounts
     let expected = xorca_burn
@@ -216,7 +216,7 @@ fn test_unstake_succeeds_with_existing_escrow() {
         XORCA_ID,
     );
     let xorca_burn = 1_000_000u64;
-    assert!(do_unstake(&mut env, idx, xorca_burn, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, xorca_burn).is_ok());
     let non_escrowed = snap.vault_before.saturating_sub(snap.escrow_before);
     let expected = xorca_burn
         .saturating_mul(non_escrowed)
@@ -276,7 +276,7 @@ fn test_unstake_multiple_indices_success() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx_a, 1_000_000, 0).is_ok());
+    assert!(do_unstake(&mut env, idx_a, 1_000_000).is_ok());
     let now_a = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let a = env
         .ctx
@@ -313,7 +313,7 @@ fn test_unstake_multiple_indices_success() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx_b, 2_000_000, 0).is_ok());
+    assert!(do_unstake(&mut env, idx_b, 2_000_000).is_ok());
     let now_b = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let b = env
         .ctx
@@ -383,7 +383,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx1, 1_000_000, 0).is_ok());
+    assert!(do_unstake(&mut env, idx1, 1_000_000).is_ok());
     let now1 = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let pending_orca_amount_1 = env
         .ctx
@@ -421,7 +421,7 @@ fn test_unstake_partial_two_steps_accumulate_escrow() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx2, 1_500_000, 0).is_ok());
+    assert!(do_unstake(&mut env, idx2, 1_500_000).is_ok());
     let now2 = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let pending_orca_amount_2 = env
         .ctx
@@ -507,7 +507,7 @@ fn test_unstake_partial_with_existing_escrow_low_rate() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx1, 500_000, 0).is_ok());
+    assert!(do_unstake(&mut env, idx1, 500_000).is_ok());
 
     let vault = env
         .ctx
@@ -548,7 +548,7 @@ fn test_unstake_partial_with_existing_escrow_low_rate() {
         "partial low-rate step 1",
     );
 
-    assert!(do_unstake(&mut env, idx2, 500_000, 0).is_ok());
+    assert!(do_unstake(&mut env, idx2, 500_000).is_ok());
     let pend2_acc = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_2)
@@ -604,7 +604,7 @@ fn test_unstake_partial_all_but_one_then_last() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx_a, 10_000, 0).is_ok());
+    assert!(do_unstake(&mut env, idx_a, 10_000).is_ok());
     let now_a = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let a = env
         .ctx
@@ -642,7 +642,7 @@ fn test_unstake_partial_all_but_one_then_last() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx_b, 1, 0).is_ok());
+    assert!(do_unstake(&mut env, idx_b, 1).is_ok());
     let total_burned = 10_001u64;
     let now_b = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let b = env
@@ -729,7 +729,7 @@ fn test_unstake_insufficient_vault_backing_error() {
         )
         .unwrap();
     let idx = 90u8;
-    let res = do_unstake(&mut env, idx, 1, 0);
+    let res = do_unstake(&mut env, idx, 1);
     assert_program_error!(res, XorcaStakingProgramError::InsufficientVaultBacking);
 }
 
@@ -750,7 +750,7 @@ fn test_unstake_escrow_overflow_error() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 91u8;
-    let res = do_unstake(&mut env, idx, 1, 0);
+    let res = do_unstake(&mut env, idx, 1);
     assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
 }
 
@@ -776,7 +776,7 @@ fn test_unstake_cool_down_period_overflow() {
     env.ctx.set_sysvar::<Clock>(&clock);
 
     let idx = 43u8;
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::CoolDownOverflow);
 }
 
@@ -799,7 +799,7 @@ fn test_unstake_u128_overflow_in_conversion() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 45u8;
-    let res = do_unstake(&mut env, idx, u64::MAX, 0);
+    let res = do_unstake(&mut env, idx, u64::MAX);
     assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
 }
 
@@ -830,7 +830,7 @@ fn test_unstake_invalid_state_account_owner() {
             ),
         )
         .unwrap();
-    let res = do_unstake(&mut env, withdraw_index, 10_000_000_000, 0);
+    let res = do_unstake(&mut env, withdraw_index, 10_000_000_000);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -863,7 +863,7 @@ fn test_unstake_invalid_vault_account_mint_in_data() {
             ),
         )
         .unwrap();
-    let res = do_unstake(&mut env, withdraw_index, 10_000_000_000, 0);
+    let res = do_unstake(&mut env, withdraw_index, 10_000_000_000);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -965,7 +965,7 @@ fn test_unstake_zero_amount() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 1u8;
-    let res = do_unstake(&mut env, idx, 0, 0);
+    let res = do_unstake(&mut env, idx, 0);
     assert_program_error!(res, XorcaStakingProgramError::InsufficientUnstakeAmount);
 }
 
@@ -980,7 +980,7 @@ fn test_unstake_insufficient_xorca_tokens() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 2u8;
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::InsufficientFunds);
 }
 
@@ -1148,7 +1148,7 @@ fn test_unstake_precision_loss_attack() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx, 1, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, 1).is_ok());
     let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let p = env
         .ctx
@@ -1196,7 +1196,7 @@ fn test_unstake_rounding_many_small_vs_one_large() {
     let mut total_small: u64 = 0;
     for i in 0u8..100u8 {
         let pending_withdraw_account = find_pending_withdraw_pda(&env_small.staker, &i).unwrap().0;
-        assert!(do_unstake(&mut env_small, i, 100, i as u64).is_ok());
+        assert!(do_unstake_with_unique(&mut env_small, i, 100, i as u64).is_ok());
         total_small = total_small.saturating_add(
             env_small
                 .ctx
@@ -1208,7 +1208,7 @@ fn test_unstake_rounding_many_small_vs_one_large() {
     }
     let pending_withdraw_account_large =
         find_pending_withdraw_pda(&env_large.staker, &0).unwrap().0;
-    assert!(do_unstake(&mut env_large, 0, 10_000, 0).is_ok());
+    assert!(do_unstake(&mut env_large, 0, 10_000).is_ok());
     let large = env_large
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_large)
@@ -1336,9 +1336,9 @@ fn test_unstake_duplicate_withdraw_index() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 11u8;
-    assert!(do_unstake(&mut env, idx, 1_000_000, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, 1_000_000).is_ok());
 
-    let res = do_unstake(&mut env, idx, 1_000_000, 1);
+    let res = do_unstake_with_unique(&mut env, idx, 1_000_000, 1);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -1368,7 +1368,7 @@ fn test_unstake_pending_withdraw_already_exists() {
             ),
         )
         .unwrap();
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -1445,7 +1445,7 @@ fn test_unstake_division_by_zero_non_escrowed_zero() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 14u8;
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
 }
 
@@ -1474,7 +1474,7 @@ fn test_unstake_at_available_amount() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx, user.staker_xorca, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, user.staker_xorca).is_ok());
     let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let pend = env
         .ctx
@@ -1515,7 +1515,7 @@ fn test_unstake_cool_down_period_calculation_correct() {
     let idx = 17u8;
     let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
     let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
-    assert!(do_unstake(&mut env, idx, 1_000_000, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, 1_000_000).is_ok());
     let pend = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
@@ -1546,7 +1546,7 @@ fn test_unstake_invalid_unstaker_xorca_ata_owner_in_data() {
         )
         .unwrap();
     let idx = 18u8;
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -1568,7 +1568,7 @@ fn test_unstake_invalid_unstaker_xorca_ata_mint_in_data() {
         )
         .unwrap();
     let idx = 19u8;
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -1590,7 +1590,7 @@ fn test_unstake_invalid_unstaker_xorca_ata_program_owner() {
         )
         .unwrap();
     let idx = 20u8;
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -1609,7 +1609,7 @@ fn test_unstake_account_creation_failure_insufficient_lamports() {
     signer_acc.lamports = 0;
     env.ctx.set_account(env.staker, signer_acc).unwrap();
     let idx = 21u8;
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert!(
         res.is_err(),
         "should error due to insufficient lamports to create pending"
@@ -1649,7 +1649,7 @@ fn test_unstake_supply_manipulation_attack() {
         )
         .unwrap();
     let idx = 35u8;
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -1686,7 +1686,7 @@ fn test_unstake_freeze_authority_manipulation() {
         )
         .unwrap();
     let idx = 36u8;
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -1707,7 +1707,7 @@ fn test_unstake_zero_supply_with_nonzero_vault_fails() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 40u8;
-    let res = do_unstake(&mut env, idx, 100_000, 0);
+    let res = do_unstake(&mut env, idx, 100_000);
     assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
 }
 
@@ -1727,7 +1727,7 @@ fn test_unstake_zero_supply_with_zero_vault_fails() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 41u8;
-    let res = do_unstake(&mut env, idx, 10_000, 0);
+    let res = do_unstake(&mut env, idx, 10_000);
     assert_program_error!(res, XorcaStakingProgramError::ArithmeticError);
 }
 
@@ -1757,7 +1757,7 @@ fn test_unstake_withdraw_index_max_value_255_success() {
         XORCA_ID,
     );
     let burn = 1_000_000u64;
-    assert!(do_unstake(&mut env, idx, burn, 0).is_ok());
+    assert!(do_unstake(&mut env, idx, burn).is_ok());
     let now = env.ctx.get_sysvar::<Clock>().unix_timestamp;
     let pend = env
         .ctx
@@ -1813,14 +1813,14 @@ fn test_unstake_withdraw_index_over_limit_behaviour() {
 
     for i in 0u8..=u8::MAX {
         assert!(
-            do_unstake(&mut env, i, 1_000, i as u64).is_ok(),
+            do_unstake_with_unique(&mut env, i, 1_000, i as u64).is_ok(),
             "create pending for index {}",
             i
         );
     }
 
     // Any additional attempt must reuse an existing index; since the pending exists, it should fail with IncorrectOwner
-    let res = do_unstake(&mut env, 0u8, 1_000, 0);
+    let res = do_unstake(&mut env, 0u8, 1_000);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -1843,7 +1843,7 @@ fn test_unstake_precision_loss_rounds_down_to_zero() {
     };
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 42u8; // arbitrary
-    let res = do_unstake(&mut env, idx, 1, 0);
+    let res = do_unstake(&mut env, idx, 1);
     assert_program_error!(res, XorcaStakingProgramError::InsufficientUnstakeAmount);
 }
 
@@ -1887,7 +1887,7 @@ fn test_unstake_invalid_bump_seed() {
         )
         .unwrap();
 
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -1913,6 +1913,6 @@ fn test_unstake_account_too_small() {
     state_acc.data.truncate(10); // Make it much smaller than expected State size
     env.ctx.set_account(env.state, state_acc).unwrap();
 
-    let res = do_unstake(&mut env, idx, 1_000_000, 0);
+    let res = do_unstake(&mut env, idx, 1_000_000);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }

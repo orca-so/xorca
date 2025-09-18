@@ -78,7 +78,7 @@ fn test_withdraw_pending_withdraw_wrong_bump_in_data() {
     // First, create a pending withdraw through unstake
     let idx: u8 = 0u8;
     let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &idx).unwrap().0;
-    assert!(crate::utils::flows::do_unstake(&mut env, idx, 1_000_000, 0).is_ok());
+    assert!(crate::utils::flows::do_unstake(&mut env, idx, 1_000_000).is_ok());
 
     // Now corrupt the bump in the pending withdraw account data
     let (_, correct_bump) = find_pending_withdraw_pda(&env.staker, &idx).unwrap();

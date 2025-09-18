@@ -143,12 +143,7 @@ fn test_vault_inflation_vulnerability() {
 
     // Act: attacker unstakes 0.000001 xORCA
     let withdraw_index = 0u8;
-    let res_u = do_unstake(
-        &mut attacker_env,
-        withdraw_index,
-        attacker_xorca_holdings,
-        0,
-    );
+    let res_u = do_unstake(&mut attacker_env, withdraw_index, attacker_xorca_holdings);
     assert!(res_u.is_ok());
 
     // Act: wait until cooldown passes
