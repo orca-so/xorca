@@ -164,7 +164,7 @@ fn set_fails_when_update_authority_not_signer() {
     let mut ctx = TestContext::new();
     let (state, state_bump) = find_state_address().unwrap();
 
-    let non_signer = solana_sdk::signature::Keypair::new();
+    let invalid_signer = solana_sdk::signature::Keypair::new();
 
     // Seed proper state
     ctx.write_account(
@@ -190,7 +190,7 @@ fn set_fails_when_update_authority_not_signer() {
     });
 
     // This should fail because the non_signer is not the correct update authority
-    let res = ctx.sends_with_signers(&[ix], &[&non_signer]);
+    let res = ctx.sends_with_signers(&[ix], &[&invalid_signer]);
 
     // Expect SanitizeFailure because we expect the update authority account to sign this transaction
     assert!(

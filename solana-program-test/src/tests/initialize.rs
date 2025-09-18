@@ -695,11 +695,6 @@ fn initialize_sets_different_update_authority_success() {
     // Calculate vault account address
     let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
-    // Fund the update authority account so it can pay for the transaction
-    let fund_ix =
-        system_instruction::transfer(&ctx.signer(), &update_authority.pubkey(), 100_000_000); // 0.1 SOL
-    ctx.sends(&[fund_ix]).unwrap();
-
     let ix = Initialize {
         payer_account: ctx.signer(), // Deployer as payer (required)
         update_authority_account: update_authority.pubkey(), // Different update authority

@@ -7,7 +7,7 @@ use crate::utils::flows::stake_orca_with_unique;
 use crate::{
     assert_program_error, TestContext, ORCA_ID, TOKEN_PROGRAM_ID, XORCA_ID, XORCA_PROGRAM_ID,
 };
-use solana_sdk::{pubkey::Pubkey};
+use solana_sdk::pubkey::Pubkey;
 use xorca::{
     find_state_address, Event, Stake, StakeInstructionArgs, TokenAccount, TokenMint,
     XorcaStakingProgramError,
@@ -613,7 +613,6 @@ fn stake_rounding_many_small_vs_one_large() {
     // SMALL_COUNT small stakes of 1 lamport
     for i in 0..SMALL_COUNT {
         stake_orca_with_unique(&mut env_small, 1, "stake iteration", i);
-
     }
     let xorca_small = env_small
         .ctx
