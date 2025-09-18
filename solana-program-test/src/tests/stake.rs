@@ -3,15 +3,15 @@ use crate::utils::assert::{
     take_stake_snapshot, ExpectedState, ExpectedTokenAccount,
 };
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
+use crate::utils::flows::stake_orca_with_unique;
 use crate::{
     assert_program_error, TestContext, ORCA_ID, TOKEN_PROGRAM_ID, XORCA_ID, XORCA_PROGRAM_ID,
 };
-use solana_sdk::{pubkey::Pubkey, system_instruction};
+use solana_sdk::{pubkey::Pubkey};
 use xorca::{
     find_state_address, Event, Stake, StakeInstructionArgs, TokenAccount, TokenMint,
     XorcaStakingProgramError,
 };
-use xorca_staking_program::assertions::account::assert_account_data;
 use xorca_staking_program::state::state::State;
 
 // Fresh deployment path: supply=0, non_escrowed=0 → initial exchange rate
@@ -612,29 +612,8 @@ fn stake_rounding_many_small_vs_one_large() {
 
     // SMALL_COUNT small stakes of 1 lamport
     for i in 0..SMALL_COUNT {
-        let ix = Stake {
-            staker_account: env_small.staker,
-            state_account: env_small.state,
-            vault_account: env_small.vault,
-            staker_orca_ata: env_small.staker_orca_ata,
-            staker_xorca_ata: env_small.staker_xorca_ata,
-            xorca_mint_account: XORCA_ID,
-            orca_mint_account: ORCA_ID,
-            token_program_account: TOKEN_PROGRAM_ID,
-        }
-        .instruction(StakeInstructionArgs {
-            orca_stake_amount: 1,
-        });
+        stake_orca_with_unique(&mut env_small, 1, "stake iteration", i);
 
-        // Add a unique no-op instruction to make each transaction unique
-        // Use the iteration index to make each transfer unique
-        let noop_ix = system_instruction::transfer(&env_small.staker, &env_small.staker, i);
-
-        let result = env_small.ctx.sends(&[ix, noop_ix]);
-        if result.is_err() {
-            println!("Transaction failed at iteration {}: {:?}", i, result);
-        }
-        assert!(result.is_ok());
     }
     let xorca_small = env_small
         .ctx
