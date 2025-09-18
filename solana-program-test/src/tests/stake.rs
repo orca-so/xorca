@@ -3,7 +3,7 @@ use crate::utils::assert::{
     take_stake_snapshot, ExpectedState, ExpectedTokenAccount,
 };
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
-use crate::utils::flows::stake_orca;
+use crate::utils::flows::stake_orca_with_unique;
 use crate::{
     assert_program_error, TestContext, ORCA_ID, TOKEN_PROGRAM_ID, XORCA_ID, XORCA_PROGRAM_ID,
 };
@@ -50,7 +50,7 @@ fn stake_success_on_fresh_deployment() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(env.ctx.send(ix).is_ok());
+    assert!(env.ctx.sends(&[ix]).is_ok());
     assert_stake_effects(
         &env.ctx,
         env.state,
@@ -103,7 +103,7 @@ fn stake_success_at_exchange_rate_1_to_2_success() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(env.ctx.send(ix).is_ok());
+    assert!(env.ctx.sends(&[ix]).is_ok());
     // Exchange rate r = xorca_supply / non_escrowed = 1_000_000_000 / 2_000_000_000 = 0.5
     // Minted = stake * r = 1_000_000 * 0.5 = 500,000
     let expected_minted = 500_000u64;
@@ -159,7 +159,7 @@ fn stake_success_at_exchange_rate_with_decimals() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(env.ctx.send(ix).is_ok());
+    assert!(env.ctx.sends(&[ix]).is_ok());
     // Exchange rate r = xorca_supply / non_escrowed = 1_234_356_434 / 2_323_324_233 ≈ 0.531288...
     // Minted = floor(stake * r) = floor(1_000_000 * 1_234_356_434 / 2_323_324_233) = 531,288
     let expected_minted = 531_288u64;
@@ -207,7 +207,7 @@ fn stake_success_rounds_down_at_non_divisible_rate() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_001,
     });
-    assert!(env.ctx.send(ix).is_ok());
+    assert!(env.ctx.sends(&[ix]).is_ok());
     // Exchange rate r = xorca_supply / non_escrowed = 1_000_000_000 / 3_000_000_000 = 0.3333333333333333
     // Minted = stake * r = 1_000_001 * 0.3333333333333333 = 333,333 (floored)
     let expected_minted = 333_333u64;
@@ -263,7 +263,7 @@ fn stake_success_for_low_exchange_rate() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(env.ctx.send(ix).is_ok());
+    assert!(env.ctx.sends(&[ix]).is_ok());
     // Exchange rate r = xorca_supply / non_escrowed = 3_000_000 / 100_000_000_000 = 0.00003
     // Minted = stake * r = 1_000_000 * 0.00003 = 30 (floored)
     let expected_minted = 30u64;
@@ -355,8 +355,8 @@ fn stake_success_with_escrow_orca() {
         env_b.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(env_a.ctx.send(ix_a).is_ok());
-    assert!(env_b.ctx.send(ix_b).is_ok());
+    assert!(env_a.ctx.sends(&[ix_a]).is_ok());
+    assert!(env_b.ctx.sends(&[ix_b]).is_ok());
 
     // non_escrowed = vault - escrow is equal between pools (5_000_000_000)
     // minted = ORCA_in * supply / non_escrowed = 2_000_000 * 1_000_000_000 / 5_000_000_000 = 400_000
@@ -416,6 +416,7 @@ fn stake_success_with_large_escrow_still_uses_non_escrowed_rate() {
         staker_xorca: 0,
     };
     let mut env = Env::new(ctx, &pool, &user);
+    let stake_amount = 1_000_000;
     let ix = Stake {
         staker_account: env.staker,
         state_account: env.state,
@@ -427,7 +428,7 @@ fn stake_success_with_large_escrow_still_uses_non_escrowed_rate() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
-        orca_stake_amount: 1_000_000,
+        orca_stake_amount: stake_amount,
     });
     let snap = take_stake_snapshot(
         &env.ctx,
@@ -437,9 +438,15 @@ fn stake_success_with_large_escrow_still_uses_non_escrowed_rate() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(env.ctx.send(ix).is_ok());
-    // Exchange rate r = xorca_supply / non_escrowed = 1_000_000_000 / 500_000_000 = 2
-    let expected_minted = 2_000_000u64;
+    assert!(env.ctx.sends(&[ix]).is_ok());
+    // Account for virtual amounts
+    let expected_minted = stake_amount
+        .saturating_mul(pool.xorca_supply.saturating_add(1))
+        .saturating_div(
+            pool.vault_orca
+                .saturating_sub(pool.escrowed_orca)
+                .saturating_add(1),
+        );
     assert_stake_effects(
         &env.ctx,
         env.state,
@@ -498,7 +505,7 @@ fn stake_precision_loss_rounds_down() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    let _ = env.ctx.send(ix);
+    let _ = env.ctx.sends(&[ix]);
 
     // Proportional path rounds down: floor(10 * 100 / 333) = 3
     assert_stake_effects(
@@ -554,7 +561,7 @@ fn stake_precision_loss_rounds_down_to_zero() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
 
     // Proportional path rounds down: floor(10 * 1000000 / 333333333) = 0
     assert_program_error!(res, XorcaStakingProgramError::InsufficientStakeAmount);
@@ -604,21 +611,8 @@ fn stake_rounding_many_small_vs_one_large() {
         .amount;
 
     // SMALL_COUNT small stakes of 1 lamport
-    for _ in 0..SMALL_COUNT {
-        let ix = Stake {
-            staker_account: env_small.staker,
-            state_account: env_small.state,
-            vault_account: env_small.vault,
-            staker_orca_ata: env_small.staker_orca_ata,
-            staker_xorca_ata: env_small.staker_xorca_ata,
-            xorca_mint_account: XORCA_ID,
-            orca_mint_account: ORCA_ID,
-            token_program_account: TOKEN_PROGRAM_ID,
-        }
-        .instruction(StakeInstructionArgs {
-            orca_stake_amount: 1,
-        });
-        assert!(env_small.ctx.send(ix).is_ok());
+    for i in 0..SMALL_COUNT {
+        stake_orca_with_unique(&mut env_small, 1, "stake iteration", i);
     }
     let xorca_small = env_small
         .ctx
@@ -641,7 +635,7 @@ fn stake_rounding_many_small_vs_one_large() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: SMALL_COUNT,
     });
-    assert!(env_large.ctx.send(ix_large).is_ok());
+    assert!(env_large.ctx.sends(&[ix_large]).is_ok());
     let xorca_large = env_large
         .ctx
         .get_account::<TokenAccount>(env_large.staker_xorca_ata)
@@ -730,7 +724,7 @@ fn stake_invalid_state_account_owner() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let result = env.ctx.send(ix);
+    let result = env.ctx.sends(&[ix]);
     assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -766,7 +760,7 @@ fn stake_overflow_attack_large_numbers() {
     });
     let res = {
         let ix_clone = ix.clone();
-        env.ctx.send(ix_clone)
+        env.ctx.sends(&[ix_clone])
     };
     assert!(res.is_ok() || res.is_err(), "tx should not panic");
 }
@@ -822,7 +816,7 @@ fn stake_underflow_non_escrowed_error() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::InsufficientVaultBacking);
 }
 
@@ -864,7 +858,7 @@ fn stake_division_by_zero_non_escrowed_zero_supply_nonzero() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(env.ctx.send(ix).is_ok());
+    assert!(env.ctx.sends(&[ix]).is_ok());
     // With equal decimals fallback, mint 1:1 even if non_escrowed is zero
     assert_stake_effects(
         &env.ctx,
@@ -905,7 +899,7 @@ fn stake_zero_amount() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 0,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::InsufficientStakeAmount);
 }
 
@@ -939,7 +933,7 @@ fn stake_max_u64_amount_overflow_expected() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: u64::MAX,
     });
-    let _ = env.ctx.send(ix); // Accept current behavior (may succeed or overflow in token program)
+    let _ = env.ctx.sends(&[ix]); // Accept current behavior (may succeed or overflow in token program)
 }
 
 // Tests that vault account must be the canonical PDA
@@ -974,7 +968,7 @@ fn stake_wrong_vault_account() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
 }
 
@@ -1020,7 +1014,7 @@ fn stake_wrong_xorca_mint_address() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
@@ -1063,7 +1057,7 @@ fn stake_wrong_orca_mint_address() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
@@ -1092,7 +1086,7 @@ fn stake_malicious_token_program() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
@@ -1120,7 +1114,7 @@ fn stake_insufficient_orca_tokens() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::InsufficientFunds);
 }
 
@@ -1164,7 +1158,7 @@ fn stake_invalid_state_account_seeds() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let result = env.ctx.send(ix);
+    let result = env.ctx.sends(&[ix]);
     assert_program_error!(result, XorcaStakingProgramError::InvalidSeeds);
 }
 
@@ -1200,7 +1194,7 @@ fn stake_invalid_state_account_bump() {
         .unwrap();
 
     // Use utility function to attempt stake - should fail due to invalid bump
-    stake_orca(&mut env, 1_000_000, "stake with wrong bump");
+    let result = stake_orca_with_unique(&mut env, 1_000_000, "stake with wrong bump", 0);
     assert_program_error!(result, XorcaStakingProgramError::InvalidSeeds);
 }
 
@@ -1236,7 +1230,7 @@ fn stake_invalid_staker_orca_ata_owner_data() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let result = env.ctx.send(ix);
+    let result = env.ctx.sends(&[ix]);
     assert_program_error!(result, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -1271,7 +1265,7 @@ fn stake_invalid_staker_orca_ata_mint_data() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let result = env.ctx.send(ix);
+    let result = env.ctx.sends(&[ix]);
     assert_program_error!(result, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -1306,7 +1300,7 @@ fn stake_invalid_staker_orca_ata_program_owner() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let result = env.ctx.send(ix);
+    let result = env.ctx.sends(&[ix]);
     assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -1341,7 +1335,7 @@ fn stake_invalid_staker_xorca_ata_owner_data() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let result = env.ctx.send(ix);
+    let result = env.ctx.sends(&[ix]);
     assert_program_error!(result, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -1376,7 +1370,7 @@ fn stake_invalid_staker_xorca_ata_mint_data() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let result = env.ctx.send(ix);
+    let result = env.ctx.sends(&[ix]);
     assert_program_error!(result, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -1411,7 +1405,7 @@ fn stake_invalid_staker_xorca_ata_program_owner() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let result = env.ctx.send(ix);
+    let result = env.ctx.sends(&[ix]);
     assert_program_error!(result, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -1504,7 +1498,7 @@ fn stake_event_emission_verification() {
         orca_stake_amount: 1_000_000,
     });
     let mut ctx2 = env.ctx;
-    let res = ctx2.send(ix);
+    let res = ctx2.sends(&[ix]);
     assert!(res.is_ok());
     let events = decode_events_from_result(&res);
     assert!(!events.is_empty(), "no events decoded");
@@ -1560,6 +1554,6 @@ fn stake_fails_when_amount_would_mint_zero() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::InsufficientStakeAmount);
 }

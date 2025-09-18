@@ -54,7 +54,7 @@ fn test_stake_state_account_wrong_bump_in_data() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     // The program fails during PDA creation with wrong bump, not during seed validation
     assert!(res.is_err());
 }
@@ -102,9 +102,9 @@ fn test_withdraw_pending_withdraw_wrong_bump_in_data() {
         .unwrap();
 
     // Advance time to allow withdrawal
-    let mut clock = env.ctx.svm.get_sysvar::<solana_sdk::clock::Clock>();
+    let mut clock = env.ctx.get_sysvar::<solana_sdk::clock::Clock>();
     clock.unix_timestamp = 1000;
-    env.ctx.svm.set_sysvar::<solana_sdk::clock::Clock>(&clock);
+    env.ctx.set_sysvar::<solana_sdk::clock::Clock>(&clock);
 
     let ix = xorca::Withdraw {
         unstaker_account: env.staker,
@@ -119,7 +119,7 @@ fn test_withdraw_pending_withdraw_wrong_bump_in_data() {
     .instruction(xorca::WithdrawInstructionArgs {
         withdraw_index: idx,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     // The program fails during PDA creation with wrong bump, not during seed validation
     assert!(res.is_err());
 }
@@ -168,7 +168,7 @@ fn test_stake_state_account_zero_bump_wrong_pda() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     // The program fails during PDA creation with wrong bump, not during seed validation
     assert!(res.is_err());
 }
@@ -219,7 +219,7 @@ fn test_withdraw_pending_withdraw_zero_bump_wrong_pda() {
     .instruction(xorca::WithdrawInstructionArgs {
         withdraw_index: idx,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     // The program fails during PDA creation with wrong bump, not during seed validation
     assert!(res.is_err());
 }
@@ -267,7 +267,7 @@ fn test_stake_with_max_bump_value() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     // The program fails during PDA creation with wrong bump, not during seed validation
     assert!(res.is_err());
 }
@@ -315,7 +315,7 @@ fn test_stake_corrupted_state_discriminator() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -338,7 +338,7 @@ fn test_stake_state_account_too_small() {
     // Make the state account too small
     let mut state_acc = env.ctx.get_raw_account(env.state).unwrap();
     state_acc.data.truncate(10); // Make it much smaller than expected State size
-    env.ctx.svm.set_account(env.state, state_acc).unwrap();
+    env.ctx.set_account(env.state, state_acc).unwrap();
 
     let ix = xorca::Stake {
         staker_account: env.staker,
@@ -353,7 +353,7 @@ fn test_stake_state_account_too_small() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -396,7 +396,7 @@ fn test_stake_vault_account_wrong_bump() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     // The program fails during PDA creation with wrong bump, not during seed validation
     assert!(res.is_err());
 }

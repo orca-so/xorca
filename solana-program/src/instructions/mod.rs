@@ -4,13 +4,10 @@ pub mod stake;
 pub mod unstake;
 pub mod withdraw;
 use pinocchio::pubkey::Pubkey;
-use pinocchio_pubkey::pubkey;
 
 use borsh::{BorshDeserialize, BorshSerialize};
 use shank::ShankInstruction;
 use strum::{Display, EnumDiscriminants, FromRepr};
-
-pub const INITIAL_UPGRADE_AUTHORITY_ID: Pubkey = pubkey!("11111111111111111111111111111111"); // TODO: replace with actual initial upgrade authority
 
 #[derive(
     Debug, Clone, BorshSerialize, BorshDeserialize, ShankInstruction, Display, EnumDiscriminants,
@@ -56,12 +53,12 @@ pub enum Instruction {
     Withdraw { withdraw_index: u8 },
 
     #[account(0, writable, signer, name = "payer_account")]
-    #[account(1, writable, name = "state_account")]
-    #[account(2, name = "xorca_mint_account")]
-    #[account(3, name = "orca_mint_account")]
-    #[account(4, name = "update_authority_account")]
-    #[account(5, name = "system_program_account")]
-    #[account(6, writable, name = "vault_account")]
+    #[account(1, writable, signer, name = "update_authority_account")]
+    #[account(2, writable, name = "state_account")]
+    #[account(3, writable, name = "vault_account")]
+    #[account(4, name = "xorca_mint_account")]
+    #[account(5, name = "orca_mint_account")]
+    #[account(6, name = "system_program_account")]
     #[account(7, name = "token_program_account")]
     #[account(8, name = "associated_token_program_account")]
     Initialize { cool_down_period_s: i64 },

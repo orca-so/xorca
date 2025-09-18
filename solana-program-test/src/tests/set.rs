@@ -1,4 +1,5 @@
 use crate::{assert_program_error, TestContext};
+use solana_sdk::signature::Signer;
 use xorca::{
     find_state_address, Set, SetInstructionArgs, State, StateUpdateInstruction,
     XorcaStakingProgramError,
@@ -30,7 +31,7 @@ fn set_updates_cooldown() {
             new_cool_down_period_s: 500,
         },
     });
-    assert!(ctx.send(ix).is_ok());
+    assert!(ctx.sends(&[ix]).is_ok());
     let state_account = ctx.get_account::<State>(state).unwrap();
     assert_eq!(state_account.data.cool_down_period_s, 500);
 }
@@ -62,7 +63,7 @@ fn set_updates_update_authority() {
             new_authority: new_auth,
         },
     });
-    assert!(ctx.send(ix).is_ok());
+    assert!(ctx.sends(&[ix]).is_ok());
     let state_account = ctx.get_account::<State>(state).unwrap();
     assert_eq!(state_account.data.update_authority, new_auth);
 }
@@ -94,7 +95,7 @@ fn set_fails_with_wrong_update_authority_signer() {
             new_cool_down_period_s: 123,
         },
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
@@ -123,7 +124,7 @@ fn set_fails_with_wrong_state_owner() {
             new_cool_down_period_s: 123,
         },
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -153,7 +154,7 @@ fn set_fails_with_invalid_state_seeds() {
             new_cool_down_period_s: 123,
         },
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
 }
 
@@ -162,6 +163,9 @@ fn set_fails_with_invalid_state_seeds() {
 fn set_fails_when_update_authority_not_signer() {
     let mut ctx = TestContext::new();
     let (state, state_bump) = find_state_address().unwrap();
+
+    let invalid_signer = solana_sdk::signature::Keypair::new();
+
     // Seed proper state
     ctx.write_account(
         state,
@@ -174,11 +178,9 @@ fn set_fails_when_update_authority_not_signer() {
         ),
     )
     .unwrap();
-    // Use a non-signer pubkey instead of ctx.signer as the update_authority account
-    let non_signer = solana_sdk::pubkey::Pubkey::new_unique();
-    // We cannot actually mark it non-signer in our harness, but we can still pass a different pubkey which fails address match first.
+
     let ix = Set {
-        update_authority_account: non_signer,
+        update_authority_account: ctx.signer(),
         state_account: state,
     }
     .instruction(SetInstructionArgs {
@@ -186,8 +188,57 @@ fn set_fails_when_update_authority_not_signer() {
             new_cool_down_period_s: 123,
         },
     });
-    let res = ctx.send(ix);
-    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
+
+    // This should fail because the non_signer is not the correct update authority
+    let res = ctx.sends_with_signers(&[ix], &[&invalid_signer]);
+
+    // Expect SanitizeFailure because we expect the update authority account to sign this transaction
+    assert!(
+        res.is_err(),
+        "Should fail with SanitizeFailure when update authority is not a signer"
+    );
+}
+
+// Failure: update_authority account must be a signer
+#[test]
+fn set_fails_when_signer_didnt_sign() {
+    let mut ctx = TestContext::new();
+    let (state, state_bump) = find_state_address().unwrap();
+
+    let non_signer = solana_sdk::signature::Keypair::new();
+
+    // Seed proper state
+    ctx.write_account(
+        state,
+        xorca::XORCA_STAKING_PROGRAM_ID,
+        crate::state_data!(
+            escrowed_orca_amount => 0,
+            update_authority => ctx.signer(),
+            cool_down_period_s => 10,
+            bump => state_bump,
+        ),
+    )
+    .unwrap();
+
+    let ix = Set {
+        update_authority_account: non_signer.pubkey(),
+        state_account: state,
+    }
+    .instruction(SetInstructionArgs {
+        instruction_data: StateUpdateInstruction::UpdateCoolDownPeriod {
+            new_cool_down_period_s: 123,
+        },
+    });
+
+    // Sign with both the deployer and the non_signer
+    // This should fail because the non_signer is not the correct update authority
+    let res = ctx.sends_with_signers(&[ix], &[&non_signer]);
+
+    // Expect SanitizeFailure because we expect the update authority account to sign this transaction
+    assert!(
+        res.is_err(),
+        "Should fail with SanitizeFailure when update authority is not a signer"
+    );
 }
 
 // Idempotent: updating cooldown to the same value is a no-op but succeeds
@@ -215,7 +266,7 @@ fn set_cooldown_idempotent_noop_succeeds() {
             new_cool_down_period_s: 777,
         },
     });
-    assert!(ctx.send(ix).is_ok());
+    assert!(ctx.sends(&[ix]).is_ok());
     let state_account = ctx.get_account::<State>(state).unwrap();
     assert_eq!(state_account.data.cool_down_period_s, 777);
 }
@@ -245,7 +296,7 @@ fn set_update_authority_idempotent_noop_succeeds() {
             new_authority: ctx.signer(),
         },
     });
-    assert!(ctx.send(ix).is_ok());
+    assert!(ctx.sends(&[ix]).is_ok());
     let state_account = ctx.get_account::<State>(state).unwrap();
     assert_eq!(state_account.data.update_authority, ctx.signer());
 }
@@ -275,7 +326,7 @@ fn set_updates_cooldown_to_max_success() {
             new_cool_down_period_s: i64::MAX,
         },
     });
-    assert!(ctx.send(ix_max).is_ok());
+    assert!(ctx.sends(&[ix_max]).is_ok());
     let st_max = ctx.get_account::<State>(state).unwrap();
     assert_eq!(st_max.data.cool_down_period_s, i64::MAX);
 }
@@ -305,7 +356,7 @@ fn set_updates_cooldown_to_zero_success() {
             new_cool_down_period_s: 0,
         },
     });
-    assert!(ctx.send(ix_zero).is_ok());
+    assert!(ctx.sends(&[ix_zero]).is_ok());
     let st_zero = ctx.get_account::<State>(state).unwrap();
     assert_eq!(st_zero.data.cool_down_period_s, 0);
 }
@@ -335,7 +386,7 @@ fn set_fails_on_negative_cooldown_fails() {
             new_cool_down_period_s: -123,
         },
     });
-    let res = ctx.send(ix_neg);
+    let res = ctx.sends(&[ix_neg]);
     assert_program_error!(res, XorcaStakingProgramError::InvalidCoolDownPeriod);
 }
 
@@ -371,7 +422,7 @@ fn set_fails_with_wrong_bump_in_state_data() {
         },
     });
 
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
 }
 
@@ -404,7 +455,7 @@ fn set_succeeds_with_correct_bump_in_state_data() {
         },
     });
 
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert!(res.is_ok());
 
     // Verify the update was applied

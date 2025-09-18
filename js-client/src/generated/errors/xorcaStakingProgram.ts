@@ -52,6 +52,8 @@ export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_ESCROW = 0x1780; // 6016
 export const XORCA_STAKING_PROGRAM_ERROR__COOL_DOWN_OVERFLOW = 0x1781; // 6017
 /** InsufficientVaultBacking: Insufficient vault backing (vault < escrow) */
 export const XORCA_STAKING_PROGRAM_ERROR__INSUFFICIENT_VAULT_BACKING = 0x1782; // 6018
+/** UnauthorizedDeployerAccess: Unauthorized deployer access */
+export const XORCA_STAKING_PROGRAM_ERROR__UNAUTHORIZED_DEPLOYER_ACCESS = 0x1783; // 6019
 
 export type XorcaStakingProgramError =
   | typeof XORCA_STAKING_PROGRAM_ERROR__ARITHMETIC_ERROR
@@ -72,6 +74,7 @@ export type XorcaStakingProgramError =
   | typeof XORCA_STAKING_PROGRAM_ERROR__INVALID_SEEDS
   | typeof XORCA_STAKING_PROGRAM_ERROR__NOT_ENOUGH_ACCOUNT_KEYS
   | typeof XORCA_STAKING_PROGRAM_ERROR__STATE_ACCOUNT_ALREADY_INITIALIZED
+  | typeof XORCA_STAKING_PROGRAM_ERROR__UNAUTHORIZED_DEPLOYER_ACCESS
   | typeof XORCA_STAKING_PROGRAM_ERROR__UNKNOWN_INSTRUCTION_DISCRIMINATOR;
 
 let xorcaStakingProgramErrorMessages: Record<XorcaStakingProgramError, string> | undefined;
@@ -95,6 +98,7 @@ if (process.env.NODE_ENV !== 'production') {
     [XORCA_STAKING_PROGRAM_ERROR__INVALID_SEEDS]: `Invalid seeds`,
     [XORCA_STAKING_PROGRAM_ERROR__NOT_ENOUGH_ACCOUNT_KEYS]: `Not enough account keys`,
     [XORCA_STAKING_PROGRAM_ERROR__STATE_ACCOUNT_ALREADY_INITIALIZED]: `State account already initialized`,
+    [XORCA_STAKING_PROGRAM_ERROR__UNAUTHORIZED_DEPLOYER_ACCESS]: `Unauthorized deployer access`,
     [XORCA_STAKING_PROGRAM_ERROR__UNKNOWN_INSTRUCTION_DISCRIMINATOR]: `Unknown instruction discriminator`,
   };
 }

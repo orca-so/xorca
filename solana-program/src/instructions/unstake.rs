@@ -12,7 +12,7 @@ use crate::{
     event::Event,
     state::{pending_withdraw::PendingWithdraw, state::State},
     util::{
-        account::{create_program_account, get_account_info},
+        account::{create_program_account_secure, get_account_info},
         math::convert_xorca_to_orca,
     },
 };
@@ -153,9 +153,8 @@ pub fn process_instruction(
         .checked_add(withdrawable_orca_amount)
         .ok_or(ErrorCode::ArithmeticError)?;
 
-    // Create new pending withdraw account
-    let mut pending_withdraw_data = create_program_account::<PendingWithdraw>(
-        system_program_account,
+    // Create new pending withdraw account (secure against DoS attacks)
+    let mut pending_withdraw_data = create_program_account_secure::<PendingWithdraw>(
         unstaker_account,
         pending_withdraw_account,
         &[pending_withdraw_seeds.as_slice().into()],

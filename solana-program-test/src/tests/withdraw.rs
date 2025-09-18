@@ -4,7 +4,8 @@ use crate::utils::assert::{
 };
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
 use crate::utils::flows::{
-    advance_clock_env, do_unstake, do_withdraw, stake_orca, unstake_and_advance,
+    advance_clock_env, do_unstake, do_withdraw, do_withdraw_with_unique, stake_orca,
+    unstake_and_advance,
 };
 use crate::{
     assert_program_error, TestContext, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
@@ -75,6 +76,7 @@ fn withdraw_transfers_funds_and_clears_escrow() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw basic",
@@ -130,6 +132,7 @@ fn withdraw_succeeds_when_escrow_already_nonzero() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -189,6 +192,7 @@ fn withdraw_succeeds_with_zero_cooldown() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw zero cooldown",
@@ -245,6 +249,7 @@ fn withdraw_succeeds_at_high_exchange_rate_small_withdraw() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw high rate (small amount)",
@@ -299,6 +304,7 @@ fn withdraw_succeeds_at_low_exchange_rate_large_withdraw() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -357,6 +363,7 @@ fn withdraw_zero_index_path() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw zero index",
@@ -410,6 +417,7 @@ fn withdraw_with_zero_escrow_state_no_underflow() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -483,6 +491,7 @@ fn withdraw_increases_staker_orca_balance_from_nonzero() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw increases user ORCA from nonzero",
@@ -543,6 +552,7 @@ fn withdraw_extreme_large_values() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         (u64::MAX / 8).min(10_000_000_000),
         "extreme large withdraw",
@@ -584,7 +594,7 @@ fn withdraw_invalid_system_program_id() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(
         res,
         xorca::XorcaStakingProgramError::IncorrectAccountAddress
@@ -633,7 +643,7 @@ fn withdraw_wrong_vault_account_seeds() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
 }
 
@@ -686,7 +696,7 @@ fn withdraw_invalid_orca_mint_address() {
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
@@ -723,7 +733,7 @@ fn withdraw_invalid_token_program_id() {
         token_program_account: bad,
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
-    let res = env.ctx.send(ix);
+    let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
 
@@ -798,6 +808,7 @@ fn withdraw_succeeds_at_cooldown_boundary() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         1_000_000,
@@ -887,6 +898,7 @@ fn withdraw_succeeds_one_second_after_boundary() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
         "withdraw one second after boundary",
@@ -926,7 +938,7 @@ fn withdraw_invalid_withdraw_index_param_mismatch() {
         .instruction(WithdrawInstructionArgs {
             withdraw_index: wrong_index,
         });
-        env.ctx.send(ix)
+        env.ctx.sends(&[ix])
     };
     assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
 }
@@ -978,6 +990,7 @@ fn withdraw_duplicate_withdraw_index() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -1080,6 +1093,7 @@ fn withdraw_concurrent_two_indices_in_one_tx() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         total_withdrawable,
         total_xorca_burn,
         "two withdraws in one tx",
@@ -1135,6 +1149,7 @@ fn withdraw_zero_amount_pending() {
         env.staker_xorca_ata,
         XORCA_ID,
         &snap,
+        &snap,
         withdrawable_orca_before,
         1,
         "zero-amount withdraw",
@@ -1189,6 +1204,7 @@ fn withdraw_overflow_attack_large_numbers_probe() {
             env.staker_xorca_ata,
             XORCA_ID,
             &snap,
+            &snap,
             withdrawable_orca_before,
             xorca_unstake_amount,
             "large-numbers withdraw",
@@ -1242,6 +1258,7 @@ fn withdraw_index_max_value_255_success() {
         env.staker_orca_ata,
         env.staker_xorca_ata,
         XORCA_ID,
+        &snap,
         &snap,
         withdrawable_orca_before,
         xorca_unstake_amount,
@@ -1349,7 +1366,7 @@ fn withdraw_invalid_pending_withdraw_account_seeds() {
         .instruction(WithdrawInstructionArgs {
             withdraw_index: idx,
         });
-        ctx2.send(ix)
+        ctx2.sends(&[ix])
     };
     assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
 }
@@ -1705,9 +1722,9 @@ fn test_withdraw_timestamp_overflow() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Set the current timestamp to a value that will cause overflow when adding i64::MAX
-    let mut clock = env.ctx.svm.get_sysvar::<Clock>();
+    let mut clock = env.ctx.get_sysvar::<Clock>();
     clock.unix_timestamp = 1; // Set to 1 so that 1 + i64::MAX will overflow
-    env.ctx.svm.set_sysvar::<Clock>(&clock);
+    env.ctx.set_sysvar::<Clock>(&clock);
 
     let idx = 24u8;
     let res = do_unstake(&mut env, idx, 1_000_000);
@@ -1888,7 +1905,7 @@ fn withdraw_cooldown_update_mid_flight_policy_change() {
             new_cool_down_period_s: 100,
         },
     });
-    assert!(env.ctx.send(ix_set).is_ok());
+    assert!(env.ctx.sends(&[ix_set]).is_ok());
 
     // New pending should use new cooldown value
     let idx_new = 41u8;
@@ -1905,7 +1922,7 @@ fn withdraw_cooldown_update_mid_flight_policy_change() {
 
     // Advance to just before old cooldown maturity: old withdraw should still fail
     advance_clock_env(&mut env, 9);
-    let res_old_early = do_withdraw(&mut env, pending_old, idx_old);
+    let res_old_early = do_withdraw_with_unique(&mut env, pending_old, idx_old, 1);
     assert_program_error!(
         res_old_early,
         XorcaStakingProgramError::CoolDownPeriodStillActive
@@ -1913,11 +1930,11 @@ fn withdraw_cooldown_update_mid_flight_policy_change() {
 
     // Advance to satisfy old cooldown but not the new one
     advance_clock_env(&mut env, 1);
-    let res_old_ok = do_withdraw(&mut env, pending_old, idx_old);
+    let res_old_ok = do_withdraw_with_unique(&mut env, pending_old, idx_old, 2);
     assert!(res_old_ok.is_ok());
 
     // New pending should still be locked (we've only advanced ~10s total)
-    let res_new_early = do_withdraw(&mut env, pending_new, idx_new);
+    let res_new_early = do_withdraw_with_unique(&mut env, pending_new, idx_new, 3);
     assert_program_error!(
         res_new_early,
         XorcaStakingProgramError::CoolDownPeriodStillActive
@@ -1947,7 +1964,7 @@ fn withdraw_index_reuse_lifecycle() {
 
     // First cycle: create pending and withdraw
     let pending1 = unstake_and_advance(&mut env, idx, 1_000_000, 3);
-    let res1 = do_withdraw(&mut env, pending1, idx);
+    let res1 = do_withdraw_with_unique(&mut env, pending1, idx, 1);
     assert!(res1.is_ok());
     assert_account_closed(&env.ctx, pending1, "pending1 closed");
 
@@ -1963,7 +1980,7 @@ fn withdraw_index_reuse_lifecycle() {
 
     // Advance and withdraw the second pending
     advance_clock_env(&mut env, pool.cool_down_period_s + 1);
-    let res2 = do_withdraw(&mut env, pending2, idx);
+    let res2 = do_withdraw_with_unique(&mut env, pending2, idx, 2);
     assert!(res2.is_ok());
     assert_account_closed(&env.ctx, pending2, "pending2 closed");
 }
@@ -2051,7 +2068,6 @@ fn withdraw_verifies_account_closure_with_zero_lamports() {
     let mut modified_account = account_before.clone();
     modified_account.lamports = 0;
     env.ctx
-        .svm
         .set_account(pending_withdraw_account, modified_account)
         .unwrap();
 

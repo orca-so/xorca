@@ -155,6 +155,53 @@ impl Env {
             staker_xorca_ata,
         }
     }
+
+    pub fn new_user(mut ctx: TestContext, state: Pubkey, vault: Pubkey, user: &UserSetup) -> Self {
+        let staker = ctx.signer();
+
+        let staker_orca_ata = Pubkey::find_program_address(
+            &[
+                &staker.to_bytes(),
+                &TOKEN_PROGRAM_ID.to_bytes(),
+                &ORCA_ID.to_bytes(),
+            ],
+            &ATA_PROGRAM_ID,
+        )
+        .0;
+
+        let staker_xorca_ata = Pubkey::find_program_address(
+            &[
+                &staker.to_bytes(),
+                &TOKEN_PROGRAM_ID.to_bytes(),
+                &XORCA_ID.to_bytes(),
+            ],
+            &ATA_PROGRAM_ID,
+        )
+        .0;
+
+        // User token accounts
+        ctx.write_account(
+            staker_orca_ata,
+            TOKEN_PROGRAM_ID,
+            token_account_data!(mint => ORCA_ID, owner => staker, amount => user.staker_orca),
+        )
+        .unwrap();
+        ctx.write_account(
+            staker_xorca_ata,
+            TOKEN_PROGRAM_ID,
+            token_account_data!(mint => XORCA_ID, owner => staker, amount => user.staker_xorca),
+        )
+        .unwrap();
+
+        Self {
+            ctx,
+            state,
+            vault,
+            staker,
+            staker_orca_ata,
+            staker_xorca_ata,
+        }
+    }
 }
 
 // Note: Any exchange-rate based setup should be expressed via concrete `xorca_supply`,

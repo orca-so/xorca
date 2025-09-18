@@ -57,6 +57,9 @@ pub enum ErrorCode {
 
     #[error("Insufficient vault backing (vault < escrow)")]
     InsufficientVaultBacking = 6018, // 0x1782
+
+    #[error("Unauthorized deployer access")]
+    UnauthorizedDeployerAccess = 6019, // 0x1783
 }
 
 impl From<ErrorCode> for pinocchio::program_error::ProgramError {
