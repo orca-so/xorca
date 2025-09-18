@@ -29,7 +29,7 @@ fn yield_fresh_deploy_stake_unstake_withdraw_flow() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Act: user stakes ORCA to mint xORCA at fresh deploy
-    stake_orca(&mut env, 1_000_000, "fresh deploy stake");
+    let _ = stake_orca(&mut env, 1_000_000);
 
     // Assert: post-stake balances and mint
     assert_token_account(
@@ -169,8 +169,8 @@ fn yield_operational_multi_user_mixed_flow() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Act: two stakes (2M, then 3M)
-    stake_orca(&mut env, 2_000_000, "stake #1");
-    stake_orca(&mut env, 3_000_000, "stake #2");
+    let _ = stake_orca(&mut env, 2_000_000);
+    let _ = stake_orca(&mut env, 3_000_000);
 
     // Assert: post-stake vault and mint state
     assert_token_account(
@@ -413,7 +413,7 @@ fn yield_operational_interleaved_multi_flows_varied_amounts() {
 
     // Act: first stake
     let first_stake_orca_amount = 4_000_000u64;
-    stake_orca(&mut env, first_stake_orca_amount, "interleaved stake #1");
+    let _ = stake_orca(&mut env, first_stake_orca_amount);
 
     // Assert: post first stake
     assert_token_account(
@@ -517,7 +517,7 @@ fn yield_operational_interleaved_multi_flows_varied_amounts() {
         .unwrap()
         .data
         .amount;
-    stake_orca(&mut env, second_stake_orca_amount, "interleaved stake #2");
+    let _ = stake_orca(&mut env, second_stake_orca_amount);
 
     // Assert: post second stake
     // Vault should equal initial override + stakes + any prior yield deposit
@@ -671,7 +671,12 @@ fn yield_many_small_vs_one_large_full_cycle() {
 
     // Act: many small stakes vs one large stake
     for i in 0..100 {
-        stake_orca_with_unique(&mut env_small, 1_000, "many-small loop stake", i);
+        let res = stake_orca_with_unique(&mut env_small, 1_000, i);
+            assert!(
+        res.is_ok(),
+        "loop {i}: stake should succeed",
+        
+    );
     }
     let user_xorca_after_many_small_stakes = env_small
         .ctx
@@ -679,7 +684,7 @@ fn yield_many_small_vs_one_large_full_cycle() {
         .unwrap()
         .data
         .amount;
-    stake_orca(&mut env_large, 100_000, "one-large stake");
+    let _ = stake_orca(&mut env_large, 100_000);
     let user_xorca_after_one_large_stake = env_large
         .ctx
         .get_account::<xorca::TokenAccount>(env_large.staker_xorca_ata)
@@ -795,8 +800,8 @@ fn yield_long_sequence_invariants_hold() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Act: two stakes
-    stake_orca(&mut env, 1_000_000, "long-seq S1");
-    stake_orca(&mut env, 500_000, "long-seq S2");
+    let _ = stake_orca(&mut env, 1_000_000);
+    let _ = stake_orca(&mut env, 500_000);
 
     // Act: unstake and withdraw
     let withdraw_index_1 = 50u8;

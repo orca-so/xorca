@@ -612,7 +612,8 @@ fn stake_rounding_many_small_vs_one_large() {
 
     // SMALL_COUNT small stakes of 1 lamport
     for i in 0..SMALL_COUNT {
-        stake_orca_with_unique(&mut env_small, 1, "stake iteration", i);
+        let res = stake_orca_with_unique(&mut env_small, 1, i);
+        assert!(res.is_ok(), "loop {i}: stake should succeed");
     }
     let xorca_small = env_small
         .ctx
@@ -1194,7 +1195,7 @@ fn stake_invalid_state_account_bump() {
         .unwrap();
 
     // Use utility function to attempt stake - should fail due to invalid bump
-    let result = stake_orca_with_unique(&mut env, 1_000_000, "stake with wrong bump", 0);
+    let result = stake_orca_with_unique(&mut env, 1_000_000, 0);
     assert_program_error!(result, XorcaStakingProgramError::InvalidSeeds);
 }
 
