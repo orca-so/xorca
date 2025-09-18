@@ -1,7 +1,7 @@
 use crate::utils::fixture::Env;
 use crate::{ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID};
 use litesvm::types::TransactionResult;
-use solana_sdk::{clock::Clock, pubkey::Pubkey};
+use solana_sdk::{clock::Clock, pubkey::Pubkey, system_instruction};
 use xorca::{
     find_pending_withdraw_pda, Stake, StakeInstructionArgs, Unstake, UnstakeInstructionArgs,
     Withdraw, WithdrawInstructionArgs,
@@ -31,7 +31,7 @@ pub fn unstake_and_advance(
         xorca_unstake_amount,
         withdraw_index,
     });
-    let _ = env.ctx.send(ix_unstake);
+    let _ = env.ctx.sends(&[ix_unstake]);
     advance_clock_env(env, advance_secs);
     pending_withdraw_account
 }
@@ -40,6 +40,15 @@ pub fn do_withdraw(
     env: &mut Env,
     pending_withdraw_account: Pubkey,
     withdraw_index: u8,
+) -> TransactionResult {
+    do_withdraw_with_unique(env, pending_withdraw_account, withdraw_index, 0)
+}
+
+pub fn do_withdraw_with_unique(
+    env: &mut Env,
+    pending_withdraw_account: Pubkey,
+    withdraw_index: u8,
+    unique_id: u64,
 ) -> TransactionResult {
     let ix = Withdraw {
         unstaker_account: env.staker,
@@ -52,13 +61,18 @@ pub fn do_withdraw(
         token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
-    env.ctx.send(ix)
+
+    // Add a unique no-op instruction to make each transaction unique
+    let noop_ix = system_instruction::transfer(&env.staker, &env.staker, unique_id);
+
+    env.ctx.sends(&[ix, noop_ix])
 }
 
 pub fn do_unstake(
     env: &mut Env,
     withdraw_index: u8,
     xorca_unstake_amount: u64,
+    unique_id: u64,
 ) -> TransactionResult {
     let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &withdraw_index)
         .unwrap()
@@ -78,7 +92,11 @@ pub fn do_unstake(
         xorca_unstake_amount,
         withdraw_index,
     });
-    env.ctx.send(ix_unstake)
+
+    // Add a unique no-op instruction to make each transaction unique
+    let noop_ix = system_instruction::transfer(&env.staker, &env.staker, unique_id);
+
+    env.ctx.sends(&[ix_unstake, noop_ix])
 }
 
 pub fn advance_clock_env(env: &mut Env, advance_secs: i64) {
@@ -91,6 +109,10 @@ pub fn advance_clock_env(env: &mut Env, advance_secs: i64) {
 }
 
 pub fn stake_orca(env: &mut Env, orca_amount: u64, label: &str) {
+    stake_orca_with_unique(env, orca_amount, label, 0);
+}
+
+pub fn stake_orca_with_unique(env: &mut Env, orca_amount: u64, label: &str, unique_id: u64) {
     let ix = Stake {
         staker_account: env.staker,
         state_account: env.state,
@@ -104,7 +126,15 @@ pub fn stake_orca(env: &mut Env, orca_amount: u64, label: &str) {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: orca_amount,
     });
-    assert!(env.ctx.send(ix).is_ok(), "{}: stake should succeed", label);
+
+    // Add a unique no-op instruction to make each transaction unique
+    let noop_ix = system_instruction::transfer(&env.staker, &env.staker, unique_id);
+
+    assert!(
+        env.ctx.sends(&[ix, noop_ix]).is_ok(),
+        "{}: stake should succeed",
+        label
+    );
 }
 
 pub fn deposit_yield_into_vault(env: &mut Env, orca_amount: u64, label: &str) {

@@ -7,7 +7,7 @@ use crate::utils::assert::{
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
 use crate::utils::flows::{
     advance_clock_env, deposit_yield_into_vault, do_unstake, do_withdraw, stake_orca,
-    unstake_and_advance,
+    stake_orca_with_unique, unstake_and_advance,
 };
 use crate::{TestContext, ORCA_ID, TOKEN_PROGRAM_ID, XORCA_ID};
 use xorca::{PendingWithdraw, State};
@@ -98,7 +98,7 @@ fn yield_fresh_deploy_stake_unstake_withdraw_flow() {
         XORCA_ID,
     );
     let xorca_to_burn = 100_000;
-    assert!(do_unstake(&mut env, withdraw_index, xorca_to_burn).is_ok());
+    assert!(do_unstake(&mut env, withdraw_index, xorca_to_burn, 0).is_ok());
     let pending_withdraw_account_data = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
@@ -670,8 +670,8 @@ fn yield_many_small_vs_one_large_full_cycle() {
     deposit_yield_into_vault(&mut env_large, 1, "yield for rounding in large");
 
     // Act: many small stakes vs one large stake
-    for _ in 0..100 {
-        stake_orca(&mut env_small, 1_000, "many-small loop stake");
+    for i in 0..100 {
+        stake_orca_with_unique(&mut env_small, 1_000, "many-small loop stake", i);
     }
     let user_xorca_after_many_small_stakes = env_small
         .ctx
@@ -875,7 +875,7 @@ fn yield_prefunded_vault_fresh_deploy_stake_then_withdraw() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: stake_amount,
     });
-    assert!(env.ctx.send(ix_stake).is_ok());
+    assert!(env.ctx.sends(&[ix_stake]).is_ok());
     let user_xorca = env
         .ctx
         .get_account::<xorca::TokenAccount>(env.staker_xorca_ata)
@@ -886,7 +886,7 @@ fn yield_prefunded_vault_fresh_deploy_stake_then_withdraw() {
 
     // Act: unstake full balance and withdraw
     let idx = 77u8;
-    assert!(do_unstake(&mut env, idx, user_xorca).is_ok());
+    assert!(do_unstake(&mut env, idx, user_xorca, 0).is_ok());
     advance_clock_env(&mut env, pool.cool_down_period_s + 1);
     let snap_w = take_withdraw_snapshot(
         &env.ctx,
@@ -992,7 +992,7 @@ fn yield_deposit_before_stake_affects_minting() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: stake_amount,
     });
-    assert!(env.ctx.send(ix).is_ok());
+    assert!(env.ctx.sends(&[ix]).is_ok());
     let user_xorca = env
         .ctx
         .get_account::<xorca::TokenAccount>(env.staker_xorca_ata)
@@ -1036,7 +1036,7 @@ fn yield_deposit_before_unstake_increases_withdrawable() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: stake_amount,
     });
-    assert!(env.ctx.send(ix_s).is_ok());
+    assert!(env.ctx.sends(&[ix_s]).is_ok());
     let user_xorca = env
         .ctx
         .get_account::<xorca::TokenAccount>(env.staker_xorca_ata)
@@ -1059,7 +1059,7 @@ fn yield_deposit_before_unstake_increases_withdrawable() {
         XORCA_ID,
     );
     let xorca_to_burn_for_unstake = user_xorca / 2;
-    assert!(do_unstake(&mut env, idx, xorca_to_burn_for_unstake).is_ok());
+    assert!(do_unstake(&mut env, idx, xorca_to_burn_for_unstake, 0).is_ok());
     let non_escrowed = snapshot_before_unstake
         .vault_before
         .saturating_sub(snapshot_before_unstake.escrow_before);
@@ -1111,7 +1111,7 @@ fn yield_deposit_after_unstake_does_not_change_pending() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 10_000_000,
     });
-    assert!(env.ctx.send(ix_s).is_ok());
+    assert!(env.ctx.sends(&[ix_s]).is_ok());
     let idx = 61u8;
     let xorca_to_burn_for_unstake = 5_000_000u64;
     let snapshot_before_unstake = take_withdraw_snapshot(
@@ -1122,7 +1122,7 @@ fn yield_deposit_after_unstake_does_not_change_pending() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    assert!(do_unstake(&mut env, idx, xorca_to_burn_for_unstake).is_ok());
+    assert!(do_unstake(&mut env, idx, xorca_to_burn_for_unstake, 0).is_ok());
     let non_escrowed_pre = snapshot_before_unstake
         .vault_before
         .saturating_sub(snapshot_before_unstake.escrow_before);

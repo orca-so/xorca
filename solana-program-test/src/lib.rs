@@ -11,7 +11,7 @@ use solana_sdk::{
     packet::PACKET_DATA_SIZE,
     program_error::ProgramError,
     pubkey::Pubkey,
-    signature::{EncodableKey, Keypair, Signature},
+    signature::{Keypair, Signature},
     signer::Signer,
     system_instruction, system_program,
     transaction::VersionedTransaction,
@@ -56,7 +56,6 @@ impl TestContext {
         let signer = Keypair::new_from_array(signer_seed);
 
         let mut svm = LiteSVM::new()
-            .with_sigverify(false)
             .with_blockhash_check(false)
             .with_log_bytes_limit(Some(100_000));
 
@@ -92,6 +91,10 @@ impl TestContext {
         self.signer.pubkey()
     }
 
+    pub fn signer_ref(&self) -> &Keypair {
+        &self.signer
+    }
+
     pub fn write_account<T: BorshSerialize>(
         &mut self,
         address: Pubkey,
@@ -121,37 +124,11 @@ impl TestContext {
         Ok(())
     }
 
-    pub fn send(&mut self, ix: Instruction) -> TransactionResult {
-        let result = self.sends(&[ix]);
-
-        // Only print logs on failure by default. To enable verbose success logs, set env XORCA_TEST_VERBOSE=1
-        let verbose_success = std::env::var("XORCA_TEST_VERBOSE").ok().as_deref() == Some("1");
-        match &result {
-            Ok(meta) if verbose_success => {
-                println!("Transaction succeeded!");
-                println!("Transaction logs:");
-                for log in &meta.logs {
-                    println!("  {}", log);
-                }
-                println!("Compute units consumed: {}", meta.compute_units_consumed);
-            }
-            Ok(_) => {}
-            Err(e) => {
-                println!("Transaction failed with error: {:?}", e);
-                println!("Transaction logs:");
-                for log in &e.meta.logs {
-                    println!("  {}", log);
-                }
-                println!("Compute units consumed: {}", e.meta.compute_units_consumed);
-            }
-        }
-
-        result
-    }
-
     pub fn sends(&mut self, ix: &[Instruction]) -> TransactionResult {
+        let recent_blockhash = self.svm.borrow().latest_blockhash();
+
         // Add compute budget instructions to make sure the instruction fits in a tx
-        let msg = Message::new(
+        let msg = Message::new_with_blockhash(
             &[
                 &[
                     ComputeBudgetInstruction::set_compute_unit_limit(1_400_000),
@@ -162,11 +139,14 @@ impl TestContext {
             ]
             .concat(),
             Some(&self.signer()),
+            &recent_blockhash,
         );
+
         let tx = VersionedTransaction {
-            signatures: vec![Signature::new_unique(); msg.header.num_required_signatures as usize],
+            signatures: vec![self.signer.sign_message(&msg.serialize())],
             message: VersionedMessage::Legacy(msg),
         };
+
         let bytes = bincode::serialize(&tx).map_err(|_| ProgramError::Custom(0))?;
         if self.verify_tx_size {
             assert!(
@@ -178,22 +158,33 @@ impl TestContext {
         self.svm.borrow_mut().send_transaction(tx)
     }
 
-    pub fn sends_with_signer(&mut self, ix: &[Instruction], signer: &Keypair) -> TransactionResult {
+    pub fn sends_with_signers(
+        &self,
+        ix: &[Instruction],
+        signers: &[&Keypair],
+    ) -> TransactionResult {
+        let recent_blockhash = self.svm.borrow().latest_blockhash();
+
         // Add compute budget instructions to make sure the instruction fits in a tx
-        let msg = Message::new(
+        let msg = Message::new_with_blockhash(
             &[
                 &[
                     ComputeBudgetInstruction::set_compute_unit_limit(1_400_000),
                     ComputeBudgetInstruction::set_compute_unit_price(0),
-                    system_instruction::transfer(&signer.pubkey(), &JITO_TIP_ADDRESS, 0),
+                    system_instruction::transfer(&signers[0].pubkey(), &JITO_TIP_ADDRESS, 0),
                 ],
                 ix,
             ]
             .concat(),
-            Some(&signer.pubkey()),
+            Some(&signers[0].pubkey()),
+            &recent_blockhash,
         );
+
         let tx = VersionedTransaction {
-            signatures: vec![Signature::new_unique(); msg.header.num_required_signatures as usize],
+            signatures: signers
+                .iter()
+                .map(|s| s.sign_message(&msg.serialize()))
+                .collect(),
             message: VersionedMessage::Legacy(msg),
         };
         let bytes = bincode::serialize(&tx).map_err(|_| ProgramError::Custom(0))?;

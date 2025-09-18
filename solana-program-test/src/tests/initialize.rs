@@ -65,7 +65,7 @@ fn initialize_sets_values_with_standard_values_success() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 100,
     });
-    assert!(ctx.send(ix).is_ok());
+    assert!(ctx.sends(&[ix]).is_ok());
 
     let state_account = ctx.get_account::<State>(state).unwrap();
     assert_eq!(state_account.data.cool_down_period_s, 100);
@@ -129,7 +129,7 @@ fn initialize_fails_with_wrong_system_program_account() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(
         res,
         xorca::XorcaStakingProgramError::IncorrectAccountAddress
@@ -200,7 +200,7 @@ fn initialize_fails_with_insufficient_lamports() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert!(res.is_err(), "Should fail with insufficient lamports");
 }
 
@@ -252,7 +252,7 @@ fn initialize_fails_when_xorca_mint_frozen() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(res, xorca::XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -303,7 +303,7 @@ fn initialize_fails_when_xorca_mint_no_authority_flag() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(res, xorca::XorcaStakingProgramError::InvalidAccountData);
 }
 // xORCA mint supply must be zero
@@ -357,7 +357,7 @@ fn initialize_fails_when_xorca_mint_supply_nonzero() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(res, xorca::XorcaStakingProgramError::InvalidAccountData);
 }
 
@@ -410,7 +410,7 @@ fn initialize_fails_when_xorca_mint_wrong_owner() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(res, xorca::XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -464,7 +464,7 @@ fn initialize_fails_when_xorca_mint_wrong_address() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(
         res,
         xorca::XorcaStakingProgramError::IncorrectAccountAddress
@@ -524,7 +524,7 @@ fn initialize_fails_when_state_already_initialized() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(
         res,
         xorca::XorcaStakingProgramError::StateAccountAlreadyInitialized
@@ -583,7 +583,7 @@ fn initialize_fails_with_wrong_state_owner() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
     });
-    let res = ctx.send(ix);
+    let res = ctx.sends(&[ix]);
     assert_program_error!(res, xorca::XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -636,7 +636,7 @@ fn initialize_fails_when_payer_is_not_deployer() {
 
     let ix = Initialize {
         payer_account: non_deployer.pubkey(), // Use non-deployer as payer
-        update_authority_account: ctx.signer(), // Use non-deployer as update authority too
+        update_authority_account: non_deployer.pubkey(), // Use non-deployer as update authority too
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
@@ -650,7 +650,7 @@ fn initialize_fails_when_payer_is_not_deployer() {
     });
 
     // This should fail because the payer is not the deployer
-    let res = ctx.sends_with_signer(&[ix], &non_deployer);
+    let res = ctx.sends_with_signers(&[ix], &[&non_deployer]);
     assert_program_error!(res, XorcaStakingProgramError::UnauthorizedDeployerAccess);
 }
 
@@ -698,7 +698,7 @@ fn initialize_sets_different_update_authority_success() {
     // Fund the update authority account so it can pay for the transaction
     let fund_ix =
         system_instruction::transfer(&ctx.signer(), &update_authority.pubkey(), 100_000_000); // 0.1 SOL
-    ctx.send(fund_ix).unwrap();
+    ctx.sends(&[fund_ix]).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(), // Deployer as payer (required)
@@ -717,7 +717,7 @@ fn initialize_sets_different_update_authority_success() {
 
     // This should succeed because deployer is the payer, even though update_authority is different
     // Need to sign with both the payer and the update authority
-    let res = ctx.sends_with_signer(&[ix], &update_authority);
+    let res = ctx.sends_with_signers(&[ix], &[ctx.signer_ref(), &update_authority]);
     assert!(res.is_ok());
 
     let state_account = ctx.get_account::<State>(state).unwrap();
@@ -732,11 +732,15 @@ fn initialize_sets_different_update_authority_success() {
     assert_eq!(mint_after.data.supply, 0);
 }
 
-// Update authority must match the expected constant
+// Update authority must be a signer - test with a different keypair
 #[test]
-fn initialize_fails_with_wrong_update_authority_account() {
+fn initialize_sets_different_update_authority_no_signer_fail() {
     let mut ctx = TestContext::new();
     let (state, _) = find_state_address().unwrap();
+
+    // Create a different keypair for update authority
+    let different_update_authority = Keypair::new();
+
     // Seed mints
     ctx.write_account(
         XORCA_ID,
@@ -766,14 +770,13 @@ fn initialize_fails_with_wrong_update_authority_account() {
         ),
     )
     .unwrap();
-    let wrong_update = Pubkey::new_unique();
 
     // Calculate vault account address
     let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
 
     let ix = Initialize {
         payer_account: ctx.signer(),
-        update_authority_account: wrong_update,
+        update_authority_account: different_update_authority.pubkey(),
         state_account: state,
         vault_account,
         xorca_mint_account: XORCA_ID,
@@ -785,6 +788,13 @@ fn initialize_fails_with_wrong_update_authority_account() {
     .instruction(InitializeInstructionArgs {
         cool_down_period_s: 1,
     });
-    let res = ctx.send(ix);
-    assert_program_error!(res, xorca::XorcaStakingProgramError::InvalidAccountRole);
+
+    // This should fail because the update authority is not a signer
+    let res = ctx.sends_with_signers(&[ix], &[ctx.signer_ref()]);
+
+    // Expect SanitizeFailure because the update authority account is not signed
+    assert!(
+        res.is_err(),
+        "Should fail with SanitizeFailure when update authority is not a signer"
+    );
 }
