@@ -3,12 +3,11 @@ use crate::utils::assert::{
     take_withdraw_snapshot,
 };
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
-use crate::utils::flows::do_unstake;
+use crate::utils::flows::{do_unstake, do_unstake_with_unique};
 use crate::{
     assert_program_error, TestContext, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
 };
-use solana_sdk::clock::Clock;
-use solana_sdk::pubkey::Pubkey;
+use solana_sdk::{clock::Clock, pubkey::Pubkey};
 use xorca::{
     find_pending_withdraw_pda, find_state_address, Event, PendingWithdraw, State,
     XorcaStakingProgramError,
@@ -904,7 +903,7 @@ fn test_unstake_invalid_token_program_id() {
             xorca_unstake_amount: 10_000_000_000,
             withdraw_index,
         });
-        env.ctx.send(ix)
+        env.ctx.sends(&[ix])
     };
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
@@ -945,7 +944,7 @@ fn test_unstake_invalid_system_program_id() {
             xorca_unstake_amount: 10_000_000_000,
             withdraw_index,
         });
-        env.ctx.send(ix)
+        env.ctx.sends(&[ix])
     };
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
@@ -1022,7 +1021,7 @@ fn test_unstake_wrong_vault_account_seeds() {
             xorca_unstake_amount: 1_000_000,
             withdraw_index: idx,
         });
-        env.ctx.send(ix)
+        env.ctx.sends(&[ix])
     };
     assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
 }
@@ -1071,7 +1070,7 @@ fn test_unstake_invalid_xorca_mint_address() {
             xorca_unstake_amount: 1_000_000,
             withdraw_index: idx,
         });
-        env.ctx.send(ix)
+        env.ctx.sends(&[ix])
     };
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
@@ -1119,7 +1118,7 @@ fn test_unstake_invalid_orca_mint_address() {
             xorca_unstake_amount: 1_000_000,
             withdraw_index: idx,
         });
-        env.ctx.send(ix)
+        env.ctx.sends(&[ix])
     };
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
 }
@@ -1197,7 +1196,7 @@ fn test_unstake_rounding_many_small_vs_one_large() {
     let mut total_small: u64 = 0;
     for i in 0u8..100u8 {
         let pending_withdraw_account = find_pending_withdraw_pda(&env_small.staker, &i).unwrap().0;
-        assert!(do_unstake(&mut env_small, i, 100).is_ok());
+        assert!(do_unstake_with_unique(&mut env_small, i, 100, i as u64).is_ok());
         total_small = total_small.saturating_add(
             env_small
                 .ctx
@@ -1316,7 +1315,7 @@ fn test_unstake_withdraw_index_mismatch() {
             xorca_unstake_amount: 1_000_000,
             withdraw_index: wrong_index,
         });
-        env.ctx.send(ix)
+        env.ctx.sends(&[ix])
     };
     assert_program_error!(res, XorcaStakingProgramError::InvalidSeeds);
 }
@@ -1338,7 +1337,8 @@ fn test_unstake_duplicate_withdraw_index() {
     let mut env = Env::new(ctx, &pool, &user);
     let idx = 11u8;
     assert!(do_unstake(&mut env, idx, 1_000_000).is_ok());
-    let res = do_unstake(&mut env, idx, 1_000_000);
+
+    let res = do_unstake_with_unique(&mut env, idx, 1_000_000, 1);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
 
@@ -1405,7 +1405,7 @@ fn test_unstake_event_emission_verification() {
             xorca_unstake_amount: 1_000_000,
             withdraw_index: idx,
         });
-        env.ctx.send(ix)
+        env.ctx.sends(&[ix])
     };
     assert!(res.is_ok());
     let events = decode_events_from_result(&res);
@@ -1813,7 +1813,7 @@ fn test_unstake_withdraw_index_over_limit_behaviour() {
 
     for i in 0u8..=u8::MAX {
         assert!(
-            do_unstake(&mut env, i, 1_000).is_ok(),
+            do_unstake_with_unique(&mut env, i, 1_000, i as u64).is_ok(),
             "create pending for index {}",
             i
         );

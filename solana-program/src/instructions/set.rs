@@ -4,6 +4,7 @@ use crate::{
         AccountRole,
     },
     error::ErrorCode,
+    event::Event,
     instructions::StateUpdateInstruction,
     state::state::State,
     util::account::get_account_info,
@@ -31,6 +32,12 @@ pub fn process_instruction(
     State::verify_address_with_bump(state_account, &crate::ID, state_view.bump)
         .map_err(|_| ErrorCode::InvalidSeeds)?;
     assert_account_address(update_authority_account, &state_view.update_authority)?;
+
+    Event::UpdateAuthoritySet {
+        new_authority: update_authority_account.key(),
+        set_by: &state_view.update_authority,
+    }
+    .emit()?;
 
     // Apply updates based on the instruction_data enum
     match instruction_data {

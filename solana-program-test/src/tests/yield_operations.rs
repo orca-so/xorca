@@ -7,7 +7,7 @@ use crate::utils::assert::{
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
 use crate::utils::flows::{
     advance_clock_env, deposit_yield_into_vault, do_unstake, do_withdraw, stake_orca,
-    unstake_and_advance,
+    stake_orca_with_unique, unstake_and_advance,
 };
 use crate::{TestContext, ORCA_ID, TOKEN_PROGRAM_ID, XORCA_ID};
 use xorca::{PendingWithdraw, State};
@@ -218,7 +218,7 @@ fn yield_operational_multi_user_mixed_flow() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    let pending_withdraw_account_a = unstake_and_advance(&mut env, withdraw_index_a, 1_000_000, 0);
+    let pending_withdraw_account_a = unstake_and_advance(&mut env, withdraw_index_a, 1_000_000, 2);
     let withdrawable_orca_a = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_a)
@@ -249,7 +249,7 @@ fn yield_operational_multi_user_mixed_flow() {
         env.staker_xorca_ata,
         XORCA_ID,
     );
-    let pending_withdraw_account_b = unstake_and_advance(&mut env, withdraw_index_b, 2_000_000, 0);
+    let pending_withdraw_account_b = unstake_and_advance(&mut env, withdraw_index_b, 2_000_000, 2);
     let withdrawable_orca_b = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account_b)
@@ -351,7 +351,7 @@ fn yield_operational_large_escrow_carries_through() {
 
     // Act: user unstakes to create pending
     let idx = 42u8;
-    let pending_withdraw_account = unstake_and_advance(&mut env, idx, 2_000_000, 0);
+    let pending_withdraw_account = unstake_and_advance(&mut env, idx, 2_000_000, 2);
     let withdrawable_orca_amount = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)
@@ -670,8 +670,8 @@ fn yield_many_small_vs_one_large_full_cycle() {
     deposit_yield_into_vault(&mut env_large, 1, "yield for rounding in large");
 
     // Act: many small stakes vs one large stake
-    for _ in 0..100 {
-        stake_orca(&mut env_small, 1_000, "many-small loop stake");
+    for i in 0..100 {
+        stake_orca_with_unique(&mut env_small, 1_000, "many-small loop stake", i);
     }
     let user_xorca_after_many_small_stakes = env_small
         .ctx
@@ -875,7 +875,7 @@ fn yield_prefunded_vault_fresh_deploy_stake_then_withdraw() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: stake_amount,
     });
-    assert!(env.ctx.send(ix_stake).is_ok());
+    assert!(env.ctx.sends(&[ix_stake]).is_ok());
     let user_xorca = env
         .ctx
         .get_account::<xorca::TokenAccount>(env.staker_xorca_ata)
@@ -992,7 +992,7 @@ fn yield_deposit_before_stake_affects_minting() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: stake_amount,
     });
-    assert!(env.ctx.send(ix).is_ok());
+    assert!(env.ctx.sends(&[ix]).is_ok());
     let user_xorca = env
         .ctx
         .get_account::<xorca::TokenAccount>(env.staker_xorca_ata)
@@ -1036,7 +1036,7 @@ fn yield_deposit_before_unstake_increases_withdrawable() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: stake_amount,
     });
-    assert!(env.ctx.send(ix_s).is_ok());
+    assert!(env.ctx.sends(&[ix_s]).is_ok());
     let user_xorca = env
         .ctx
         .get_account::<xorca::TokenAccount>(env.staker_xorca_ata)
@@ -1111,7 +1111,7 @@ fn yield_deposit_after_unstake_does_not_change_pending() {
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 10_000_000,
     });
-    assert!(env.ctx.send(ix_s).is_ok());
+    assert!(env.ctx.sends(&[ix_s]).is_ok());
     let idx = 61u8;
     let xorca_to_burn_for_unstake = 5_000_000u64;
     let snapshot_before_unstake = take_withdraw_snapshot(

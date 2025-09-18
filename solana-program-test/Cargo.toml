@@ -10,7 +10,7 @@ publish = false
 edition = "2021"
 
 [dev-dependencies]
-xorca-staking-program = { path = "../solana-program" }
+xorca-staking-program = { path = "../solana-program", features = ["test"] }
 xorca = { path = "../rust-client", features = ["fetch"] }
 bincode = { version = "^1.3" }
 borsh = { version = "^0.10" }

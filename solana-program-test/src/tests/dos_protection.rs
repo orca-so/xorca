@@ -29,7 +29,7 @@ fn test_unstake_dos_protection_various_pre_funding() {
         // Pre-fund the account
         let transfer_ix =
             solana_sdk::system_instruction::transfer(&env.staker, &pending_withdraw_pda, amount);
-        env.ctx.send(transfer_ix).unwrap();
+        env.ctx.sends(&[transfer_ix]).unwrap();
 
         // Attempt unstake - should succeed (use 1M per iteration)
         let res = {
@@ -48,7 +48,7 @@ fn test_unstake_dos_protection_various_pre_funding() {
                 xorca_unstake_amount: 1_000_000,
                 withdraw_index,
             });
-            env.ctx.send(ix)
+            env.ctx.sends(&[ix])
         };
 
         assert!(
