@@ -48,6 +48,15 @@ pub fn process_instruction(
     State::verify_address_with_bump(state_account, &crate::ID, state_view.bump)
         .map_err(|_| ErrorCode::InvalidSeeds)?;
 
+    // Extract values we need before dropping the immutable borrow
+    let initial_escrowed_orca_amount = state_view.escrowed_orca_amount;
+    let _state_bump = state_view.bump;
+    let vault_bump = state_view.vault_bump;
+    let cool_down_period_s = state_view.cool_down_period_s;
+
+    // Drop the state_view to release the immutable borrow
+    drop(state_view);
+
     // 3. Vault Account Assertions
     let vault_account_data = make_owner_token_account_assertions(
         vault_account,
@@ -59,7 +68,7 @@ pub fn process_instruction(
         state_account,
         vault_account,
         orca_mint_account,
-        state_view.vault_bump,
+        vault_bump,
     )
     .map_err(|_| ErrorCode::InvalidSeeds)?;
 
@@ -86,6 +95,10 @@ pub fn process_instruction(
     if unstaker_xorca_ata_data.amount < *xorca_unstake_amount {
         return Err(ErrorCode::InsufficientFunds.into());
     }
+
+    // Extract the amount we need and drop the borrow to avoid conflicts with the burn instruction
+    let _unstaker_xorca_amount = unstaker_xorca_ata_data.amount;
+    let _ = unstaker_xorca_ata_data;
 
     // 6. xOrca Mint Account Assertions
     assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
@@ -114,8 +127,6 @@ pub fn process_instruction(
     assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     // Calculate withdrawable ORCA amount using checked math
-    let initial_escrowed_orca_amount = state_view.escrowed_orca_amount;
-
     let non_escrowed_orca_amount = vault_account_data
         .amount
         .checked_sub(initial_escrowed_orca_amount)
@@ -160,7 +171,7 @@ pub fn process_instruction(
     pending_withdraw_data.withdrawable_orca_amount = withdrawable_orca_amount;
     let current_unix_timestamp = get_current_unix_timestamp()?;
     let withdrawable_timestamp = current_unix_timestamp
-        .checked_add(state.cool_down_period_s)
+        .checked_add(cool_down_period_s)
         .ok_or(ErrorCode::CoolDownOverflow)?;
     pending_withdraw_data.withdrawable_timestamp = withdrawable_timestamp;
 

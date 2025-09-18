@@ -36,11 +36,11 @@ fn test_unstake_dos_protection_various_pre_funding() {
             let ix = xorca::Unstake {
                 unstaker_account: env.staker,
                 state_account: env.state,
-                vault_account: env.vault,
                 pending_withdraw_account: pending_withdraw_pda,
                 unstaker_xorca_ata: env.staker_xorca_ata,
                 xorca_mint_account: XORCA_ID,
                 orca_mint_account: ORCA_ID,
+                vault_account: env.vault,
                 system_program_account: solana_sdk::system_program::ID,
                 token_program_account: crate::TOKEN_PROGRAM_ID,
             }

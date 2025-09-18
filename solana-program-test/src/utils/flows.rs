@@ -19,11 +19,11 @@ pub fn unstake_and_advance(
     let ix_unstake = Unstake {
         unstaker_account: env.staker,
         state_account: env.state,
-        vault_account: env.vault,
         pending_withdraw_account,
         unstaker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
+        vault_account: env.vault,
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
     }
@@ -80,11 +80,11 @@ pub fn do_unstake(
     let ix_unstake = Unstake {
         unstaker_account: env.staker,
         state_account: env.state,
-        vault_account: env.vault,
         pending_withdraw_account: pending_withdraw_account,
         unstaker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
+        vault_account: env.vault,
         system_program_account: SYSTEM_PROGRAM_ID,
         token_program_account: TOKEN_PROGRAM_ID,
     }

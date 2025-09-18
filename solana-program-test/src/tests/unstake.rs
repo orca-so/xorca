@@ -891,11 +891,11 @@ fn test_unstake_invalid_token_program_id() {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
             state_account: env.state,
-            vault_account: env.vault,
             pending_withdraw_account: pending_withdraw_account,
             unstaker_xorca_ata: env.staker_xorca_ata,
             xorca_mint_account: XORCA_ID,
             orca_mint_account: ORCA_ID,
+            vault_account: env.vault,
             system_program_account: SYSTEM_PROGRAM_ID,
             token_program_account: invalid_token_program_id,
         }
@@ -932,11 +932,11 @@ fn test_unstake_invalid_system_program_id() {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
             state_account: env.state,
-            vault_account: env.vault,
             pending_withdraw_account: pending_withdraw_account,
             unstaker_xorca_ata: env.staker_xorca_ata,
             xorca_mint_account: XORCA_ID,
             orca_mint_account: ORCA_ID,
+            vault_account: env.vault,
             system_program_account: invalid_system_program_id,
             token_program_account: TOKEN_PROGRAM_ID,
         }
@@ -1009,11 +1009,11 @@ fn test_unstake_wrong_vault_account_seeds() {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
             state_account: env.state,
-            vault_account: bogus_vault,
             pending_withdraw_account: pending_withdraw_account,
             unstaker_xorca_ata: env.staker_xorca_ata,
             xorca_mint_account: XORCA_ID,
             orca_mint_account: ORCA_ID,
+            vault_account: bogus_vault,
             system_program_account: SYSTEM_PROGRAM_ID,
             token_program_account: TOKEN_PROGRAM_ID,
         }
@@ -1058,11 +1058,11 @@ fn test_unstake_invalid_xorca_mint_address() {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
             state_account: env.state,
-            vault_account: env.vault,
             pending_withdraw_account: pending_withdraw_account,
             unstaker_xorca_ata: env.staker_xorca_ata,
             xorca_mint_account: wrong_mint,
             orca_mint_account: ORCA_ID,
+            vault_account: env.vault,
             system_program_account: SYSTEM_PROGRAM_ID,
             token_program_account: TOKEN_PROGRAM_ID,
         }
@@ -1106,11 +1106,11 @@ fn test_unstake_invalid_orca_mint_address() {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
             state_account: env.state,
-            vault_account: env.vault,
             pending_withdraw_account: pending_withdraw_account,
             unstaker_xorca_ata: env.staker_xorca_ata,
             xorca_mint_account: XORCA_ID,
             orca_mint_account: wrong_orca,
+            vault_account: env.vault,
             system_program_account: SYSTEM_PROGRAM_ID,
             token_program_account: TOKEN_PROGRAM_ID,
         }
@@ -1303,11 +1303,11 @@ fn test_unstake_withdraw_index_mismatch() {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
             state_account: env.state,
-            vault_account: env.vault,
             pending_withdraw_account: pending_withdraw_account,
             unstaker_xorca_ata: env.staker_xorca_ata,
             xorca_mint_account: XORCA_ID,
             orca_mint_account: ORCA_ID,
+            vault_account: env.vault,
             system_program_account: SYSTEM_PROGRAM_ID,
             token_program_account: TOKEN_PROGRAM_ID,
         }
@@ -1393,11 +1393,11 @@ fn test_unstake_event_emission_verification() {
         let ix = xorca::Unstake {
             unstaker_account: env.staker,
             state_account: env.state,
-            vault_account: env.vault,
             pending_withdraw_account: p,
             unstaker_xorca_ata: env.staker_xorca_ata,
             xorca_mint_account: XORCA_ID,
             orca_mint_account: ORCA_ID,
+            vault_account: env.vault,
             system_program_account: SYSTEM_PROGRAM_ID,
             token_program_account: TOKEN_PROGRAM_ID,
         }
