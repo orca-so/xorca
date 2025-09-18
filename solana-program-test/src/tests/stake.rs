@@ -1162,6 +1162,42 @@ fn stake_invalid_state_account_seeds() {
     assert_program_error!(result, XorcaStakingProgramError::InvalidSeeds);
 }
 
+// Tests that state account is verified against the bump on the state account data
+#[test]
+fn stake_invalid_state_account_bump() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup::default();
+    let user = UserSetup {
+        staker_orca: 1_000_000,
+        staker_xorca: 0,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+
+    let state_data = env.ctx.get_account::<State>(env.state).unwrap();
+    let vault_bump = state_data.data.vault_bump;
+
+    // Corrupt the bump in the state account data to a wrong value
+    // Stake will expect this "correct value"
+    let wrong_bump = 254;
+    env.ctx
+        .write_account(
+            env.state,
+            XORCA_PROGRAM_ID,
+            crate::state_data!(
+                escrowed_orca_amount => 0,
+                update_authority => Pubkey::default(),
+                cool_down_period_s => 7*24*60*60,
+                bump => wrong_bump, // Wrong bump
+                vault_bump => vault_bump,
+            ),
+        )
+        .unwrap();
+
+    // Use utility function to attempt stake - should fail due to invalid bump
+    let result = stake_orca_with_unique(&mut env, 1_000_000, "stake with wrong bump", 0);
+    assert_program_error!(result, XorcaStakingProgramError::InvalidSeeds);
+}
+
 // Tests that staker ORCA ATA must have correct owner in its data
 // Using ATA with wrong owner should fail with InvalidAccountData
 #[test]
