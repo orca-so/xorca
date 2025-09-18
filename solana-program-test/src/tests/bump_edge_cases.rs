@@ -289,7 +289,7 @@ fn test_stake_corrupted_state_discriminator() {
     let mut env = Env::new(ctx, &pool, &user);
 
     // Create corrupted state data with wrong discriminator
-    let mut corrupted_data = crate::state_data!(
+    let corrupted_data = crate::state_data!(
         escrowed_orca_amount => 0,
         update_authority => Pubkey::default(),
         cool_down_period_s => 60,

@@ -672,11 +672,7 @@ fn yield_many_small_vs_one_large_full_cycle() {
     // Act: many small stakes vs one large stake
     for i in 0..100 {
         let res = stake_orca_with_unique(&mut env_small, 1_000, i);
-            assert!(
-        res.is_ok(),
-        "loop {i}: stake should succeed",
-        
-    );
+        assert!(res.is_ok(), "loop {i}: stake should succeed",);
     }
     let user_xorca_after_many_small_stakes = env_small
         .ctx

@@ -9,6 +9,11 @@ authors = ["team@orca.so"]
 edition = "2021"
 publish = false
 
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = [
+  'cfg(target_os, values("solana"))',
+] }
+
 [lib]
 crate-type = ["cdylib", "lib"]
 

@@ -120,7 +120,11 @@ pub fn stake_orca(env: &mut Env, orca_amount: u64) -> TransactionResult {
     stake_orca_with_unique(env, orca_amount, 0)
 }
 
-pub fn stake_orca_with_unique(env: &mut Env, orca_amount: u64, unique_id: u64) -> TransactionResult {
+pub fn stake_orca_with_unique(
+    env: &mut Env,
+    orca_amount: u64,
+    unique_id: u64,
+) -> TransactionResult {
     let ix = Stake {
         staker_account: env.staker,
         state_account: env.state,

@@ -11,11 +11,11 @@ use solana_sdk::{
     packet::PACKET_DATA_SIZE,
     program_error::ProgramError,
     pubkey::Pubkey,
-    signature::{Keypair, Signature},
+    signature::Keypair,
     signer::Signer,
-    system_instruction, system_program,
     transaction::VersionedTransaction,
 };
+use solana_sdk::{system_instruction, system_program};
 use std::{cell::RefCell, error::Error, rc::Rc};
 use xorca::DecodedAccount;
 

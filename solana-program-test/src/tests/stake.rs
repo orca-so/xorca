@@ -553,7 +553,7 @@ fn stake_precision_loss_rounds_down_to_zero() {
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 10,
     });
-    let snap = take_stake_snapshot(
+    let _snap = take_stake_snapshot(
         &env.ctx,
         env.state,
         env.vault,
@@ -1422,7 +1422,7 @@ fn stake_concurrent_stakes_same_user_in_one_tx() {
         staker_orca: 2_000_000,
         staker_xorca: 0,
     };
-    let mut env = Env::new(ctx, &pool, &user);
+    let env = Env::new(ctx, &pool, &user);
     let ix1 = Stake {
         staker_account: env.staker,
         state_account: env.state,
