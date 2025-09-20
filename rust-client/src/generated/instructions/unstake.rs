@@ -29,7 +29,9 @@ pub struct Unstake {
 
     pub system_program_account: solana_pubkey::Pubkey,
 
-    pub token_program_account: solana_pubkey::Pubkey,
+    pub spl_token_program_account: solana_pubkey::Pubkey,
+
+    pub token2022_program_account: solana_pubkey::Pubkey,
 }
 
 impl Unstake {
@@ -43,7 +45,7 @@ impl Unstake {
         args: UnstakeInstructionArgs,
         remaining_accounts: &[solana_instruction::AccountMeta],
     ) -> solana_instruction::Instruction {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_instruction::AccountMeta::new(
             self.unstaker_account,
             true,
@@ -77,7 +79,11 @@ impl Unstake {
             false,
         ));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.token_program_account,
+            self.spl_token_program_account,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            self.token2022_program_account,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -130,7 +136,8 @@ pub struct UnstakeInstructionArgs {
 ///   5. `[]` orca_mint_account
 ///   6. `[]` vault_account
 ///   7. `[]` system_program_account
-///   8. `[]` token_program_account
+///   8. `[]` spl_token_program_account
+///   9. `[]` token2022_program_account
 #[derive(Clone, Debug, Default)]
 pub struct UnstakeBuilder {
     unstaker_account: Option<solana_pubkey::Pubkey>,
@@ -141,7 +148,8 @@ pub struct UnstakeBuilder {
     orca_mint_account: Option<solana_pubkey::Pubkey>,
     vault_account: Option<solana_pubkey::Pubkey>,
     system_program_account: Option<solana_pubkey::Pubkey>,
-    token_program_account: Option<solana_pubkey::Pubkey>,
+    spl_token_program_account: Option<solana_pubkey::Pubkey>,
+    token2022_program_account: Option<solana_pubkey::Pubkey>,
     xorca_unstake_amount: Option<u64>,
     withdraw_index: Option<u8>,
     __remaining_accounts: Vec<solana_instruction::AccountMeta>,
@@ -198,11 +206,19 @@ impl UnstakeBuilder {
         self
     }
     #[inline(always)]
-    pub fn token_program_account(
+    pub fn spl_token_program_account(
         &mut self,
-        token_program_account: solana_pubkey::Pubkey,
+        spl_token_program_account: solana_pubkey::Pubkey,
     ) -> &mut Self {
-        self.token_program_account = Some(token_program_account);
+        self.spl_token_program_account = Some(spl_token_program_account);
+        self
+    }
+    #[inline(always)]
+    pub fn token2022_program_account(
+        &mut self,
+        token2022_program_account: solana_pubkey::Pubkey,
+    ) -> &mut Self {
+        self.token2022_program_account = Some(token2022_program_account);
         self
     }
     #[inline(always)]
@@ -251,9 +267,12 @@ impl UnstakeBuilder {
             system_program_account: self
                 .system_program_account
                 .expect("system_program_account is not set"),
-            token_program_account: self
-                .token_program_account
-                .expect("token_program_account is not set"),
+            spl_token_program_account: self
+                .spl_token_program_account
+                .expect("spl_token_program_account is not set"),
+            token2022_program_account: self
+                .token2022_program_account
+                .expect("token2022_program_account is not set"),
         };
         let args = UnstakeInstructionArgs {
             xorca_unstake_amount: self
@@ -288,7 +307,9 @@ pub struct UnstakeCpiAccounts<'a, 'b> {
 
     pub system_program_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub token_program_account: &'b solana_account_info::AccountInfo<'a>,
+    pub spl_token_program_account: &'b solana_account_info::AccountInfo<'a>,
+
+    pub token2022_program_account: &'b solana_account_info::AccountInfo<'a>,
 }
 
 /// `unstake` CPI instruction.
@@ -312,7 +333,9 @@ pub struct UnstakeCpi<'a, 'b> {
 
     pub system_program_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub token_program_account: &'b solana_account_info::AccountInfo<'a>,
+    pub spl_token_program_account: &'b solana_account_info::AccountInfo<'a>,
+
+    pub token2022_program_account: &'b solana_account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: UnstakeInstructionArgs,
 }
@@ -333,7 +356,8 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
             orca_mint_account: accounts.orca_mint_account,
             vault_account: accounts.vault_account,
             system_program_account: accounts.system_program_account,
-            token_program_account: accounts.token_program_account,
+            spl_token_program_account: accounts.spl_token_program_account,
+            token2022_program_account: accounts.token2022_program_account,
             __args: args,
         }
     }
@@ -360,7 +384,7 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
         signers_seeds: &[&[&[u8]]],
         remaining_accounts: &[(&'b solana_account_info::AccountInfo<'a>, bool, bool)],
     ) -> solana_program_error::ProgramResult {
-        let mut accounts = Vec::with_capacity(9 + remaining_accounts.len());
+        let mut accounts = Vec::with_capacity(10 + remaining_accounts.len());
         accounts.push(solana_instruction::AccountMeta::new(
             *self.unstaker_account.key,
             true,
@@ -394,7 +418,11 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.token_program_account.key,
+            *self.spl_token_program_account.key,
+            false,
+        ));
+        accounts.push(solana_instruction::AccountMeta::new_readonly(
+            *self.token2022_program_account.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -413,7 +441,7 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
             accounts,
             data,
         };
-        let mut account_infos = Vec::with_capacity(10 + remaining_accounts.len());
+        let mut account_infos = Vec::with_capacity(11 + remaining_accounts.len());
         account_infos.push(self.__program.clone());
         account_infos.push(self.unstaker_account.clone());
         account_infos.push(self.state_account.clone());
@@ -423,7 +451,8 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
         account_infos.push(self.orca_mint_account.clone());
         account_infos.push(self.vault_account.clone());
         account_infos.push(self.system_program_account.clone());
-        account_infos.push(self.token_program_account.clone());
+        account_infos.push(self.spl_token_program_account.clone());
+        account_infos.push(self.token2022_program_account.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -448,7 +477,8 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
 ///   5. `[]` orca_mint_account
 ///   6. `[]` vault_account
 ///   7. `[]` system_program_account
-///   8. `[]` token_program_account
+///   8. `[]` spl_token_program_account
+///   9. `[]` token2022_program_account
 #[derive(Clone, Debug)]
 pub struct UnstakeCpiBuilder<'a, 'b> {
     instruction: Box<UnstakeCpiBuilderInstruction<'a, 'b>>,
@@ -466,7 +496,8 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
             orca_mint_account: None,
             vault_account: None,
             system_program_account: None,
-            token_program_account: None,
+            spl_token_program_account: None,
+            token2022_program_account: None,
             xorca_unstake_amount: None,
             withdraw_index: None,
             __remaining_accounts: Vec::new(),
@@ -538,11 +569,19 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn token_program_account(
+    pub fn spl_token_program_account(
         &mut self,
-        token_program_account: &'b solana_account_info::AccountInfo<'a>,
+        spl_token_program_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.token_program_account = Some(token_program_account);
+        self.instruction.spl_token_program_account = Some(spl_token_program_account);
+        self
+    }
+    #[inline(always)]
+    pub fn token2022_program_account(
+        &mut self,
+        token2022_program_account: &'b solana_account_info::AccountInfo<'a>,
+    ) -> &mut Self {
+        self.instruction.token2022_program_account = Some(token2022_program_account);
         self
     }
     #[inline(always)]
@@ -644,10 +683,15 @@ impl<'a, 'b> UnstakeCpiBuilder<'a, 'b> {
                 .system_program_account
                 .expect("system_program_account is not set"),
 
-            token_program_account: self
+            spl_token_program_account: self
                 .instruction
-                .token_program_account
-                .expect("token_program_account is not set"),
+                .spl_token_program_account
+                .expect("spl_token_program_account is not set"),
+
+            token2022_program_account: self
+                .instruction
+                .token2022_program_account
+                .expect("token2022_program_account is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -668,7 +712,8 @@ struct UnstakeCpiBuilderInstruction<'a, 'b> {
     orca_mint_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     vault_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     system_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-    token_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    spl_token_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    token2022_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     xorca_unstake_amount: Option<u64>,
     withdraw_index: Option<u8>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.

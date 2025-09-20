@@ -25,7 +25,8 @@ pub enum Instruction {
     #[account(4, writable, name = "xorca_mint_account")]
     #[account(5, name = "state_account")]
     #[account(6, name = "orca_mint_account")]
-    #[account(7, name = "token_program_account")]
+    #[account(7, name = "spl_token_program_account")]
+    #[account(8, name = "token_2022_program_account")]
     Stake { orca_stake_amount: u64 },
 
     #[account(0, writable, signer, name = "unstaker_account")]
@@ -36,7 +37,8 @@ pub enum Instruction {
     #[account(5, name = "orca_mint_account")]
     #[account(6, name = "vault_account")]
     #[account(7, name = "system_program_account")]
-    #[account(8, name = "token_program_account")]
+    #[account(8, name = "spl_token_program_account")]
+    #[account(9, name = "token_2022_program_account")]
     Unstake {
         xorca_unstake_amount: u64,
         withdraw_index: u8,
@@ -49,7 +51,7 @@ pub enum Instruction {
     #[account(4, writable, name = "vault_account")]
     #[account(5, name = "orca_mint_account")]
     #[account(6, name = "system_program_account")]
-    #[account(7, name = "token_program_account")]
+    #[account(7, name = "spl_token_program_account")]
     Withdraw { withdraw_index: u8 },
 
     #[account(0, writable, signer, name = "payer_account")]
@@ -59,8 +61,9 @@ pub enum Instruction {
     #[account(4, name = "xorca_mint_account")]
     #[account(5, name = "orca_mint_account")]
     #[account(6, name = "system_program_account")]
-    #[account(7, name = "token_program_account")]
-    #[account(8, name = "associated_token_program_account")]
+    #[account(7, name = "spl_token_program_account")]
+    #[account(8, name = "token_2022_program_account")]
+    #[account(9, name = "associated_token_program_account")]
     Initialize { cool_down_period_s: i64 },
 
     #[account(0, writable, signer, name = "update_authority_account")]

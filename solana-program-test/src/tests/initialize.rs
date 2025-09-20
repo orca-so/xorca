@@ -1,6 +1,6 @@
 use crate::{
     assert_program_error, TestContext, ATA_PROGRAM_ID, ORCA_ID, SYSTEM_PROGRAM_ID,
-    TOKEN_PROGRAM_ID, XORCA_ID,
+    TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
 };
 use solana_sdk::{
     native_token::LAMPORTS_PER_SOL,
@@ -20,8 +20,8 @@ fn initialize_sets_values_with_standard_values_success() {
     // Seed mints
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
@@ -58,7 +58,9 @@ fn initialize_sets_values_with_standard_values_success() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -83,8 +85,8 @@ fn initialize_fails_with_wrong_system_program_account() {
     // Seed mints
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
@@ -122,7 +124,9 @@ fn initialize_fails_with_wrong_system_program_account() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: wrong_system,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -155,8 +159,8 @@ fn initialize_fails_with_insufficient_lamports() {
     // Seed mints minimally
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
@@ -193,7 +197,9 @@ fn initialize_fails_with_insufficient_lamports() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -210,8 +216,8 @@ fn initialize_fails_when_xorca_mint_frozen() {
     let (state, _) = find_state_address().unwrap();
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
@@ -245,7 +251,9 @@ fn initialize_fails_when_xorca_mint_frozen() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -262,8 +270,8 @@ fn initialize_fails_when_xorca_mint_no_authority_flag() {
     let (state, _) = find_state_address().unwrap();
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 0,
@@ -296,7 +304,9 @@ fn initialize_fails_when_xorca_mint_no_authority_flag() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -312,8 +322,8 @@ fn initialize_fails_when_xorca_mint_supply_nonzero() {
     let (state, _) = find_state_address().unwrap();
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 1,
             decimals => 6,
             mint_authority_flag => 1,
@@ -350,7 +360,9 @@ fn initialize_fails_when_xorca_mint_supply_nonzero() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -367,7 +379,125 @@ fn initialize_fails_when_xorca_mint_wrong_owner() {
     let (state, _) = find_state_address().unwrap();
     ctx.write_account(
         XORCA_ID,
-        SYSTEM_PROGRAM_ID,
+        SYSTEM_PROGRAM_ID, // Wrong owner - should be either TOKEN_PROGRAM_ID or TOKEN_2022_PROGRAM_ID
+        crate::token2022_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
+
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
+        state_account: state,
+        vault_account,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
+        associated_token_program_account: ATA_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.sends(&[ix]);
+    assert_program_error!(res, xorca::XorcaStakingProgramError::IncorrectOwner);
+}
+
+// Invalid: token2022_program_account is not the Token2022 Program.
+#[test]
+fn initialize_fails_with_wrong_token2022_program_account() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    // Seed mints
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => state,
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    ctx.write_account(
+        ORCA_ID,
+        TOKEN_PROGRAM_ID,
+        crate::token_mint_data!(
+            supply => 0,
+            decimals => 6,
+            mint_authority_flag => 1,
+            mint_authority => Pubkey::default(),
+            is_initialized => true,
+            freeze_authority_flag => 0,
+            freeze_authority => Pubkey::default(),
+        ),
+    )
+    .unwrap();
+    let wrong_token2022_program = Pubkey::new_unique();
+
+    // Calculate vault account address
+    let (vault_account, _) = find_orca_vault_address(&state, &TOKEN_PROGRAM_ID, &ORCA_ID).unwrap();
+
+    let ix = Initialize {
+        payer_account: ctx.signer(),
+        update_authority_account: ctx.signer(),
+        state_account: state,
+        vault_account,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        system_program_account: SYSTEM_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: wrong_token2022_program,
+
+        associated_token_program_account: ATA_PROGRAM_ID,
+    }
+    .instruction(InitializeInstructionArgs {
+        cool_down_period_s: 1,
+    });
+    let res = ctx.sends(&[ix]);
+    assert_program_error!(
+        res,
+        xorca::XorcaStakingProgramError::IncorrectAccountAddress
+    );
+}
+
+// xORCA mint owned by SPL Token program instead of Token2022 should fail with IncorrectOwner
+#[test]
+fn initialize_fails_when_xorca_mint_not_token2022() {
+    let mut ctx = TestContext::new();
+    let (state, _) = find_state_address().unwrap();
+    // Set xORCA mint to be owned by SPL Token program (wrong)
+    ctx.write_account(
+        XORCA_ID,
+        TOKEN_PROGRAM_ID, // Wrong owner - should be TOKEN_2022_PROGRAM_ID
         crate::token_mint_data!(
             supply => 0,
             decimals => 6,
@@ -403,7 +533,9 @@ fn initialize_fails_when_xorca_mint_wrong_owner() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -421,8 +553,8 @@ fn initialize_fails_when_xorca_mint_wrong_address() {
     let wrong_mint = Pubkey::new_unique();
     ctx.write_account(
         wrong_mint,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
@@ -457,7 +589,9 @@ fn initialize_fails_when_xorca_mint_wrong_address() {
         xorca_mint_account: wrong_mint,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -480,8 +614,8 @@ fn initialize_fails_when_state_already_initialized() {
     // Seed mints
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
@@ -517,7 +651,9 @@ fn initialize_fails_when_state_already_initialized() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -540,8 +676,8 @@ fn initialize_fails_with_wrong_state_owner() {
     // Seed mints
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
@@ -576,7 +712,9 @@ fn initialize_fails_with_wrong_state_owner() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -603,8 +741,8 @@ fn initialize_fails_when_payer_is_not_deployer() {
     // Seed mints
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
@@ -641,7 +779,9 @@ fn initialize_fails_when_payer_is_not_deployer() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -664,8 +804,8 @@ fn initialize_sets_different_update_authority_success() {
     // Seed mints
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
@@ -702,7 +842,9 @@ fn initialize_sets_different_update_authority_success() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {
@@ -738,8 +880,8 @@ fn initialize_sets_different_update_authority_no_signer_fail() {
     // Seed mints
     ctx.write_account(
         XORCA_ID,
-        TOKEN_PROGRAM_ID,
-        crate::token_mint_data!(
+        TOKEN_2022_PROGRAM_ID,
+        crate::token2022_mint_data!(
             supply => 0,
             decimals => 6,
             mint_authority_flag => 1,
@@ -776,7 +918,9 @@ fn initialize_sets_different_update_authority_no_signer_fail() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+
         associated_token_program_account: ATA_PROGRAM_ID,
     }
     .instruction(InitializeInstructionArgs {

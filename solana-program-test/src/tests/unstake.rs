@@ -5,7 +5,8 @@ use crate::utils::assert::{
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
 use crate::utils::flows::{do_unstake, do_unstake_with_unique};
 use crate::{
-    assert_program_error, TestContext, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
+    assert_program_error, TestContext, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_2022_PROGRAM_ID,
+    TOKEN_PROGRAM_ID, XORCA_ID,
 };
 use solana_sdk::{clock::Clock, pubkey::Pubkey};
 use xorca::{
@@ -897,7 +898,8 @@ fn test_unstake_invalid_token_program_id() {
             xorca_mint_account: XORCA_ID,
             orca_mint_account: ORCA_ID,
             system_program_account: SYSTEM_PROGRAM_ID,
-            token_program_account: invalid_token_program_id,
+            spl_token_program_account: invalid_token_program_id,
+            token2022_program_account: TOKEN_2022_PROGRAM_ID,
         }
         .instruction(xorca::UnstakeInstructionArgs {
             xorca_unstake_amount: 10_000_000_000,
@@ -906,6 +908,79 @@ fn test_unstake_invalid_token_program_id() {
         env.ctx.sends(&[ix])
     };
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
+}
+
+// Invalid: token2022_program_account is not the Token2022 Program.
+#[test]
+fn test_unstake_invalid_token2022_program_id() {
+    let ctx = TestContext::new();
+    let withdraw_index = 0u8;
+    let pool = PoolSetup {
+        xorca_supply: 1_000_000,
+        vault_orca: 1_000_000_000,
+        escrowed_orca: 0,
+        cool_down_period_s: 60,
+    };
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 10_000_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let pending_withdraw_account = find_pending_withdraw_pda(&env.staker, &withdraw_index)
+        .unwrap()
+        .0;
+    let invalid_token2022_program_id = Pubkey::new_unique();
+    let res = {
+        let ix = xorca::Unstake {
+            unstaker_account: env.staker,
+            state_account: env.state,
+            vault_account: env.vault,
+            pending_withdraw_account: pending_withdraw_account,
+            unstaker_xorca_ata: env.staker_xorca_ata,
+            xorca_mint_account: XORCA_ID,
+            orca_mint_account: ORCA_ID,
+            system_program_account: SYSTEM_PROGRAM_ID,
+            spl_token_program_account: TOKEN_PROGRAM_ID,
+            token2022_program_account: invalid_token2022_program_id,
+        }
+        .instruction(xorca::UnstakeInstructionArgs {
+            xorca_unstake_amount: 10_000_000_000,
+            withdraw_index,
+        });
+        env.ctx.sends(&[ix])
+    };
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
+}
+
+// xORCA mint owned by SPL Token program instead of Token2022 should fail with IncorrectOwner
+#[test]
+fn test_unstake_xorca_mint_not_token2022() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup::default();
+    let user = UserSetup {
+        staker_orca: 0,
+        staker_xorca: 1_000_000,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    // Set xORCA mint to be owned by SPL Token program (wrong)
+    env.ctx
+        .write_account(
+            XORCA_ID,
+            TOKEN_PROGRAM_ID, // Wrong owner - should be TOKEN_2022_PROGRAM_ID
+            crate::token_mint_data!(
+                supply => pool.xorca_supply,
+                decimals => 6,
+                mint_authority_flag => 1,
+                mint_authority => env.state,
+                is_initialized => true,
+                freeze_authority_flag => 0,
+                freeze_authority => Pubkey::default(),
+            ),
+        )
+        .unwrap();
+    let idx = 37u8;
+    let res = do_unstake(&mut env, idx, 1_000_000);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
 
 // Invalid: system program account is not the System Program.
@@ -938,7 +1013,8 @@ fn test_unstake_invalid_system_program_id() {
             xorca_mint_account: XORCA_ID,
             orca_mint_account: ORCA_ID,
             system_program_account: invalid_system_program_id,
-            token_program_account: TOKEN_PROGRAM_ID,
+            spl_token_program_account: TOKEN_PROGRAM_ID,
+            token2022_program_account: TOKEN_2022_PROGRAM_ID,
         }
         .instruction(xorca::UnstakeInstructionArgs {
             xorca_unstake_amount: 10_000_000_000,
@@ -1015,7 +1091,8 @@ fn test_unstake_wrong_vault_account_seeds() {
             xorca_mint_account: XORCA_ID,
             orca_mint_account: ORCA_ID,
             system_program_account: SYSTEM_PROGRAM_ID,
-            token_program_account: TOKEN_PROGRAM_ID,
+            spl_token_program_account: TOKEN_PROGRAM_ID,
+            token2022_program_account: TOKEN_2022_PROGRAM_ID,
         }
         .instruction(xorca::UnstakeInstructionArgs {
             xorca_unstake_amount: 1_000_000,
@@ -1064,7 +1141,8 @@ fn test_unstake_invalid_xorca_mint_address() {
             xorca_mint_account: wrong_mint,
             orca_mint_account: ORCA_ID,
             system_program_account: SYSTEM_PROGRAM_ID,
-            token_program_account: TOKEN_PROGRAM_ID,
+            spl_token_program_account: TOKEN_PROGRAM_ID,
+            token2022_program_account: TOKEN_2022_PROGRAM_ID,
         }
         .instruction(xorca::UnstakeInstructionArgs {
             xorca_unstake_amount: 1_000_000,
@@ -1112,7 +1190,8 @@ fn test_unstake_invalid_orca_mint_address() {
             xorca_mint_account: XORCA_ID,
             orca_mint_account: wrong_orca,
             system_program_account: SYSTEM_PROGRAM_ID,
-            token_program_account: TOKEN_PROGRAM_ID,
+            spl_token_program_account: TOKEN_PROGRAM_ID,
+            token2022_program_account: TOKEN_2022_PROGRAM_ID,
         }
         .instruction(xorca::UnstakeInstructionArgs {
             xorca_unstake_amount: 1_000_000,
@@ -1246,7 +1325,8 @@ fn test_unstake_concurrent_unstakes_same_user_in_one_tx() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::UnstakeInstructionArgs {
         xorca_unstake_amount: 1_000_000,
@@ -1261,7 +1341,8 @@ fn test_unstake_concurrent_unstakes_same_user_in_one_tx() {
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::UnstakeInstructionArgs {
         xorca_unstake_amount: 2_000_000,
@@ -1309,7 +1390,8 @@ fn test_unstake_withdraw_index_mismatch() {
             xorca_mint_account: XORCA_ID,
             orca_mint_account: ORCA_ID,
             system_program_account: SYSTEM_PROGRAM_ID,
-            token_program_account: TOKEN_PROGRAM_ID,
+            spl_token_program_account: TOKEN_PROGRAM_ID,
+            token2022_program_account: TOKEN_2022_PROGRAM_ID,
         }
         .instruction(xorca::UnstakeInstructionArgs {
             xorca_unstake_amount: 1_000_000,
@@ -1399,7 +1481,8 @@ fn test_unstake_event_emission_verification() {
             xorca_mint_account: XORCA_ID,
             orca_mint_account: ORCA_ID,
             system_program_account: SYSTEM_PROGRAM_ID,
-            token_program_account: TOKEN_PROGRAM_ID,
+            spl_token_program_account: TOKEN_PROGRAM_ID,
+            token2022_program_account: TOKEN_2022_PROGRAM_ID,
         }
         .instruction(xorca::UnstakeInstructionArgs {
             xorca_unstake_amount: 1_000_000,
@@ -1539,9 +1622,11 @@ fn test_unstake_invalid_unstaker_xorca_ata_owner_in_data() {
     env.ctx
         .write_account(
             env.staker_xorca_ata,
-            TOKEN_PROGRAM_ID,
-            crate::token_account_data!(
-                mint => XORCA_ID, owner => Pubkey::new_unique(), amount => 1_000_000,
+            TOKEN_2022_PROGRAM_ID,
+            crate::token2022_account_data!(
+                mint => XORCA_ID,
+                owner => Pubkey::new_unique(), // Wrong owner - should be env.staker
+                amount => 1_000_000,
             ),
         )
         .unwrap();
@@ -1563,8 +1648,11 @@ fn test_unstake_invalid_unstaker_xorca_ata_mint_in_data() {
     env.ctx
         .write_account(
             env.staker_xorca_ata,
-            TOKEN_PROGRAM_ID,
-            crate::token_account_data!(mint => ORCA_ID, owner => env.staker, amount => 1_000_000),
+            TOKEN_2022_PROGRAM_ID,
+            crate::token2022_account_data!(
+                mint => ORCA_ID, // Wrong mint - should be XORCA_ID
+                owner => env.staker,
+                amount => 1_000_000),
         )
         .unwrap();
     let idx = 19u8;
@@ -1585,8 +1673,8 @@ fn test_unstake_invalid_unstaker_xorca_ata_program_owner() {
     env.ctx
         .write_account(
             env.staker_xorca_ata,
-            crate::ATA_PROGRAM_ID,
-            crate::token_account_data!(mint => XORCA_ID, owner => env.staker, amount => 1_000_000),
+            TOKEN_PROGRAM_ID, // Wrong program owner - should be TOKEN_2022_PROGRAM_ID
+            crate::token2022_account_data!(mint => XORCA_ID, owner => env.staker, amount => 1_000_000),
         )
         .unwrap();
     let idx = 20u8;
@@ -1636,12 +1724,12 @@ fn test_unstake_supply_manipulation_attack() {
     env.ctx
         .write_account(
             XORCA_ID,
-            TOKEN_PROGRAM_ID,
-            crate::token_mint_data!(
+            TOKEN_2022_PROGRAM_ID,
+            crate::token2022_mint_data!(
                 supply => pool.xorca_supply,
                 decimals => 6,
                 mint_authority_flag => 1,
-                mint_authority => wrong_auth,
+                mint_authority => wrong_auth, // Supply manipulation attack - wrong mint authority
                 is_initialized => true,
                 freeze_authority_flag => 0,
                 freeze_authority => Pubkey::default(),
@@ -1673,15 +1761,15 @@ fn test_unstake_freeze_authority_manipulation() {
     env.ctx
         .write_account(
             XORCA_ID,
-            TOKEN_PROGRAM_ID,
-            crate::token_mint_data!(
+            TOKEN_2022_PROGRAM_ID,
+            crate::token2022_mint_data!(
                 supply => pool.xorca_supply,
                 decimals => 6,
                 mint_authority_flag => 1,
                 mint_authority => env.state,
                 is_initialized => true,
                 freeze_authority_flag => 1,
-                freeze_authority => freeze_auth,
+                freeze_authority => freeze_auth, // Freeze authority manipulation
             ),
         )
         .unwrap();

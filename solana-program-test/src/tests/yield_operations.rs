@@ -9,7 +9,7 @@ use crate::utils::flows::{
     advance_clock_env, deposit_yield_into_vault, do_unstake, do_withdraw, stake_orca,
     stake_orca_with_unique, unstake_and_advance,
 };
-use crate::{TestContext, ORCA_ID, TOKEN_PROGRAM_ID, XORCA_ID};
+use crate::{TestContext, ORCA_ID, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID};
 use xorca::{PendingWithdraw, State};
 
 #[test]
@@ -871,7 +871,8 @@ fn yield_prefunded_vault_fresh_deploy_stake_then_withdraw() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: stake_amount,
@@ -988,7 +989,8 @@ fn yield_deposit_before_stake_affects_minting() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: stake_amount,
@@ -1032,7 +1034,8 @@ fn yield_deposit_before_unstake_increases_withdrawable() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: stake_amount,
@@ -1107,7 +1110,8 @@ fn yield_deposit_after_unstake_does_not_change_pending() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 10_000_000,

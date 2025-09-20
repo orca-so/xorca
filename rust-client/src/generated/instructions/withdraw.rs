@@ -27,7 +27,7 @@ pub struct Withdraw {
 
     pub system_program_account: solana_pubkey::Pubkey,
 
-    pub token_program_account: solana_pubkey::Pubkey,
+    pub spl_token_program_account: solana_pubkey::Pubkey,
 }
 
 impl Withdraw {
@@ -71,7 +71,7 @@ impl Withdraw {
             false,
         ));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
-            self.token_program_account,
+            self.spl_token_program_account,
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
@@ -122,7 +122,7 @@ pub struct WithdrawInstructionArgs {
 ///   4. `[writable]` vault_account
 ///   5. `[]` orca_mint_account
 ///   6. `[]` system_program_account
-///   7. `[]` token_program_account
+///   7. `[]` spl_token_program_account
 #[derive(Clone, Debug, Default)]
 pub struct WithdrawBuilder {
     unstaker_account: Option<solana_pubkey::Pubkey>,
@@ -132,7 +132,7 @@ pub struct WithdrawBuilder {
     vault_account: Option<solana_pubkey::Pubkey>,
     orca_mint_account: Option<solana_pubkey::Pubkey>,
     system_program_account: Option<solana_pubkey::Pubkey>,
-    token_program_account: Option<solana_pubkey::Pubkey>,
+    spl_token_program_account: Option<solana_pubkey::Pubkey>,
     withdraw_index: Option<u8>,
     __remaining_accounts: Vec<solana_instruction::AccountMeta>,
 }
@@ -183,11 +183,11 @@ impl WithdrawBuilder {
         self
     }
     #[inline(always)]
-    pub fn token_program_account(
+    pub fn spl_token_program_account(
         &mut self,
-        token_program_account: solana_pubkey::Pubkey,
+        spl_token_program_account: solana_pubkey::Pubkey,
     ) -> &mut Self {
-        self.token_program_account = Some(token_program_account);
+        self.spl_token_program_account = Some(spl_token_program_account);
         self
     }
     #[inline(always)]
@@ -228,9 +228,9 @@ impl WithdrawBuilder {
             system_program_account: self
                 .system_program_account
                 .expect("system_program_account is not set"),
-            token_program_account: self
-                .token_program_account
-                .expect("token_program_account is not set"),
+            spl_token_program_account: self
+                .spl_token_program_account
+                .expect("spl_token_program_account is not set"),
         };
         let args = WithdrawInstructionArgs {
             withdraw_index: self
@@ -259,7 +259,7 @@ pub struct WithdrawCpiAccounts<'a, 'b> {
 
     pub system_program_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub token_program_account: &'b solana_account_info::AccountInfo<'a>,
+    pub spl_token_program_account: &'b solana_account_info::AccountInfo<'a>,
 }
 
 /// `withdraw` CPI instruction.
@@ -281,7 +281,7 @@ pub struct WithdrawCpi<'a, 'b> {
 
     pub system_program_account: &'b solana_account_info::AccountInfo<'a>,
 
-    pub token_program_account: &'b solana_account_info::AccountInfo<'a>,
+    pub spl_token_program_account: &'b solana_account_info::AccountInfo<'a>,
     /// The arguments for the instruction.
     pub __args: WithdrawInstructionArgs,
 }
@@ -301,7 +301,7 @@ impl<'a, 'b> WithdrawCpi<'a, 'b> {
             vault_account: accounts.vault_account,
             orca_mint_account: accounts.orca_mint_account,
             system_program_account: accounts.system_program_account,
-            token_program_account: accounts.token_program_account,
+            spl_token_program_account: accounts.spl_token_program_account,
             __args: args,
         }
     }
@@ -358,7 +358,7 @@ impl<'a, 'b> WithdrawCpi<'a, 'b> {
             false,
         ));
         accounts.push(solana_instruction::AccountMeta::new_readonly(
-            *self.token_program_account.key,
+            *self.spl_token_program_account.key,
             false,
         ));
         remaining_accounts.iter().for_each(|remaining_account| {
@@ -386,7 +386,7 @@ impl<'a, 'b> WithdrawCpi<'a, 'b> {
         account_infos.push(self.vault_account.clone());
         account_infos.push(self.orca_mint_account.clone());
         account_infos.push(self.system_program_account.clone());
-        account_infos.push(self.token_program_account.clone());
+        account_infos.push(self.spl_token_program_account.clone());
         remaining_accounts
             .iter()
             .for_each(|remaining_account| account_infos.push(remaining_account.0.clone()));
@@ -410,7 +410,7 @@ impl<'a, 'b> WithdrawCpi<'a, 'b> {
 ///   4. `[writable]` vault_account
 ///   5. `[]` orca_mint_account
 ///   6. `[]` system_program_account
-///   7. `[]` token_program_account
+///   7. `[]` spl_token_program_account
 #[derive(Clone, Debug)]
 pub struct WithdrawCpiBuilder<'a, 'b> {
     instruction: Box<WithdrawCpiBuilderInstruction<'a, 'b>>,
@@ -427,7 +427,7 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
             vault_account: None,
             orca_mint_account: None,
             system_program_account: None,
-            token_program_account: None,
+            spl_token_program_account: None,
             withdraw_index: None,
             __remaining_accounts: Vec::new(),
         });
@@ -490,11 +490,11 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
         self
     }
     #[inline(always)]
-    pub fn token_program_account(
+    pub fn spl_token_program_account(
         &mut self,
-        token_program_account: &'b solana_account_info::AccountInfo<'a>,
+        spl_token_program_account: &'b solana_account_info::AccountInfo<'a>,
     ) -> &mut Self {
-        self.instruction.token_program_account = Some(token_program_account);
+        self.instruction.spl_token_program_account = Some(spl_token_program_account);
         self
     }
     #[inline(always)]
@@ -581,10 +581,10 @@ impl<'a, 'b> WithdrawCpiBuilder<'a, 'b> {
                 .system_program_account
                 .expect("system_program_account is not set"),
 
-            token_program_account: self
+            spl_token_program_account: self
                 .instruction
-                .token_program_account
-                .expect("token_program_account is not set"),
+                .spl_token_program_account
+                .expect("spl_token_program_account is not set"),
             __args: args,
         };
         instruction.invoke_signed_with_remaining_accounts(
@@ -604,7 +604,7 @@ struct WithdrawCpiBuilderInstruction<'a, 'b> {
     vault_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     orca_mint_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     system_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
-    token_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
+    spl_token_program_account: Option<&'b solana_account_info::AccountInfo<'a>>,
     withdraw_index: Option<u8>,
     /// Additional instruction accounts `(AccountInfo, is_writable, is_signer)`.
     __remaining_accounts: Vec<(&'b solana_account_info::AccountInfo<'a>, bool, bool)>,

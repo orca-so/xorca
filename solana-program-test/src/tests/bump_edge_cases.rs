@@ -1,6 +1,7 @@
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
 use crate::{
-    assert_program_error, TestContext, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
+    assert_program_error, TestContext, ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_2022_PROGRAM_ID,
+    TOKEN_PROGRAM_ID, XORCA_ID,
 };
 use solana_sdk::pubkey::Pubkey;
 use xorca::{find_pending_withdraw_pda, find_state_address, XorcaStakingProgramError};
@@ -49,7 +50,8 @@ fn test_stake_state_account_wrong_bump_in_data() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -114,7 +116,7 @@ fn test_withdraw_pending_withdraw_wrong_bump_in_data() {
         unstaker_orca_ata: env.staker_orca_ata,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(xorca::WithdrawInstructionArgs {
         withdraw_index: idx,
@@ -163,7 +165,8 @@ fn test_stake_state_account_zero_bump_wrong_pda() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -214,7 +217,7 @@ fn test_withdraw_pending_withdraw_zero_bump_wrong_pda() {
         unstaker_orca_ata: env.staker_orca_ata,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(xorca::WithdrawInstructionArgs {
         withdraw_index: idx,
@@ -262,7 +265,8 @@ fn test_stake_with_max_bump_value() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -310,7 +314,8 @@ fn test_stake_corrupted_state_discriminator() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -348,7 +353,8 @@ fn test_stake_state_account_too_small() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -391,7 +397,8 @@ fn test_stake_vault_account_wrong_bump() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(xorca::StakeInstructionArgs {
         orca_stake_amount: 1_000_000,

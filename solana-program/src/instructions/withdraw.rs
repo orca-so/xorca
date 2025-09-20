@@ -3,7 +3,10 @@ use crate::{
         assert_account_address, assert_account_data, assert_account_data_mut, assert_account_owner,
         assert_account_role, make_owner_token_account_assertions, AccountRole,
     },
-    cpi::{system::get_current_unix_timestamp, token::ORCA_MINT_ID},
+    cpi::{
+        system::get_current_unix_timestamp,
+        token::{ORCA_MINT_ID, SPL_TOKEN_PROGRAM_ID},
+    },
     error::ErrorCode,
     event::Event,
     state::{pending_withdraw::PendingWithdraw, state::State},
@@ -11,7 +14,7 @@ use crate::{
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
 use pinocchio_system::ID as SYSTEM_PROGRAM_ID;
-use pinocchio_token::{instructions::Transfer, ID as SPL_TOKEN_PROGRAM_ID};
+use pinocchio_token::instructions::Transfer;
 
 pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> ProgramResult {
     let unstaker_account = get_account_info(accounts, 0)?;
@@ -21,7 +24,7 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     let vault_account = get_account_info(accounts, 4)?;
     let orca_mint_account = get_account_info(accounts, 5)?;
     let system_program_account = get_account_info(accounts, 6)?;
-    let token_program_account = get_account_info(accounts, 7)?;
+    let spl_token_program_account = get_account_info(accounts, 7)?;
 
     // 1. Unstaker Account Assertions
     assert_account_role(
@@ -103,7 +106,7 @@ pub fn process_instruction(accounts: &[AccountInfo], withdraw_index: &u8) -> Pro
     assert_account_address(system_program_account, &SYSTEM_PROGRAM_ID)?;
 
     // 8. Token Program Account Assertions
-    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+    assert_account_address(spl_token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
 
     // Validate pending withdraw
     let current_unix_timestamp = get_current_unix_timestamp()?;

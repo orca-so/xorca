@@ -1,5 +1,5 @@
 use crate::utils::fixture::Env;
-use crate::{ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID};
+use crate::{ORCA_ID, SYSTEM_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID};
 use litesvm::types::TransactionResult;
 use solana_sdk::{clock::Clock, pubkey::Pubkey, system_instruction};
 use xorca::{
@@ -25,7 +25,8 @@ pub fn unstake_and_advance(
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
         xorca_unstake_amount,
@@ -58,7 +59,7 @@ pub fn do_withdraw_with_unique(
         unstaker_orca_ata: env.staker_orca_ata,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
 
@@ -94,7 +95,8 @@ pub fn do_unstake_with_unique(
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(UnstakeInstructionArgs {
         xorca_unstake_amount,
@@ -133,7 +135,8 @@ pub fn stake_orca_with_unique(
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: orca_amount,

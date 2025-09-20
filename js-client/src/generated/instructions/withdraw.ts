@@ -46,7 +46,7 @@ export type WithdrawInstruction<
   TAccountVaultAccount extends string | AccountMeta<string> = string,
   TAccountOrcaMintAccount extends string | AccountMeta<string> = string,
   TAccountSystemProgramAccount extends string | AccountMeta<string> = string,
-  TAccountTokenProgramAccount extends string | AccountMeta<string> = string,
+  TAccountSplTokenProgramAccount extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -74,9 +74,9 @@ export type WithdrawInstruction<
       TAccountSystemProgramAccount extends string
         ? ReadonlyAccount<TAccountSystemProgramAccount>
         : TAccountSystemProgramAccount,
-      TAccountTokenProgramAccount extends string
-        ? ReadonlyAccount<TAccountTokenProgramAccount>
-        : TAccountTokenProgramAccount,
+      TAccountSplTokenProgramAccount extends string
+        ? ReadonlyAccount<TAccountSplTokenProgramAccount>
+        : TAccountSplTokenProgramAccount,
       ...TRemainingAccounts,
     ]
   >;
@@ -120,7 +120,7 @@ export type WithdrawInput<
   TAccountVaultAccount extends string = string,
   TAccountOrcaMintAccount extends string = string,
   TAccountSystemProgramAccount extends string = string,
-  TAccountTokenProgramAccount extends string = string,
+  TAccountSplTokenProgramAccount extends string = string,
 > = {
   unstakerAccount: TransactionSigner<TAccountUnstakerAccount>;
   stateAccount: Address<TAccountStateAccount>;
@@ -129,7 +129,7 @@ export type WithdrawInput<
   vaultAccount: Address<TAccountVaultAccount>;
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
-  tokenProgramAccount: Address<TAccountTokenProgramAccount>;
+  splTokenProgramAccount: Address<TAccountSplTokenProgramAccount>;
   withdrawIndex: WithdrawInstructionDataArgs['withdrawIndex'];
 };
 
@@ -141,7 +141,7 @@ export function getWithdrawInstruction<
   TAccountVaultAccount extends string,
   TAccountOrcaMintAccount extends string,
   TAccountSystemProgramAccount extends string,
-  TAccountTokenProgramAccount extends string,
+  TAccountSplTokenProgramAccount extends string,
   TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: WithdrawInput<
@@ -152,7 +152,7 @@ export function getWithdrawInstruction<
     TAccountVaultAccount,
     TAccountOrcaMintAccount,
     TAccountSystemProgramAccount,
-    TAccountTokenProgramAccount
+    TAccountSplTokenProgramAccount
   >,
   config?: { programAddress?: TProgramAddress }
 ): WithdrawInstruction<
@@ -164,7 +164,7 @@ export function getWithdrawInstruction<
   TAccountVaultAccount,
   TAccountOrcaMintAccount,
   TAccountSystemProgramAccount,
-  TAccountTokenProgramAccount
+  TAccountSplTokenProgramAccount
 > {
   // Program address.
   const programAddress = config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
@@ -187,8 +187,8 @@ export function getWithdrawInstruction<
       value: input.systemProgramAccount ?? null,
       isWritable: false,
     },
-    tokenProgramAccount: {
-      value: input.tokenProgramAccount ?? null,
+    splTokenProgramAccount: {
+      value: input.splTokenProgramAccount ?? null,
       isWritable: false,
     },
   };
@@ -207,7 +207,7 @@ export function getWithdrawInstruction<
       getAccountMeta(accounts.vaultAccount),
       getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.systemProgramAccount),
-      getAccountMeta(accounts.tokenProgramAccount),
+      getAccountMeta(accounts.splTokenProgramAccount),
     ],
     data: getWithdrawInstructionDataEncoder().encode(args as WithdrawInstructionDataArgs),
     programAddress,
@@ -220,7 +220,7 @@ export function getWithdrawInstruction<
     TAccountVaultAccount,
     TAccountOrcaMintAccount,
     TAccountSystemProgramAccount,
-    TAccountTokenProgramAccount
+    TAccountSplTokenProgramAccount
   >);
 }
 
@@ -237,7 +237,7 @@ export type ParsedWithdrawInstruction<
     vaultAccount: TAccountMetas[4];
     orcaMintAccount: TAccountMetas[5];
     systemProgramAccount: TAccountMetas[6];
-    tokenProgramAccount: TAccountMetas[7];
+    splTokenProgramAccount: TAccountMetas[7];
   };
   data: WithdrawInstructionData;
 };
@@ -270,7 +270,7 @@ export function parseWithdrawInstruction<
       vaultAccount: getNextAccount(),
       orcaMintAccount: getNextAccount(),
       systemProgramAccount: getNextAccount(),
-      tokenProgramAccount: getNextAccount(),
+      splTokenProgramAccount: getNextAccount(),
     },
     data: getWithdrawInstructionDataDecoder().decode(instruction.data),
   };

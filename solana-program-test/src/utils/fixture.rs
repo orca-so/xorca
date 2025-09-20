@@ -1,6 +1,7 @@
 use crate::{
-    state_data, token_account_data, token_mint_data, TestContext, ATA_PROGRAM_ID, ORCA_ID,
-    TOKEN_PROGRAM_ID, XORCA_ID, XORCA_PROGRAM_ID,
+    state_data, token2022_account_data, token2022_mint_data, token_account_data, token_mint_data,
+    TestContext, ATA_PROGRAM_ID, ORCA_ID, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
+    XORCA_PROGRAM_ID,
 };
 use solana_sdk::pubkey::Pubkey;
 use xorca::{find_orca_vault_address, find_state_address};
@@ -68,7 +69,7 @@ impl Env {
         let staker_xorca_ata = Pubkey::find_program_address(
             &[
                 &staker.to_bytes(),
-                &TOKEN_PROGRAM_ID.to_bytes(),
+                &TOKEN_2022_PROGRAM_ID.to_bytes(),
                 &XORCA_ID.to_bytes(),
             ],
             &ATA_PROGRAM_ID,
@@ -89,11 +90,11 @@ impl Env {
         )
         .unwrap();
 
-        // xORCA mint (6 decimals)
+        // xORCA mint (6 decimals) - Token2022
         ctx.write_account(
             XORCA_ID,
-            TOKEN_PROGRAM_ID,
-            token_mint_data!(
+            TOKEN_2022_PROGRAM_ID,
+            token2022_mint_data!(
                 supply => pool.xorca_supply,
                 decimals => 6,
                 mint_authority_flag => 1,
@@ -141,8 +142,8 @@ impl Env {
         .unwrap();
         ctx.write_account(
             staker_xorca_ata,
-            TOKEN_PROGRAM_ID,
-            token_account_data!(mint => XORCA_ID, owner => staker, amount => user.staker_xorca),
+            TOKEN_2022_PROGRAM_ID,
+            token2022_account_data!(mint => XORCA_ID, owner => staker, amount => user.staker_xorca),
         )
         .unwrap();
 
@@ -172,7 +173,7 @@ impl Env {
         let staker_xorca_ata = Pubkey::find_program_address(
             &[
                 &staker.to_bytes(),
-                &TOKEN_PROGRAM_ID.to_bytes(),
+                &TOKEN_2022_PROGRAM_ID.to_bytes(),
                 &XORCA_ID.to_bytes(),
             ],
             &ATA_PROGRAM_ID,
@@ -188,8 +189,8 @@ impl Env {
         .unwrap();
         ctx.write_account(
             staker_xorca_ata,
-            TOKEN_PROGRAM_ID,
-            token_account_data!(mint => XORCA_ID, owner => staker, amount => user.staker_xorca),
+            TOKEN_2022_PROGRAM_ID,
+            token2022_account_data!(mint => XORCA_ID, owner => staker, amount => user.staker_xorca),
         )
         .unwrap();
 

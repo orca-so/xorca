@@ -591,7 +591,7 @@ fn withdraw_invalid_system_program_id() {
         unstaker_orca_ata: env.staker_orca_ata,
         orca_mint_account: ORCA_ID,
         system_program_account: invalid_sys,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
     let res = env.ctx.sends(&[ix]);
@@ -640,7 +640,7 @@ fn withdraw_wrong_vault_account_seeds() {
         unstaker_orca_ata: env.staker_orca_ata,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
     let res = env.ctx.sends(&[ix]);
@@ -693,7 +693,7 @@ fn withdraw_invalid_orca_mint_address() {
         unstaker_orca_ata: env.staker_orca_ata,
         orca_mint_account: wrong_orca_mint,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
     let res = env.ctx.sends(&[ix]);
@@ -730,7 +730,7 @@ fn withdraw_invalid_token_program_id() {
         unstaker_orca_ata: env.staker_orca_ata,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: bad,
+        spl_token_program_account: bad,
     }
     .instruction(WithdrawInstructionArgs { withdraw_index });
     let res = env.ctx.sends(&[ix]);
@@ -933,7 +933,7 @@ fn withdraw_invalid_withdraw_index_param_mismatch() {
             unstaker_orca_ata: env.staker_orca_ata,
             orca_mint_account: ORCA_ID,
             system_program_account: SYSTEM_PROGRAM_ID,
-            token_program_account: TOKEN_PROGRAM_ID,
+            spl_token_program_account: TOKEN_PROGRAM_ID,
         }
         .instruction(WithdrawInstructionArgs {
             withdraw_index: wrong_index,
@@ -1052,7 +1052,7 @@ fn withdraw_concurrent_two_indices_in_one_tx() {
         unstaker_orca_ata: env.staker_orca_ata,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(WithdrawInstructionArgs {
         withdraw_index: idx_a,
@@ -1065,7 +1065,7 @@ fn withdraw_concurrent_two_indices_in_one_tx() {
         unstaker_orca_ata: env.staker_orca_ata,
         orca_mint_account: ORCA_ID,
         system_program_account: SYSTEM_PROGRAM_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
     }
     .instruction(WithdrawInstructionArgs {
         withdraw_index: idx_b,
@@ -1361,7 +1361,7 @@ fn withdraw_invalid_pending_withdraw_account_seeds() {
             unstaker_orca_ata: env.staker_orca_ata,
             orca_mint_account: ORCA_ID,
             system_program_account: SYSTEM_PROGRAM_ID,
-            token_program_account: TOKEN_PROGRAM_ID,
+            spl_token_program_account: TOKEN_PROGRAM_ID,
         }
         .instruction(WithdrawInstructionArgs {
             withdraw_index: idx,
@@ -1756,7 +1756,7 @@ fn test_withdraw_account_closure_failure() {
     env.ctx
         .write_raw_account(
             pending_withdraw_account,
-            SYSTEM_PROGRAM_ID, // Wrong owner - should be xorca::ID
+            SYSTEM_PROGRAM_ID,
             pending_data.data,
         )
         .unwrap();
@@ -1834,9 +1834,8 @@ fn test_withdraw_wrong_program_id_in_state() {
     env.ctx
         .write_raw_account(
             env.state,
-            SYSTEM_PROGRAM_ID, // Wrong owner - should be xorca::ID
-            state_data.data,
-        )
+            SYSTEM_PROGRAM_ID,
+            state_data.data)
         .unwrap();
 
     let res = do_withdraw(&mut env, pending_withdraw_account, idx);

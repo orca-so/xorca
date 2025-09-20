@@ -1,5 +1,5 @@
 use crate::{
-    cpi::token::TokenAccount,
+    cpi::token::{Token2022Account, TokenAccount, SPL_TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID},
     error::ErrorCode,
     state::{AccountDiscriminator, ProgramAccount},
 };
@@ -13,7 +13,6 @@ use pinocchio::{
     ProgramResult,
 };
 use pinocchio_log::log;
-use pinocchio_token::ID as SPL_TOKEN_PROGRAM_ID;
 
 pub trait Key {
     fn key(&self) -> &Pubkey;
@@ -218,6 +217,38 @@ pub fn make_owner_token_account_assertions<'a>(
     if owner_token_account_data.mint != *token_mint_account.key() {
         log!(
             "Token account data mint {} does not match token mint account {}.",
+            owner_token_account_data.mint.to_base58().as_str(),
+            token_mint_account.key().to_base58().as_str()
+        );
+        return Err(ErrorCode::InvalidAccountData.into());
+    }
+    Ok(owner_token_account_data)
+}
+
+pub fn make_owner_token_2022_account_assertions(
+    owner_token_account: &AccountInfo,
+    owner_account: &AccountInfo,
+    token_mint_account: &AccountInfo,
+    verify_writable: bool,
+) -> Result<Token2022Account, ProgramError> {
+    if verify_writable {
+        assert_account_role(owner_token_account, &[AccountRole::Writable])?;
+    }
+    assert_account_owner(owner_token_account, &TOKEN_2022_PROGRAM_ID)?;
+    let owner_token_account_data =
+        assert_external_account_data::<Token2022Account>(owner_token_account)?;
+    if owner_token_account_data.owner != *owner_account.key() {
+        log!(
+            "Token2022 account data owner {} does not match owner account {} for token mint account {}.",
+            owner_token_account_data.owner.to_base58().as_str(),
+            owner_account.key().to_base58().as_str(),
+            token_mint_account.key().to_base58().as_str()
+        );
+        return Err(ErrorCode::InvalidAccountData.into());
+    }
+    if owner_token_account_data.mint != *token_mint_account.key() {
+        log!(
+            "Token2022 account data mint {} does not match token mint account {}.",
             owner_token_account_data.mint.to_base58().as_str(),
             token_mint_account.key().to_base58().as_str()
         );

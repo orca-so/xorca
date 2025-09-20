@@ -5,7 +5,8 @@ use crate::utils::assert::{
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
 use crate::utils::flows::stake_orca_with_unique;
 use crate::{
-    assert_program_error, TestContext, ORCA_ID, TOKEN_PROGRAM_ID, XORCA_ID, XORCA_PROGRAM_ID,
+    assert_program_error, TestContext, ORCA_ID, TOKEN_2022_PROGRAM_ID, TOKEN_PROGRAM_ID, XORCA_ID,
+    XORCA_PROGRAM_ID,
 };
 use solana_sdk::pubkey::Pubkey;
 use xorca::{
@@ -37,7 +38,8 @@ fn stake_success_on_fresh_deployment() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -90,7 +92,8 @@ fn stake_success_at_exchange_rate_1_to_2_success() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -146,7 +149,8 @@ fn stake_success_at_exchange_rate_with_decimals() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -202,7 +206,8 @@ fn stake_success_rounds_down_at_non_divisible_rate() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_001,
@@ -250,7 +255,8 @@ fn stake_success_for_low_exchange_rate() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: orca_stake,
@@ -320,7 +326,8 @@ fn stake_success_with_escrow_orca() {
         staker_xorca_ata: env_a.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 2_000_000,
@@ -333,7 +340,8 @@ fn stake_success_with_escrow_orca() {
         staker_xorca_ata: env_b.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 2_000_000,
@@ -425,7 +433,8 @@ fn stake_success_with_large_escrow_still_uses_non_escrowed_rate() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: stake_amount,
@@ -492,7 +501,8 @@ fn stake_precision_loss_rounds_down() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 10,
@@ -548,7 +558,8 @@ fn stake_precision_loss_rounds_down_to_zero() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 10,
@@ -631,7 +642,8 @@ fn stake_rounding_many_small_vs_one_large() {
         staker_xorca_ata: env_large.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: SMALL_COUNT,
@@ -720,7 +732,8 @@ fn stake_invalid_state_account_owner() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -754,7 +767,8 @@ fn stake_overflow_attack_large_numbers() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -812,7 +826,8 @@ fn stake_underflow_non_escrowed_error() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1,
@@ -846,7 +861,8 @@ fn stake_division_by_zero_non_escrowed_zero_supply_nonzero() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -895,7 +911,8 @@ fn stake_zero_amount() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 0,
@@ -929,7 +946,8 @@ fn stake_max_u64_amount_overflow_expected() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: u64::MAX,
@@ -964,7 +982,8 @@ fn stake_wrong_vault_account() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1010,7 +1029,8 @@ fn stake_wrong_xorca_mint_address() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: wrong_mint,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1053,7 +1073,8 @@ fn stake_wrong_orca_mint_address() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: wrong_orca_mint,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1082,13 +1103,87 @@ fn stake_malicious_token_program() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: bad,
+        spl_token_program_account: bad,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
     });
     let res = env.ctx.sends(&[ix]);
     assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
+}
+
+// Using a random pubkey for token2022_program_account should fail with IncorrectAccountAddress
+#[test]
+fn stake_malicious_token2022_program() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup::default();
+    let user = UserSetup {
+        staker_orca: 1_000_000,
+        staker_xorca: 0,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    let bad = Pubkey::new_unique();
+    let ix = Stake {
+        staker_account: env.staker,
+        state_account: env.state,
+        vault_account: env.vault,
+        staker_orca_ata: env.staker_orca_ata,
+        staker_xorca_ata: env.staker_xorca_ata,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: bad,
+    }
+    .instruction(StakeInstructionArgs {
+        orca_stake_amount: 1_000_000,
+    });
+    let res = env.ctx.sends(&[ix]);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectAccountAddress);
+}
+
+// xORCA mint owned by SPL Token program instead of Token2022 should fail with IncorrectOwner
+#[test]
+fn stake_xorca_mint_not_token2022() {
+    let ctx = TestContext::new();
+    let pool = PoolSetup::default();
+    let user = UserSetup {
+        staker_orca: 1_000_000,
+        staker_xorca: 0,
+    };
+    let mut env = Env::new(ctx, &pool, &user);
+    // Set xORCA mint to be owned by SPL Token program (wrong)
+    env.ctx
+        .write_account(
+            XORCA_ID,
+            TOKEN_PROGRAM_ID, // Wrong owner - should be TOKEN_2022_PROGRAM_ID
+            crate::token_mint_data!(
+                supply => pool.xorca_supply,
+                decimals => 6,
+                mint_authority_flag => 1,
+                mint_authority => env.state,
+                is_initialized => true,
+                freeze_authority_flag => 0,
+                freeze_authority => Pubkey::default(),
+            ),
+        )
+        .unwrap();
+    let ix = Stake {
+        staker_account: env.staker,
+        state_account: env.state,
+        vault_account: env.vault,
+        staker_orca_ata: env.staker_orca_ata,
+        staker_xorca_ata: env.staker_xorca_ata,
+        xorca_mint_account: XORCA_ID,
+        orca_mint_account: ORCA_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
+    }
+    .instruction(StakeInstructionArgs {
+        orca_stake_amount: 1_000_000,
+    });
+    let res = env.ctx.sends(&[ix]);
+    assert_program_error!(res, XorcaStakingProgramError::IncorrectOwner);
 }
 
 // Tests staking more ORCA than the user owns
@@ -1110,7 +1205,8 @@ fn stake_insufficient_orca_tokens() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1154,7 +1250,8 @@ fn stake_invalid_state_account_seeds() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1226,7 +1323,8 @@ fn stake_invalid_staker_orca_ata_owner_data() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1250,7 +1348,7 @@ fn stake_invalid_staker_orca_ata_mint_data() {
         .write_account(
             env.staker_orca_ata,
             TOKEN_PROGRAM_ID,
-            crate::token_account_data!(mint => XORCA_ID, owner => env.staker, amount => 1_000_000),
+            crate::token_account_data!(mint => XORCA_ID, owner => env.staker, amount => 1_000_000), // Wrong mint - should be ORCA_ID
         )
         .unwrap();
     let ix = Stake {
@@ -1261,7 +1359,8 @@ fn stake_invalid_staker_orca_ata_mint_data() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1296,7 +1395,8 @@ fn stake_invalid_staker_orca_ata_program_owner() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1319,8 +1419,8 @@ fn stake_invalid_staker_xorca_ata_owner_data() {
     env.ctx
         .write_account(
             env.staker_xorca_ata,
-            TOKEN_PROGRAM_ID,
-            crate::token_account_data!(mint => XORCA_ID, owner => Pubkey::default(), amount => 0),
+            TOKEN_2022_PROGRAM_ID,
+            crate::token2022_account_data!(mint => XORCA_ID, owner => Pubkey::default(), amount => 0),
         )
         .unwrap();
     let ix = Stake {
@@ -1331,7 +1431,8 @@ fn stake_invalid_staker_xorca_ata_owner_data() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1354,8 +1455,8 @@ fn stake_invalid_staker_xorca_ata_mint_data() {
     env.ctx
         .write_account(
             env.staker_xorca_ata,
-            TOKEN_PROGRAM_ID,
-            crate::token_account_data!(mint => ORCA_ID, owner => env.staker, amount => 0),
+            TOKEN_2022_PROGRAM_ID,
+            crate::token2022_account_data!(mint => ORCA_ID, owner => env.staker, amount => 0), // Wrong mint - should be XORCA_ID
         )
         .unwrap();
     let ix = Stake {
@@ -1366,7 +1467,8 @@ fn stake_invalid_staker_xorca_ata_mint_data() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1389,8 +1491,8 @@ fn stake_invalid_staker_xorca_ata_program_owner() {
     env.ctx
         .write_account(
             env.staker_xorca_ata,
-            crate::ATA_PROGRAM_ID,
-            crate::token_account_data!(mint => XORCA_ID, owner => env.staker, amount => 0),
+            TOKEN_PROGRAM_ID, // Wrong program owner - should be TOKEN_2022_PROGRAM_ID
+            crate::token2022_account_data!(mint => XORCA_ID, owner => env.staker, amount => 0),
         )
         .unwrap();
     let ix = Stake {
@@ -1401,7 +1503,8 @@ fn stake_invalid_staker_xorca_ata_program_owner() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1431,7 +1534,8 @@ fn stake_concurrent_stakes_same_user_in_one_tx() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1444,7 +1548,8 @@ fn stake_concurrent_stakes_same_user_in_one_tx() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1493,7 +1598,8 @@ fn stake_event_emission_verification() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1_000_000,
@@ -1550,7 +1656,8 @@ fn stake_fails_when_amount_would_mint_zero() {
         staker_xorca_ata: env.staker_xorca_ata,
         xorca_mint_account: XORCA_ID,
         orca_mint_account: ORCA_ID,
-        token_program_account: TOKEN_PROGRAM_ID,
+        spl_token_program_account: TOKEN_PROGRAM_ID,
+        token2022_program_account: TOKEN_2022_PROGRAM_ID,
     }
     .instruction(StakeInstructionArgs {
         orca_stake_amount: 1,

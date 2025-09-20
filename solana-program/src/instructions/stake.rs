@@ -1,19 +1,20 @@
 use crate::{
     assertions::account::{
         assert_account_address, assert_account_data, assert_account_owner, assert_account_role,
-        assert_external_account_data, make_owner_token_account_assertions, AccountRole,
+        assert_external_account_data, make_owner_token_2022_account_assertions,
+        make_owner_token_account_assertions, AccountRole,
     },
-    cpi::token::{TokenMint, ORCA_MINT_ID, XORCA_MINT_ID},
+    cpi::token::{
+        Token2022Mint, ORCA_MINT_ID, SPL_TOKEN_PROGRAM_ID, TOKEN_2022_PROGRAM_ID, XORCA_MINT_ID,
+    },
     error::ErrorCode,
     event::Event,
     state::state::State,
     util::{account::get_account_info, math::convert_orca_to_xorca},
 };
 use pinocchio::{account_info::AccountInfo, instruction::Seed, ProgramResult};
-use pinocchio_token::{
-    instructions::{MintTo, Transfer},
-    ID as SPL_TOKEN_PROGRAM_ID,
-};
+use pinocchio_token::instructions::Transfer;
+use pinocchio_token_2022::instructions::MintTo;
 
 pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) -> ProgramResult {
     let staker_account = get_account_info(accounts, 0)?;
@@ -23,7 +24,8 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
     let xorca_mint_account = get_account_info(accounts, 4)?;
     let state_account = get_account_info(accounts, 5)?;
     let orca_mint_account = get_account_info(accounts, 6)?;
-    let token_program_account = get_account_info(accounts, 7)?;
+    let spl_token_program_account = get_account_info(accounts, 7)?;
+    let token_2022_program_account = get_account_info(accounts, 8)?;
 
     // 1. Staker Account Assertions
     assert_account_role(
@@ -34,7 +36,8 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
     // 2. Account Address Assertions
     assert_account_address(orca_mint_account, &ORCA_MINT_ID)?;
     assert_account_address(xorca_mint_account, &XORCA_MINT_ID)?;
-    assert_account_address(token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+    assert_account_address(spl_token_program_account, &SPL_TOKEN_PROGRAM_ID)?;
+    assert_account_address(token_2022_program_account, &TOKEN_2022_PROGRAM_ID)?;
 
     // 3. Staker Orca ATA Assertions
     let staker_orca_ata_data = make_owner_token_account_assertions(
@@ -48,7 +51,7 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
     }
 
     // 4. Staker xORCA ATA Assertions
-    make_owner_token_account_assertions(
+    make_owner_token_2022_account_assertions(
         staker_xorca_ata,
         staker_account,
         xorca_mint_account,
@@ -57,8 +60,8 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
 
     // 5. xOrca Mint Account Assertions
     assert_account_role(xorca_mint_account, &[AccountRole::Writable])?;
-    assert_account_owner(xorca_mint_account, &SPL_TOKEN_PROGRAM_ID)?;
-    let xorca_mint_data = assert_external_account_data::<TokenMint>(xorca_mint_account)?;
+    assert_account_owner(xorca_mint_account, &TOKEN_2022_PROGRAM_ID)?;
+    let xorca_mint_data = assert_external_account_data::<Token2022Mint>(xorca_mint_account)?;
 
     // 7. Orca Mint Account Assertions
 
@@ -116,8 +119,9 @@ pub fn process_instruction(accounts: &[AccountInfo], orca_stake_amount: &u64) ->
     };
     transfer_instruction.invoke()?;
 
-    // Mint xOrca to staker xOrca ATA
+    // Mint xOrca to staker xOrca ATA using Token2022 program
     let mint_to_instruction = MintTo {
+        token_program: &TOKEN_2022_PROGRAM_ID,
         mint: xorca_mint_account,
         account: staker_xorca_ata,
         mint_authority: state_account,

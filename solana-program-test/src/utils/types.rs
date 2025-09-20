@@ -32,11 +32,36 @@ macro_rules! token_mint_data {
         data
     }};
 }
+
+#[macro_export]
+macro_rules! token2022_mint_data {
+    ($($name:ident => $value:expr),* $(,)?) => {{
+        let mut data = crate::zeroed_type!(xorca::Token2022Mint);
+        data.is_initialized = true;
+        data.decimals = 6;
+        $(
+            data.$name = $value;
+        )*
+        data
+    }};
+}
 #[macro_export]
 macro_rules! token_account_data {
     ($($name:ident => $value:expr),* $(,)?) => {{
         let mut data = crate::zeroed_type!(xorca::TokenAccount);
         data.state = xorca::TokenAccountState::Initialized;
+        $(
+            data.$name = $value;
+        )*
+        data
+    }};
+}
+
+#[macro_export]
+macro_rules! token2022_account_data {
+    ($($name:ident => $value:expr),* $(,)?) => {{
+        let mut data = crate::zeroed_type!(xorca::Token2022Account);
+        data.state = xorca::Token2022AccountState::Initialized;
         $(
             data.$name = $value;
         )*

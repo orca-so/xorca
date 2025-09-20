@@ -1,5 +1,5 @@
 use crate::utils::fixture::{Env, PoolSetup, UserSetup};
-use crate::{TestContext, ORCA_ID, XORCA_ID};
+use crate::{TestContext, ORCA_ID, TOKEN_2022_PROGRAM_ID, XORCA_ID};
 use xorca::find_pending_withdraw_pda;
 
 // Test that unstake operation succeeds with various amounts of pre-funding
@@ -42,7 +42,8 @@ fn test_unstake_dos_protection_various_pre_funding() {
                 xorca_mint_account: XORCA_ID,
                 orca_mint_account: ORCA_ID,
                 system_program_account: solana_sdk::system_program::ID,
-                token_program_account: crate::TOKEN_PROGRAM_ID,
+                spl_token_program_account: crate::TOKEN_PROGRAM_ID,
+                token2022_program_account: TOKEN_2022_PROGRAM_ID,
             }
             .instruction(xorca::UnstakeInstructionArgs {
                 xorca_unstake_amount: 1_000_000,

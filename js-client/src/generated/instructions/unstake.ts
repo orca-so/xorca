@@ -49,7 +49,8 @@ export type UnstakeInstruction<
   TAccountOrcaMintAccount extends string | AccountMeta<string> = string,
   TAccountVaultAccount extends string | AccountMeta<string> = string,
   TAccountSystemProgramAccount extends string | AccountMeta<string> = string,
-  TAccountTokenProgramAccount extends string | AccountMeta<string> = string,
+  TAccountSplTokenProgramAccount extends string | AccountMeta<string> = string,
+  TAccountToken2022ProgramAccount extends string | AccountMeta<string> = string,
   TRemainingAccounts extends readonly AccountMeta<string>[] = [],
 > = Instruction<TProgram> &
   InstructionWithData<ReadonlyUint8Array> &
@@ -80,9 +81,12 @@ export type UnstakeInstruction<
       TAccountSystemProgramAccount extends string
         ? ReadonlyAccount<TAccountSystemProgramAccount>
         : TAccountSystemProgramAccount,
-      TAccountTokenProgramAccount extends string
-        ? ReadonlyAccount<TAccountTokenProgramAccount>
-        : TAccountTokenProgramAccount,
+      TAccountSplTokenProgramAccount extends string
+        ? ReadonlyAccount<TAccountSplTokenProgramAccount>
+        : TAccountSplTokenProgramAccount,
+      TAccountToken2022ProgramAccount extends string
+        ? ReadonlyAccount<TAccountToken2022ProgramAccount>
+        : TAccountToken2022ProgramAccount,
       ...TRemainingAccounts,
     ]
   >;
@@ -133,7 +137,8 @@ export type UnstakeInput<
   TAccountOrcaMintAccount extends string = string,
   TAccountVaultAccount extends string = string,
   TAccountSystemProgramAccount extends string = string,
-  TAccountTokenProgramAccount extends string = string,
+  TAccountSplTokenProgramAccount extends string = string,
+  TAccountToken2022ProgramAccount extends string = string,
 > = {
   unstakerAccount: TransactionSigner<TAccountUnstakerAccount>;
   stateAccount: Address<TAccountStateAccount>;
@@ -143,7 +148,8 @@ export type UnstakeInput<
   orcaMintAccount: Address<TAccountOrcaMintAccount>;
   vaultAccount: Address<TAccountVaultAccount>;
   systemProgramAccount: Address<TAccountSystemProgramAccount>;
-  tokenProgramAccount: Address<TAccountTokenProgramAccount>;
+  splTokenProgramAccount: Address<TAccountSplTokenProgramAccount>;
+  token2022ProgramAccount: Address<TAccountToken2022ProgramAccount>;
   xorcaUnstakeAmount: UnstakeInstructionDataArgs['xorcaUnstakeAmount'];
   withdrawIndex: UnstakeInstructionDataArgs['withdrawIndex'];
 };
@@ -157,7 +163,8 @@ export function getUnstakeInstruction<
   TAccountOrcaMintAccount extends string,
   TAccountVaultAccount extends string,
   TAccountSystemProgramAccount extends string,
-  TAccountTokenProgramAccount extends string,
+  TAccountSplTokenProgramAccount extends string,
+  TAccountToken2022ProgramAccount extends string,
   TProgramAddress extends Address = typeof XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS,
 >(
   input: UnstakeInput<
@@ -169,7 +176,8 @@ export function getUnstakeInstruction<
     TAccountOrcaMintAccount,
     TAccountVaultAccount,
     TAccountSystemProgramAccount,
-    TAccountTokenProgramAccount
+    TAccountSplTokenProgramAccount,
+    TAccountToken2022ProgramAccount
   >,
   config?: { programAddress?: TProgramAddress }
 ): UnstakeInstruction<
@@ -182,7 +190,8 @@ export function getUnstakeInstruction<
   TAccountOrcaMintAccount,
   TAccountVaultAccount,
   TAccountSystemProgramAccount,
-  TAccountTokenProgramAccount
+  TAccountSplTokenProgramAccount,
+  TAccountToken2022ProgramAccount
 > {
   // Program address.
   const programAddress = config?.programAddress ?? XORCA_STAKING_PROGRAM_PROGRAM_ADDRESS;
@@ -212,8 +221,12 @@ export function getUnstakeInstruction<
       value: input.systemProgramAccount ?? null,
       isWritable: false,
     },
-    tokenProgramAccount: {
-      value: input.tokenProgramAccount ?? null,
+    splTokenProgramAccount: {
+      value: input.splTokenProgramAccount ?? null,
+      isWritable: false,
+    },
+    token2022ProgramAccount: {
+      value: input.token2022ProgramAccount ?? null,
       isWritable: false,
     },
   };
@@ -233,7 +246,8 @@ export function getUnstakeInstruction<
       getAccountMeta(accounts.orcaMintAccount),
       getAccountMeta(accounts.vaultAccount),
       getAccountMeta(accounts.systemProgramAccount),
-      getAccountMeta(accounts.tokenProgramAccount),
+      getAccountMeta(accounts.splTokenProgramAccount),
+      getAccountMeta(accounts.token2022ProgramAccount),
     ],
     data: getUnstakeInstructionDataEncoder().encode(args as UnstakeInstructionDataArgs),
     programAddress,
@@ -247,7 +261,8 @@ export function getUnstakeInstruction<
     TAccountOrcaMintAccount,
     TAccountVaultAccount,
     TAccountSystemProgramAccount,
-    TAccountTokenProgramAccount
+    TAccountSplTokenProgramAccount,
+    TAccountToken2022ProgramAccount
   >);
 }
 
@@ -265,7 +280,8 @@ export type ParsedUnstakeInstruction<
     orcaMintAccount: TAccountMetas[5];
     vaultAccount: TAccountMetas[6];
     systemProgramAccount: TAccountMetas[7];
-    tokenProgramAccount: TAccountMetas[8];
+    splTokenProgramAccount: TAccountMetas[8];
+    token2022ProgramAccount: TAccountMetas[9];
   };
   data: UnstakeInstructionData;
 };
@@ -278,7 +294,7 @@ export function parseUnstakeInstruction<
     InstructionWithAccounts<TAccountMetas> &
     InstructionWithData<ReadonlyUint8Array>
 ): ParsedUnstakeInstruction<TProgram, TAccountMetas> {
-  if (instruction.accounts.length < 9) {
+  if (instruction.accounts.length < 10) {
     // TODO: Coded error.
     throw new Error('Not enough accounts');
   }
@@ -299,7 +315,8 @@ export function parseUnstakeInstruction<
       orcaMintAccount: getNextAccount(),
       vaultAccount: getNextAccount(),
       systemProgramAccount: getNextAccount(),
-      tokenProgramAccount: getNextAccount(),
+      splTokenProgramAccount: getNextAccount(),
+      token2022ProgramAccount: getNextAccount(),
     },
     data: getUnstakeInstructionDataDecoder().decode(instruction.data),
   };
