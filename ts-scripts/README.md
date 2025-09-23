@@ -14,6 +14,7 @@ yarn stake <args>
 yarn unstake <args>
 yarn withdraw <args>
 yarn transfer-orca <args>
+yarn transfer-orca-to-vault <args>
 yarn update-mint-authority <args>
 yarn status
 ```
@@ -30,6 +31,7 @@ ts-scripts/
 ├── unstake.ts          # Unstake xORCA tokens
 ├── withdraw.ts         # Withdraw ORCA tokens after cooldown
 ├── transfer-orca.ts    # Transfer ORCA tokens between accounts
+├── transfer-orca-to-vault.ts # Transfer ORCA directly to vault PDA
 ├── update-xorca-mint-authority.ts # Update xORCA mint authority
 ├── status.ts           # Check program status and exchange rates
 ├── keypairs/           # Keypair files (gitignored for security)
@@ -85,7 +87,46 @@ ORCA → xORCA Rate: 3.3197868088 (1 ORCA = 3.3197868088 xORCA)
 xORCA → ORCA Rate: 0.3012241622 (1 xORCA = 0.3012241622 ORCA)
 ```
 
-### 2. Initialize Script (`initialize.ts`)
+### 2. Transfer ORCA to Vault Script (`transfer-orca-to-vault.ts`)
+
+This script transfers ORCA tokens directly to the vault PDA (Program Derived Address) without going through the staking process.
+
+#### Usage
+
+```bash
+yarn transfer-orca-to-vault <sender-keypair-path> <orca-amount>
+```
+
+#### Parameters
+
+- `sender-keypair-path`: Path to the JSON keypair file of the sender
+- `orca-amount`: Amount of ORCA to transfer (in smallest units, 6 decimals)
+
+#### Example
+
+```bash
+# Transfer 100,000 ORCA (0.1 ORCA) to the vault
+yarn transfer-orca-to-vault keypairs/deployer.json 100000
+```
+
+#### What the script does
+
+1. Loads the sender keypair
+2. Derives the vault PDA address using the state account and ORCA mint
+3. Checks sender's ORCA balance
+4. Verifies the vault account exists
+5. Creates a direct transfer instruction from sender to vault
+6. Signs and sends the transaction
+7. Confirms the transfer and displays final balances
+
+#### Important Notes
+
+- This transfers ORCA directly to the vault without minting xORCA tokens
+- The vault must already exist (program must be initialized)
+- This bypasses the normal staking flow
+- Use with caution as it may affect the program's accounting
+
+### 3. Initialize Script (`initialize.ts`)
 
 This script initializes the xORCA staking program by calling the initialize instruction.
 
