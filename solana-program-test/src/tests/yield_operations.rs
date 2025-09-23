@@ -11,6 +11,7 @@ use crate::utils::flows::{
 };
 use crate::{TestContext, ORCA_ID, TOKEN_PROGRAM_ID, XORCA_ID};
 use xorca::{PendingWithdraw, State};
+use xorca_staking_program::util::math::{convert_orca_to_xorca, convert_xorca_to_orca};
 
 #[test]
 fn yield_fresh_deploy_stake_unstake_withdraw_flow() {
@@ -906,13 +907,12 @@ fn yield_prefunded_vault_fresh_deploy_stake_then_withdraw() {
         .unwrap()
         .data
         .withdrawable_orca_amount;
-    let expected_pending = user_xorca
-        .saturating_mul(
-            pool.vault_orca
-                .saturating_add(stake_amount)
-                .saturating_add(1),
-        )
-        .saturating_div(user_xorca.saturating_add(1));
+    let expected_pending = convert_xorca_to_orca(
+        user_xorca,
+        pool.vault_orca.saturating_add(stake_amount),
+        user_xorca,
+    )
+    .unwrap();
     println!("expected_pending: {}", expected_pending);
 
     // Assert: user receives entire prefund plus stake
@@ -975,10 +975,8 @@ fn yield_deposit_before_stake_affects_minting() {
         .data
         .amount;
     let stake_amount = 2_000_000u64;
-    let expected_minted = stake_amount
-        .saturating_mul(supply_before)
-        .saturating_div(non_escrowed_before);
-
+    let expected_minted =
+        convert_orca_to_xorca(stake_amount, non_escrowed_before, supply_before).unwrap();
     // Act: stake
     let ix = xorca::Stake {
         staker_account: env.staker,
@@ -1066,9 +1064,12 @@ fn yield_deposit_before_unstake_increases_withdrawable() {
         .saturating_sub(snapshot_before_unstake.escrow_before);
 
     // Compute & Assert: pending uses pre-unstake snapshot
-    let expected_withdrawable_orca = xorca_to_burn_for_unstake
-        .saturating_mul(non_escrowed)
-        .saturating_div(snapshot_before_unstake.xorca_supply_before);
+    let expected_withdrawable_orca = convert_xorca_to_orca(
+        xorca_to_burn_for_unstake,
+        non_escrowed,
+        snapshot_before_unstake.xorca_supply_before,
+    )
+    .unwrap();
     let pending_withdraw_account = xorca::find_pending_withdraw_pda(&env.staker, &idx)
         .unwrap()
         .0;

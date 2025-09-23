@@ -13,6 +13,7 @@ use xorca::{
     XorcaStakingProgramError,
 };
 use xorca_staking_program::state::state::State;
+use xorca_staking_program::util::math::convert_orca_to_xorca;
 
 // Fresh deployment path: supply=0, non_escrowed=0 → initial exchange rate
 #[test]
@@ -507,6 +508,7 @@ fn stake_precision_loss_rounds_down() {
     );
     let _ = env.ctx.sends(&[ix]);
 
+    let predicted_xorca_minted = convert_orca_to_xorca(10, 333, 100).unwrap();
     // Proportional path rounds down: floor(10 * 100 / 333) = 3
     assert_stake_effects(
         &env.ctx,
@@ -517,7 +519,7 @@ fn stake_precision_loss_rounds_down() {
         XORCA_ID,
         &snap,
         10,
-        3,
+        predicted_xorca_minted,
         pool.cool_down_period_s,
         "precision loss rounds down",
     );

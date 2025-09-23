@@ -5,6 +5,7 @@ use crate::utils::flows::{
 };
 use crate::{TestContext, ORCA_ID, XORCA_ID};
 use xorca::TokenAccount;
+use xorca_staking_program::util::math::convert_xorca_to_orca;
 
 static ATTACKER_DONATION_AMOUNT: u64 = 1_000_000;
 
@@ -90,7 +91,11 @@ fn test_vault_inflation_vulnerability() {
     );
 
     // Act: attacker donates 1 ORCA to vault
-    deposit_yield_into_vault(&mut attacker_env, 1_000_000, "attacker donates to vault");
+    deposit_yield_into_vault(
+        &mut attacker_env,
+        ATTACKER_DONATION_AMOUNT,
+        "attacker donates to vault",
+    );
 
     assert_token_account(
         &attacker_env.ctx,
@@ -103,16 +108,19 @@ fn test_vault_inflation_vulnerability() {
         },
     );
 
-    // Act: staker (victim) stakes 1.000001 ORCA that maximizes his loss due to vault inflation.
+    // Act: staker (victim) stakes ORCA value that maximizes his loss due to vault inflation.
+    let stake_amount_for_two_xorca =
+        convert_xorca_to_orca(2, ATTACKER_DONATION_AMOUNT.checked_add(1).unwrap(), 1).unwrap();
+    // Due to rounding, if stake_amount_for_two_xorca is staked, the user will get < 2 ORCA
     // 0.000001 ORCA more and this staker would have minted 2 xORCA instead.
-    let _ = stake_orca(&mut staker_env, 1_000_001);
+    let _ = stake_orca(&mut staker_env, stake_amount_for_two_xorca);
     assert_token_account(
         &staker_env.ctx,
         staker_env.staker_xorca_ata,
         ExpectedTokenAccount {
             owner: &staker_env.staker,
             mint: &XORCA_ID,
-            amount: 1,
+            amount: 1, // Expected amount based on virtual assets calculation
             label: "victim xORCA after stake",
         },
     );
@@ -125,7 +133,7 @@ fn test_vault_inflation_vulnerability() {
             amount: ATTACKER_DONATION_AMOUNT
                 .checked_add(1)
                 .unwrap()
-                .checked_add(1_000_001)
+                .checked_add(stake_amount_for_two_xorca)
                 .unwrap(),
             label: "vault after victim stake",
         },
@@ -135,7 +143,7 @@ fn test_vault_inflation_vulnerability() {
         XORCA_ID,
         ExpectedMint {
             decimals: 6,
-            supply: 2,
+            supply: 2, // 1 (attacker) + 1 (victim)
             mint_authority: &staker_env.state,
             label: "xORCA mint after victim stake",
         },

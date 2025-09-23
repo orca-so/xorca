@@ -1,8 +1,8 @@
 use crate::error::ErrorCode;
 use pinocchio::program_error::ProgramError;
 
-static VIRTUAL_XORCA_SUPPLY: u128 = 1;
-static VIRTUAL_NON_ESCROWED_ORCA_AMOUNT: u128 = 1;
+static VIRTUAL_XORCA_SUPPLY: u128 = 100;
+static VIRTUAL_NON_ESCROWED_ORCA_AMOUNT: u128 = 100;
 
 pub fn convert_orca_to_xorca(
     orca_amount_to_convert: u64,
