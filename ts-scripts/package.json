@@ -11,6 +11,7 @@
     "transfer-orca": "tsx transfer-orca.ts",
     "transfer-orca-to-vault": "tsx transfer-orca-to-vault.ts",
     "update-mint-authority": "tsx update-xorca-mint-authority.ts",
+    "pending-withdraws": "tsx pending-withdraws.ts",
     "status": "tsx status.ts",
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit"

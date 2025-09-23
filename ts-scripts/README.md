@@ -16,6 +16,7 @@ yarn withdraw <args>
 yarn transfer-orca <args>
 yarn transfer-orca-to-vault <args>
 yarn update-mint-authority <args>
+yarn pending-withdraws <args>
 yarn status
 ```
 
@@ -33,6 +34,7 @@ ts-scripts/
 ├── transfer-orca.ts    # Transfer ORCA tokens between accounts
 ├── transfer-orca-to-vault.ts # Transfer ORCA directly to vault PDA
 ├── update-xorca-mint-authority.ts # Update xORCA mint authority
+├── pending-withdraws.ts # Check pending withdraws for a staker
 ├── status.ts           # Check program status and exchange rates
 ├── keypairs/           # Keypair files (gitignored for security)
 └── README.md           # This file
@@ -126,7 +128,75 @@ yarn transfer-orca-to-vault keypairs/deployer.json 100000
 - This bypasses the normal staking flow
 - Use with caution as it may affect the program's accounting
 
-### 3. Initialize Script (`initialize.ts`)
+### 3. Pending Withdraws Script (`pending-withdraws.ts`)
+
+This script reports on all pending withdraws for a given staker address, including withdrawal readiness and timing information.
+
+#### Usage
+
+```bash
+yarn pending-withdraws <staker-public-key>
+```
+
+#### Parameters
+
+- `staker-public-key`: The public key of the staker to check pending withdraws for
+
+#### Example
+
+```bash
+# Check pending withdraws for a staker
+yarn pending-withdraws BQGjVjG8ZJW4m4hXybjLRB367idYyAHWbyjPBeL2w1hq
+```
+
+#### What the script displays
+
+- **Pending Withdraw Details**: Each pending withdraw with its index, address, and xORCA amount
+- **Timing Information**: Creation timestamp, time elapsed, and cooldown status
+- **Withdrawal Status**: Whether each withdraw is ready or still in cooldown
+- **Time Calculations**: How long until ready (if in cooldown) or how long since ready (if ready)
+- **Summary**: Total counts and amounts of ready vs cooldown withdraws
+
+#### Example Output
+
+```
+🔍 Fetching pending withdraws for staker...
+Staker: BQGjVjG8ZJW4m4hXybjLRB367idYyAHWbyjPBeL2w1hq
+================================================================================
+State account: 8RcfsSZakW3JmuYUuz6UZoN6zfGpyhsdNRSdPhqMUft8
+📊 Fetching state account data...
+Cool down period: 350000 seconds
+
+🔍 Searching for pending withdraw accounts...
+
+📋 Found 2 pending withdraws
+================================================================================
+
+1. Pending Withdraw #0
+   Address: 7xK8vQ9mN2pL3rT5sW6uY1zA4bC7dE9fG2hJ5kM8nP
+   xORCA Amount: 1000000000
+   Created: 2024-01-15T10:30:00.000Z
+   Time Elapsed: 2d 5h 30m
+   ✅ Status: READY TO WITHDRAW
+   ⏰ Ready for: 1d 2h 15m
+
+2. Pending Withdraw #1
+   Address: 9yL7wR8nO3qM4sT6uV2xZ5bD8eF1gH4jK6lN9oQ3rS
+   xORCA Amount: 500000000
+   Created: 2024-01-16T14:45:00.000Z
+   Time Elapsed: 1d 1h 15m
+   ⏳ Status: COOLDOWN ACTIVE
+   ⏰ Time Remaining: 1d 2h 45m
+
+📊 Summary:
+Total Pending Withdraws: 2
+Ready to Withdraw: 1
+In Cooldown: 1
+Total xORCA Ready: 1000000000
+Total xORCA in Cooldown: 500000000
+```
+
+### 4. Initialize Script (`initialize.ts`)
 
 This script initializes the xORCA staking program by calling the initialize instruction.
 
