@@ -3,7 +3,8 @@
   "packageManager": "yarn@4.9.1",
   "workspaces": [
     "test-server",
-    "js-client"
+    "js-client",
+    "ts-scripts"
   ],
   "devDependencies": {
     "@codama/nodes-from-anchor": "^1.2.8",

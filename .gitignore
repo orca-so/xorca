@@ -17,3 +17,5 @@ tmp
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+# TypeScript scripts keypairs (contains sensitive private keys)
+ts-scripts/keypairs/
