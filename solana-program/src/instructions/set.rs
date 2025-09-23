@@ -33,12 +33,6 @@ pub fn process_instruction(
         .map_err(|_| ErrorCode::InvalidSeeds)?;
     assert_account_address(update_authority_account, &state_view.update_authority)?;
 
-    Event::UpdateAuthoritySet {
-        new_authority: update_authority_account.key(),
-        set_by: &state_view.update_authority,
-    }
-    .emit()?;
-
     // Apply updates based on the instruction_data enum
     match instruction_data {
         StateUpdateInstruction::UpdateCoolDownPeriod {
@@ -50,7 +44,13 @@ pub fn process_instruction(
             state_view.cool_down_period_s = *new_cool_down_period_s;
         }
         StateUpdateInstruction::UpdateUpdateAuthority { new_authority } => {
+            let old_authority = state_view.update_authority;
             state_view.update_authority = *new_authority;
+            Event::UpdateAuthoritySet {
+                new_authority: new_authority,
+                set_by: &old_authority,
+            }
+            .emit()?;
         }
     };
 
