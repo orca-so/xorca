@@ -22,6 +22,10 @@ const ASSOCIATED_TOKEN_PROGRAM_ADDRESS = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsL
 const ORCA_MINT_ADDRESS = '51ipJjMd3aSxyy97du4MDU61GQaUCgehVmyHjfojJpxH' as Address;
 const XORCA_MINT_ADDRESS = 'Cz1vQJVwpD1Gzy4PEw6yxKNq7MxbPA8Ac7wBrieUmdGz' as Address; // TODO: update this
 
+// Virtual amounts for DOS protection (matching the Rust implementation)
+const VIRTUAL_XORCA_SUPPLY = 100n;
+const VIRTUAL_NON_ESCROWED_ORCA_AMOUNT = 100n;
+
 const DEFAULT_MAX_WITHDRAWALS_TO_SEARCH = 15;
 const WITHDRAW_INDEX_MAX_UINT = 255;
 
@@ -171,8 +175,10 @@ export async function fetchStakingExchangeRate(
 }> {
   const state = await fetchStateAccountData(rpc);
   const vault = await fetchVaultState(rpc);
-  const numerator = vault.amount - state.escrowedOrcaAmount;
-  const denominator = await fetchXorcaMintSupply(rpc);
+  const xorcaSupply = await fetchXorcaMintSupply(rpc);
+  const nonEscrowedOrcaAmount = vault.amount - state.escrowedOrcaAmount;
+  const numerator = nonEscrowedOrcaAmount + VIRTUAL_NON_ESCROWED_ORCA_AMOUNT;
+  const denominator = xorcaSupply + VIRTUAL_XORCA_SUPPLY;
   return {
     numerator,
     denominator,
