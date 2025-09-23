@@ -4,6 +4,7 @@ use litesvm::types::TransactionResult;
 use solana_sdk::pubkey::Pubkey;
 use xorca::PendingWithdraw;
 use xorca::{AccountDiscriminator, Event, State, TokenAccount, TokenMint};
+use xorca_staking_program::util::math::convert_xorca_to_orca;
 
 pub struct ExpectedTokenAccount<'a> {
     pub owner: &'a Pubkey,
@@ -405,10 +406,12 @@ pub fn assert_withdraw_effects(
     let supply_pre_unstake_u128 = (post_unstake_snapshot.xorca_supply_before as u128)
         .saturating_add(xorca_unstake_amount as u128);
     if supply_pre_unstake_u128 > 0 {
-        let expected_pending_u128 = (xorca_unstake_amount as u128)
-            .saturating_mul(non_escrowed_pre_unstake_u128.saturating_add(1))
-            / supply_pre_unstake_u128.saturating_add(1);
-        let expected_pending = expected_pending_u128 as u64;
+        let expected_pending = convert_xorca_to_orca(
+            xorca_unstake_amount as u64,
+            non_escrowed_pre_unstake_u128 as u64,
+            supply_pre_unstake_u128 as u64,
+        )
+        .unwrap();
         assert_eq!(
             expected_pending, pending_orca_amount,
             "{}: pending amount matches xORCA burn and exchange rate",

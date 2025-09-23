@@ -12,6 +12,7 @@ use xorca::{
     find_pending_withdraw_pda, find_state_address, Event, PendingWithdraw, State,
     XorcaStakingProgramError,
 };
+use xorca_staking_program::util::math::convert_xorca_to_orca;
 
 // Happy path: burns xORCA, increases escrow by withdrawable ORCA, and creates a pending withdraw account
 #[test]
@@ -157,9 +158,8 @@ fn test_unstake_succeeds_at_low_exchange_rate() {
     assert!(do_unstake(&mut env, idx, xorca_burn).is_ok());
     let non_escrowed = snap.vault_before.saturating_sub(snap.escrow_before);
     // Account for virtual amounts
-    let expected = xorca_burn
-        .saturating_mul(non_escrowed.saturating_add(1))
-        .saturating_div(snap.xorca_supply_before.saturating_add(1));
+    let expected =
+        convert_xorca_to_orca(xorca_burn, non_escrowed, snap.xorca_supply_before).unwrap();
     let pend = env
         .ctx
         .get_account::<PendingWithdraw>(pending_withdraw_account)

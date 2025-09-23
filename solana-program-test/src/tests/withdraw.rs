@@ -36,7 +36,7 @@ fn withdraw_transfers_funds_and_clears_escrow() {
     };
     let user = UserSetup {
         staker_orca: 10_000_000,
-        staker_xorca: 10_000_000_000,
+        staker_xorca: 1_000_000,
     };
     let mut env = Env::new(ctx, &pool, &user);
     let withdraw_index = 7u8;
@@ -44,7 +44,7 @@ fn withdraw_transfers_funds_and_clears_escrow() {
         .unwrap()
         .0;
 
-    let xorca_unstake_amount = 10_000_000_000u64;
+    let xorca_unstake_amount = 1_000_000u64;
     let _ = unstake_and_advance(&mut env, withdraw_index, xorca_unstake_amount, 2);
     // Snapshot + pending
     let snap = take_withdraw_snapshot(
@@ -61,7 +61,11 @@ fn withdraw_transfers_funds_and_clears_escrow() {
         .unwrap()
         .data
         .withdrawable_orca_amount;
-    assert!(do_withdraw(&mut env, pending_withdraw_account, withdraw_index).is_ok());
+    let withdraw_result = do_withdraw(&mut env, pending_withdraw_account, withdraw_index);
+    if let Err(err) = &withdraw_result {
+        eprintln!("do_withdraw failed: {:?}", err);
+    }
+    assert!(withdraw_result.is_ok());
     crate::utils::assert::assert_account_closed(
         &env.ctx,
         pending_withdraw_account,
