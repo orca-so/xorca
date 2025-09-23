@@ -15,6 +15,7 @@ yarn unstake <args>
 yarn withdraw <args>
 yarn transfer-orca <args>
 yarn update-mint-authority <args>
+yarn status
 ```
 
 ## 📁 Project Structure
@@ -30,13 +31,61 @@ ts-scripts/
 ├── withdraw.ts         # Withdraw ORCA tokens after cooldown
 ├── transfer-orca.ts    # Transfer ORCA tokens between accounts
 ├── update-xorca-mint-authority.ts # Update xORCA mint authority
+├── status.ts           # Check program status and exchange rates
 ├── keypairs/           # Keypair files (gitignored for security)
 └── README.md           # This file
 ```
 
 ## Scripts
 
-### 1. Initialize Script (`initialize.ts`)
+### 1. Status Script (`status.ts`)
+
+This script displays the current state of the xORCA staking program without requiring any CLI arguments.
+
+#### Usage
+
+```bash
+yarn status
+```
+
+#### What the script displays
+
+- **Account Addresses**: State account, vault account, mint addresses
+- **State Information**: Cool down period, escrowed ORCA amount
+- **Vault Information**: Total ORCA in vault, escrowed vs non-escrowed amounts
+- **xORCA Information**: Total xORCA supply
+- **Exchange Rates**: Current ORCA ↔ xORCA conversion rates (with virtual amounts for DOS protection)
+- **Summary**: Key metrics at a glance
+
+#### Example Output
+
+```
+🔍 Fetching xORCA Staking Program Status...
+============================================================
+📋 Account Addresses:
+State Account: 8RcfsSZakW3JmuYUuz6UZoN6zfGpyhsdNRSdPhqMUft8
+Vault Account: FMZaievvLCmkuxS2E6XTgkWXUejfPXnr7ESYFHkyFr5J
+xORCA Mint: Cz1vQJVwpD1Gzy4PEw6yxKNq7MxbPA8Ac7wBrieUmdGz
+ORCA Mint: 51ipJjMd3aSxyy97du4MDU61GQaUCgehVmyHjfojJpxH
+
+📈 State Information:
+Cool Down Period: 350000 seconds
+Escrowed ORCA Amount: 1800
+
+🏦 Vault Information:
+Total ORCA in Vault: 500000
+Escrowed ORCA: 1800
+Non-Escrowed ORCA: 498200
+
+📊 xORCA Information:
+xORCA Total Supply: 150000
+
+🔄 Exchange Rates:
+ORCA → xORCA Rate: 3.3197868088 (1 ORCA = 3.3197868088 xORCA)
+xORCA → ORCA Rate: 0.3012241622 (1 xORCA = 0.3012241622 ORCA)
+```
+
+### 2. Initialize Script (`initialize.ts`)
 
 This script initializes the xORCA staking program by calling the initialize instruction.
 

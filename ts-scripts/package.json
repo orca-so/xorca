@@ -10,6 +10,7 @@
     "withdraw": "tsx withdraw.ts",
     "transfer-orca": "tsx transfer-orca.ts",
     "update-mint-authority": "tsx update-xorca-mint-authority.ts",
+    "status": "tsx status.ts",
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },
