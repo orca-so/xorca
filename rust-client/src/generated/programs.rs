@@ -9,4 +9,4 @@ use solana_pubkey::{pubkey, Pubkey};
 
 /// `xorca_staking_program` program ID.
 pub const XORCA_STAKING_PROGRAM_ID: Pubkey =
-    pubkey!("5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY");
+    pubkey!("8joqMXgaBjc2gGtPVGdZ2tBMxzRJ8igw2SCZQAPky5CE");

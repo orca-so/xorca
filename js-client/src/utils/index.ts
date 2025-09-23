@@ -19,8 +19,8 @@ import { getTokenDecoder, getMintDecoder } from '@solana-program/token';
 
 const TOKEN_PROGRAM_ADDRESS = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address;
 const ASSOCIATED_TOKEN_PROGRAM_ADDRESS = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address;
-const ORCA_MINT_ADDRESS = 'orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE' as Address;
-const XORCA_MINT_ADDRESS = 'xorcaYqbXUNz3474ubUMJAdu2xgPsew3rUCe5ughT3N' as Address; // TODO: update this
+const ORCA_MINT_ADDRESS = '51ipJjMd3aSxyy97du4MDU61GQaUCgehVmyHjfojJpxH' as Address;
+const XORCA_MINT_ADDRESS = 'Cz1vQJVwpD1Gzy4PEw6yxKNq7MxbPA8Ac7wBrieUmdGz' as Address; // TODO: update this
 
 const DEFAULT_MAX_WITHDRAWALS_TO_SEARCH = 15;
 const WITHDRAW_INDEX_MAX_UINT = 255;

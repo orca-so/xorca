@@ -2,7 +2,7 @@
 
 A Solana program that implements a staking pool model for ORCA with a liquid staking token, xORCA. Users deposit ORCA to receive xORCA proportional to their share of the pool and can later burn xORCA to initiate an unstake with a cooldown, completing withdrawal once the cooldown elapses. The program uses deterministic PDAs for core authorities and relies on SPL Token and Associated Token Account CPIs. The program emits Borsh-serialized events for Stake/Unstake/Withdraw.
 
-— Program Id: 5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY
+— Program Id: 8joqMXgaBjc2gGtPVGdZ2tBMxzRJ8igw2SCZQAPky5CE
 
 - **High-level features**:
   - **Staking model**: Single-sided ORCA deposit; mints xORCA as a proportional share of non-escrowed ORCA in the vault.
@@ -24,9 +24,7 @@ A Solana program that implements a staking pool model for ORCA with a liquid sta
 ### Accounts Overview
 
 - **Primary**
-
   - **State**
-
     - **Purpose**: Global configuration and authority for the staking pool; acts as mint authority for xORCA and as signing authority for vault transfers via PDA.
     - **Lifecycle**: Created during initialization; persistent. Size: 2048 bytes.
     - **Critical fields**:
@@ -83,9 +81,7 @@ graph TD
 ### Instructions Overview
 
 - **Pool/Config Management**
-
   - **Initialize**
-
     - **Preconditions**:
       - `xORCA` mint address must equal `XORCA_MINT_ID`; supply must be 0; mint authority must be the `State` PDA; freeze authority must be unset.
       - `ORCA` mint address must equal `ORCA_MINT_ID`.
@@ -103,9 +99,7 @@ graph TD
     - **Postconditions**: Applies the specified update.
 
 - **Staking Lifecycle**
-
   - **Stake**
-
     - **Preconditions**:
       - Staker signs; staker ORCA ATA has at least `orca_stake_amount`.
       - `State` PDA present and valid; `Vault` ORCA ATA must match ATA derivation for owner=`State` and mint=`ORCA`.
@@ -116,7 +110,6 @@ graph TD
       - Mints xORCA to staker xORCA ATA proportional to pool share: see conversion below.
 
   - **Unstake**
-
     - **Preconditions**:
       - Unstaker signs; unstaker xORCA ATA has at least `xorca_unstake_amount`.
       - `State` PDA present and writable; `Vault` ORCA ATA valid.
@@ -144,13 +137,11 @@ graph TD
 ### Authorization/Permission System
 
 - **Components**
-
   - **Update authority**: `State.update_authority` must sign to call `Set`.
   - **State PDA**: Serves as mint authority for xORCA and authority over the vault; program signs via seeds.
   - **Initial authority constraint**: During `Initialize`, the provided `update_authority_account` must equal a built-in constant; this becomes `State.update_authority`.
 
 - **Validation flow**
-
   - All instructions validate signer roles and writability for relevant accounts.
   - PDAs are checked via seeds and bump reproduction for `State`, `PendingWithdraw`, and the ATA vault address.
   - Token accounts and mints are validated against expected owners and fixed mint addresses.
@@ -182,23 +173,19 @@ graph TD
 ### Security Considerations
 
 - **Authority boundaries**
-
   - Only `update_authority` may change cooldown or rotate itself via `Set`.
   - `State` PDA is the sole authority for minting xORCA and moving ORCA from the vault.
 
 - **Invariants and assertions**
-
   - xORCA mint address fixed; mint authority must be `State`; freeze authority must be unset; initial supply must be zero.
   - ORCA mint address fixed.
   - Vault must be the ATA for owner=`State` and mint=`ORCA`.
   - `escrowed_orca_amount` tracks the sum of all pending withdrawal amounts; increased on `Unstake`, decreased on `Withdraw`.
 
 - **Re-entrancy and CPI**
-
   - Uses standard System/Token/ATA CPIs; no cross-program invocations back into this program; no re-entrancy surfaces identified.
 
 - **Rent and cleanup**
-
   - Program-created accounts are rent-exempt on creation.
   - `PendingWithdraw` is closed on successful `Withdraw`, returning lamports to the user; no lingering transient PDAs expected.
 

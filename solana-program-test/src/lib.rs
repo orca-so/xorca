@@ -28,10 +28,10 @@ pub const JITO_TIP_ADDRESS: Pubkey =
     solana_sdk::pubkey!("96gYZGLnJYVFmbjzopPSU6QiEV5fGqZNyN9nmNhvrZU5");
 pub const TOKEN_PROGRAM_ID: Pubkey =
     solana_sdk::pubkey!("TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA");
-pub const ORCA_ID: Pubkey = solana_sdk::pubkey!("orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE");
-pub const XORCA_ID: Pubkey = solana_sdk::pubkey!("xorcaYqbXUNz3474ubUMJAdu2xgPsew3rUCe5ughT3N");
+pub const ORCA_ID: Pubkey = solana_sdk::pubkey!("51ipJjMd3aSxyy97du4MDU61GQaUCgehVmyHjfojJpxH");
+pub const XORCA_ID: Pubkey = solana_sdk::pubkey!("Cz1vQJVwpD1Gzy4PEw6yxKNq7MxbPA8Ac7wBrieUmdGz");
 pub const XORCA_PROGRAM_ID: Pubkey =
-    solana_sdk::pubkey!("5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY");
+    solana_sdk::pubkey!("8joqMXgaBjc2gGtPVGdZ2tBMxzRJ8igw2SCZQAPky5CE");
 pub const ATA_PROGRAM_ID: Pubkey =
     solana_sdk::pubkey!("ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL");
 // In test mode, we use a different deployer address that we can generate a keypair for
