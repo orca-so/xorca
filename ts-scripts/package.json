@@ -13,6 +13,7 @@
     "update-mint-authority": "tsx update-xorca-mint-authority.ts",
     "pending-withdraws": "tsx pending-withdraws.ts",
     "status": "tsx status.ts",
+    "set": "tsx set.ts",
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },
