@@ -7531,7 +7531,7 @@ dependencies = [
 
 [[package]]
 name = "xorca"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "borsh 0.10.4",
  "ethnum",

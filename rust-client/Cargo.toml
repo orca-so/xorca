@@ -1,7 +1,7 @@
 [package]
 name = "xorca"
 description = "A Rust client library for interacting with the xORCA staking program on Solana."
-version = "0.1.1"
+version = "0.1.2"
 homepage = "https://orca.so"
 repository = "https://github.com/orca-so/xorca"
 license-file = "LICENSE"
