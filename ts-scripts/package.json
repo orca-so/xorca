@@ -15,12 +15,15 @@
     "status": "tsx status.ts",
     "set": "tsx set.ts",
     "generate-keypair": "tsx generate-keypair.ts",
+    "upload-image": "tsx upload-image.ts",
     "build": "tsc --noEmit",
     "lint": "tsc --noEmit"
   },
   "dependencies": {
+    "@irys/sdk": "^0.2.11",
     "@solana/spl-token": "^0.3.0",
     "@solana/web3.js": "^1.87.0",
+    "got": "^14.4.9",
     "tsx": "^4.0.0"
   },
   "devDependencies": {
