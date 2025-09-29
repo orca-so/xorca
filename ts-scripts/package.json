@@ -1,0 +1,30 @@
+{
+  "name": "xorca-ts-scripts",
+  "version": "1.0.0",
+  "description": "TypeScript scripts for xORCA staking operations",
+  "type": "module",
+  "scripts": {
+    "initialize": "tsx initialize.ts",
+    "stake": "tsx stake.ts",
+    "unstake": "tsx unstake.ts",
+    "withdraw": "tsx withdraw.ts",
+    "transfer-orca": "tsx transfer-orca.ts",
+    "transfer-orca-to-vault": "tsx transfer-orca-to-vault.ts",
+    "update-mint-authority": "tsx update-xorca-mint-authority.ts",
+    "pending-withdraws": "tsx pending-withdraws.ts",
+    "status": "tsx status.ts",
+    "set": "tsx set.ts",
+    "generate-keypair": "tsx generate-keypair.ts",
+    "build": "tsc --noEmit",
+    "lint": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@solana/spl-token": "^0.3.0",
+    "@solana/web3.js": "^1.87.0",
+    "tsx": "^4.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
