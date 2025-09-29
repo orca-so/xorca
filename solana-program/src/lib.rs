@@ -11,11 +11,11 @@ pub mod util;
 use pinocchio::pubkey::Pubkey;
 use pinocchio_pubkey::{declare_id, pubkey};
 
-declare_id!("5kyCqwYt8Pk65g3cG45SaBa2CBvjjBuaWiE3ubf2JcwY");
+declare_id!("StaKE6XNKVVhG8Qu9hDJBqCW3eRe7MDGLz17nJZetLT");
 
 // Hardcoded deployer address - only this address can call initialize
 #[cfg(not(feature = "test"))]
-pub const DEPLOYER_ADDRESS: Pubkey = pubkey!("GwH3Hiv5mACLX3ufTw1pFsrhSPon5tdw252DBs4Rx4PV");
+pub const DEPLOYER_ADDRESS: Pubkey = pubkey!("94kZD71sbTKhqhcvY9D9Ra5BsLzKRZgznbBbQpBWmKrT");
 
 // For testing, we use a different deployer address that we can generate a keypair for
 #[cfg(feature = "test")]

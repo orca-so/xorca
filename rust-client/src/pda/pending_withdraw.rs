@@ -22,12 +22,12 @@ mod tests {
         let withdraw_index = 0;
         let (address, _) = find_pending_withdraw_pda(&unstaker, &withdraw_index).unwrap();
         let expected_pending_withdraw_address =
-            pubkey!("54SQRmLZidSyvqDZ9vYdBJAXkMmrMKBpYRpYZuHVTCC3");
+            pubkey!("7hA1R5rPjcj6m7G2HcxnQ82aNumKT9FKQ6ALS2yYXeq6");
         assert_eq!(address, expected_pending_withdraw_address);
         let withdraw_index = 1;
         let (address, _) = find_pending_withdraw_pda(&unstaker, &withdraw_index).unwrap();
         let expected_pending_withdraw_address =
-            pubkey!("48DSoJ1Awrmo8oXSKQAB6JD51uxBW4H5FGtHDs1ZSJhQ");
+            pubkey!("D6i7r2sBNozTvdKuSSE2HdfqPb9sTd7gNd8jsCtR8quW");
         assert_eq!(address, expected_pending_withdraw_address);
     }
 }

@@ -27,7 +27,7 @@ mod tests {
     #[test]
     fn test_find_state_address() {
         let (address, _) = find_state_address().unwrap();
-        let state = pubkey!("AaWLLj3o6WTe5GXT2kv9ee4sDBaRQnFX5cM3pcs4gvWQ");
+        let state = pubkey!("CSqKhyW1cpdyjheAx5HXx4ibcnYrzpL5JywEMAkZixBK");
         assert_eq!(address, state);
     }
 }
