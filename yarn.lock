@@ -1179,6 +1179,21 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@orca-so/xorca@file:../js-client::locator=xorca-ts-scripts%40workspace%3Ats-scripts":
+  version: 0.1.10
+  resolution: "@orca-so/xorca@file:../js-client#../js-client::hash=c5919d&locator=xorca-ts-scripts%40workspace%3Ats-scripts"
+  peerDependencies:
+    "@solana-program/token": ^0.6.0
+    "@solana/kit": ^2.1.0
+  peerDependenciesMeta:
+    "@solana-program/token":
+      optional: false
+    "@solana/kit":
+      optional: false
+  checksum: 10c0/254895f2ff739a98c53c9cb4359718e1d587e5a4be229a288be745af2ef2687286d6956cd00aa46b1f6b45261748a833ddbbfb2b89acf8426e862f72d7e56d7f
+  languageName: node
+  linkType: hard
+
 "@orca-so/xorca@workspace:js-client":
   version: 0.0.0-use.local
   resolution: "@orca-so/xorca@workspace:js-client"
@@ -6562,6 +6577,7 @@ __metadata:
   resolution: "xorca-ts-scripts@workspace:ts-scripts"
   dependencies:
     "@irys/sdk": "npm:^0.2.11"
+    "@orca-so/xorca": "file:../js-client"
     "@solana/spl-token": "npm:^0.3.0"
     "@solana/web3.js": "npm:^1.87.0"
     "@types/node": "npm:^20.0.0"

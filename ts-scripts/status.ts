@@ -2,6 +2,7 @@
 
 import { Connection, PublicKey } from '@solana/web3.js';
 import { getAccount, getMint } from '@solana/spl-token';
+import { getStateDecoder } from '@orca-so/xorca';
 import {
   ORCA_MINT_ADDRESS,
   XORCA_MINT_ADDRESS,
@@ -43,26 +44,40 @@ async function main() {
     console.log(`ORCA Mint: ${ORCA_MINT_ADDRESS.toString()}`);
     console.log('');
 
-    // Fetch state account data
+    // Fetch state account data using SDK decoder
     console.log('📊 Fetching state account data...');
-    const stateAccountInfo = await connection.getAccountInfo(stateAddress);
-    if (!stateAccountInfo) {
-      console.error('❌ State account not found. Program may not be initialized.');
+    let coolDownPeriodS: bigint;
+    let escrowedOrcaAmount: bigint;
+
+    try {
+      const stateAccountInfo = await connection.getAccountInfo(stateAddress);
+      if (!stateAccountInfo) {
+        console.error('❌ State account not found. Program may not be initialized.');
+        return;
+      }
+
+      // Use SDK decoder to parse state data
+      const stateDecoder = getStateDecoder();
+      const stateData = stateDecoder.decode(stateAccountInfo.data);
+
+      console.log('📈 State Information:');
+      console.log(`Cool Down Period: ${stateData.coolDownPeriodS.toString()} seconds`);
+      console.log(`Escrowed ORCA Amount: ${stateData.escrowedOrcaAmount.toString()}`);
+      console.log(`Update Authority: ${stateData.updateAuthority}`);
+      console.log(`Bump: ${stateData.bump}`);
+      console.log(`Vault Bump: ${stateData.vaultBump}`);
+      console.log('');
+
+      // Extract values for calculations
+      coolDownPeriodS = stateData.coolDownPeriodS;
+      escrowedOrcaAmount = stateData.escrowedOrcaAmount;
+    } catch (error) {
+      console.error('❌ Error parsing state account:', error);
+      console.error(
+        '💡 The program may not be initialized. Try running the initialize script first.'
+      );
       return;
     }
-
-    // Parse state data (assuming the state structure from the program)
-    const stateData = stateAccountInfo.data;
-
-    // Read the state fields (adjust offsets based on your actual state structure)
-    // This is a simplified version - you may need to adjust based on your actual state layout
-    const coolDownPeriodS = stateData.readBigInt64LE(8); // Assuming cool_down_period_s is at offset 8
-    const escrowedOrcaAmount = stateData.readBigUInt64LE(16); // Assuming escrowed_orca_amount is at offset 16
-
-    console.log('📈 State Information:');
-    console.log(`Cool Down Period: ${coolDownPeriodS.toString()} seconds`);
-    console.log(`Escrowed ORCA Amount: ${escrowedOrcaAmount.toString()}`);
-    console.log('');
 
     // Fetch vault account data
     console.log('💰 Fetching vault account data...');
