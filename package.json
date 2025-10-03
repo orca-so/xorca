@@ -2,7 +2,6 @@
   "type": "module",
   "packageManager": "yarn@4.9.1",
   "workspaces": [
-    "test-server",
     "js-client",
     "ts-scripts"
   ],

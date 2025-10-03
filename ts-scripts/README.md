@@ -1,6 +1,6 @@
 # xORCA TypeScript Scripts
 
-This directory contains TypeScript scripts for interacting with the xORCA staking program on Solana devnet.
+This directory contains TypeScript scripts for interacting with the xORCA staking program on Solana devnet. These scripts provide a complete interface for all staking operations, program management, and monitoring functionality.
 
 ## 🚀 Quick Start
 
@@ -18,6 +18,9 @@ yarn transfer-orca-to-vault <args>
 yarn update-mint-authority <args>
 yarn pending-withdraws <args>
 yarn status
+yarn set <args>
+yarn generate-keypair
+yarn upload-image
 ```
 
 ## 📁 Project Structure
@@ -25,8 +28,6 @@ yarn status
 ```
 ts-scripts/
 ├── constants.ts          # Centralized constants and configuration
-├── utils.ts             # Common utility functions
-├── errors.ts            # Custom error classes
 ├── initialize.ts        # Initialize the staking program
 ├── stake.ts            # Stake ORCA tokens
 ├── unstake.ts          # Unstake xORCA tokens
@@ -36,6 +37,9 @@ ts-scripts/
 ├── update-xorca-mint-authority.ts # Update xORCA mint authority
 ├── pending-withdraws.ts # Check pending withdraws for a staker
 ├── status.ts           # Check program status and exchange rates
+├── set.ts              # Update program parameters (cooldown, authority)
+├── generate-keypair.ts # Generate new keypairs for testing
+├── upload-image.ts     # Upload images to IPFS
 ├── keypairs/           # Keypair files (gitignored for security)
 └── README.md           # This file
 ```
@@ -629,12 +633,71 @@ The script automatically derives these accounts:
 - Both accounts must be on the same network (devnet)
 - Recipient's ORCA ATA will be created automatically if it doesn't exist
 
+### 7. Set Script (`set.ts`)
+
+This script allows the update authority to modify program parameters such as the cooldown period and update authority.
+
+#### Usage
+
+```bash
+# Update cooldown period
+yarn set <authority-keypair-path> update-cooldown <seconds>
+
+# Update authority
+yarn set <authority-keypair-path> update-authority <new-authority-publickey>
+```
+
+#### Examples
+
+```bash
+# Set cooldown to 1 hour (3600 seconds)
+yarn set keypairs/authority.json update-cooldown 3600
+
+# Update authority to a new address
+yarn set keypairs/authority.json update-authority BQGjVjG8ZJW4m4hXybjLRB367idYyAHWbyjPBeL2w1hq
+```
+
+### 8. Generate Keypair Script (`generate-keypair.ts`)
+
+This script generates new keypairs for testing purposes.
+
+#### Usage
+
+```bash
+yarn generate-keypair <output-filename>
+```
+
+#### Example
+
+```bash
+# Generate a new keypair
+yarn generate-keypair keypairs/new-user.json
+```
+
+### 9. Upload Image Script (`upload-image.ts`)
+
+This script uploads images to IPFS using Irys for decentralized storage.
+
+#### Usage
+
+```bash
+yarn upload-image <image-path>
+```
+
+#### Example
+
+```bash
+# Upload an image to IPFS
+yarn upload-image ./images/logo.png
+```
+
 ## Prerequisites
 
 - Node.js and npm/yarn installed
 - Valid keypair files for the operations
 - The staking program must be deployed
 - The xORCA mint must be created and configured properly
+- For image uploads: Irys network access
 
 ## Network
 

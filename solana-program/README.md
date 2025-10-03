@@ -1,27 +1,29 @@
-### xOrca Staking Program
+# xORCA Staking Program
 
 A Solana program that implements a staking pool model for ORCA with a liquid staking token, xORCA. Users deposit ORCA to receive xORCA proportional to their share of the pool and can later burn xORCA to initiate an unstake with a cooldown, completing withdrawal once the cooldown elapses. The program uses deterministic PDAs for core authorities and relies on SPL Token and Associated Token Account CPIs. The program emits Borsh-serialized events for Stake/Unstake/Withdraw.
 
-— Program Id: StaKE6XNKVVhG8Qu9hDJBqCW3eRe7MDGLz17nJZetLT
+**Program Id**: `StaKE6XNKVVhG8Qu9hDJBqCW3eRe7MDGLz17nJZetLT`
 
-- **High-level features**:
-  - **Staking model**: Single-sided ORCA deposit; mints xORCA as a proportional share of non-escrowed ORCA in the vault.
-  - **Unstake flow**: Burns xORCA, creates a pending withdrawal with a cooldown; user completes withdrawal after the cooldown.
-  - **Cooldowns**: Global cooldown expressed in seconds; set at initialization and updatable by an authority.
-  - **Authorities**: A program-derived `State` account acts as mint authority for xORCA and owner/authority of the ORCA vault; an `update_authority` controls configuration updates.
-  - **Token invariants**: ORCA mint and xORCA mint are fixed to known addresses; xORCA freeze authority must be unset.
-  - **Pinocchio**: Implemented with Pinocchio primitives (account assertions, PDA derivation, CPI invocations).
+## Key Features
 
-### Table of Contents
+- **Liquid Staking**: Single-sided ORCA deposit; mints xORCA as a proportional share of non-escrowed ORCA in the vault
+- **Unstake Flow**: Burns xORCA, creates a pending withdrawal with a cooldown; user completes withdrawal after the cooldown
+- **Cooldown System**: Global cooldown expressed in seconds; set at initialization and updatable by an authority
+- **Authority Management**: A program-derived `State` account acts as mint authority for xORCA and owner/authority of the ORCA vault; an `update_authority` controls configuration updates
+- **Token Invariants**: ORCA mint and xORCA mint are fixed to known addresses; xORCA freeze authority must be unset
+- **Pinocchio Integration**: Implemented with Pinocchio primitives (account assertions, PDA derivation, CPI invocations)
 
-- Accounts Overview (Primary, Derived/Secondary)
-- Account Relationship Diagram
-- Instructions Overview (grouped by lifecycle)
-- Authorization/Permission System
-- State Observability and Indexing
-- Security Considerations
+## Table of Contents
 
-### Accounts Overview
+- [Accounts Overview](#accounts-overview)
+- [Account Relationship Diagram](#account-relationship-diagram)
+- [Instructions Overview](#instructions-overview)
+- [Authorization/Permission System](#authorizationpermission-system)
+- [State Observability and Indexing](#state-observability-and-indexing)
+- [Security Considerations](#security-considerations)
+- [Conversion Details](#conversion-details-for-integrators)
+
+## Accounts Overview
 
 - **Primary**
   - **State**
@@ -56,7 +58,7 @@ A Solana program that implements a staking pool model for ORCA with a liquid sta
     - **Purpose**: Underlying staked asset mint.
     - **Constraints**: Address fixed to `ORCA_MINT_ID`.
 
-### Account Relationship Diagram
+## Account Relationship Diagram
 
 ```mermaid
 graph TD
@@ -78,7 +80,7 @@ graph TD
   XORCA --- State
 ```
 
-### Instructions Overview
+## Instructions Overview
 
 - **Pool/Config Management**
   - **Initialize**
@@ -134,7 +136,7 @@ graph TD
 
 - **CPI usage**: The program invokes System, SPL Token, and Associated Token Account programs. PDA signing uses the `State` seeds.
 
-### Authorization/Permission System
+## Authorization/Permission System
 
 - **Components**
   - **Update authority**: `State.update_authority` must sign to call `Set`.
@@ -150,7 +152,7 @@ graph TD
   - Seed-based address checks prevent replay on wrong addresses.
   - No additional permission gating is present beyond signer checks and the `update_authority` for config changes.
 
-### State Observability and Indexing
+## State Observability and Indexing
 
 - **Events**: The program emits Borsh-serialized events via `sol_log_data`:
   - **Stake**:
@@ -170,7 +172,7 @@ graph TD
   - **xORCA exchange rate**: `vault.amount - state.escrowed_orca_amount` against xORCA total supply.
   - **Participation**: Count of unique stakers inferred from xORCA holders and transactions referencing the program id.
 
-### Security Considerations
+## Security Considerations
 
 - **Authority boundaries**
   - Only `update_authority` may change cooldown or rotate itself via `Set`.
@@ -193,7 +195,7 @@ graph TD
   - Conversion math uses u128 intermediates and checks for overflow.
   - Decimals: ORCA has 6; xORCA has 6. When the pool is empty (`xorca_supply == 0` or `non_escrowed_orca == 0`), stake mints `orca_amount` xORCA (1:1).
 
-### Conversion Details (for integrators)
+## Conversion Details (for integrators)
 
 - **Stake (ORCA -> xORCA)**: If both `xorca_supply` and `non_escrowed_orca` are non-zero:
   - `xorca_to_mint = orca_amount * xorca_supply / non_escrowed_orca`

@@ -1,6 +1,6 @@
 # xORCA Staking Program
 
-A Solana program for staking ORCA tokens with additional features and utilities.
+A Solana program for staking ORCA tokens with liquid staking functionality. Users can stake ORCA tokens to receive xORCA tokens proportional to their share of the pool, and later unstake with a cooldown period.
 
 ## Quick Start with Docker
 
@@ -22,14 +22,23 @@ For more detailed Docker instructions, see [DOCKER.md](./DOCKER.md).
 ## Project Structure
 
 - `solana-program/` - The main Solana program implementation
+  - Implements staking, unstaking, and withdrawal functionality
+  - Uses Pinocchio primitives for account assertions and PDA derivation
+  - Emits Borsh-serialized events for all operations
 - `rust-client/` - Rust client library for interacting with the program
   - `src/generated/` - Auto-generated client code from IDL
   - `src/math/` - Math utility functions (compiled to WASM)
+  - `src/pda/` - Program Derived Address utilities
 - `js-client/` - JavaScript/TypeScript client library
   - `src/generated/` - Auto-generated client code from IDL
   - `src/generated/wasm/` - Generated WASM bindings and TypeScript wrappers
-- `solana-program-test/` - Test suite for the Solana program
-- `scripts/` - Build scripts and utilities
+  - Universal compatibility for browser and Node.js environments
+- `solana-program-test/` - Comprehensive test suite for the Solana program
+  - Integration tests using LiteSVM
+  - Tests for all instructions and edge cases
+- `ts-scripts/` - TypeScript scripts for program interaction
+  - Scripts for staking, unstaking, withdrawing, and program management
+  - Status checking and pending withdrawal monitoring
 - `codama.js` - Code generation script using Codama framework
 
 ## Development
@@ -64,7 +73,6 @@ For Docker-based builds, you only need:
    ```
 
    This will:
-
    - Build the Solana program and generate IDL using shank
    - Generate TypeScript and Rust client code using Codama
    - Build the TypeScript SDK
@@ -112,18 +120,21 @@ The generated code is placed in:
 - `yarn build` - Build everything locally (contract, generate code, build SDKs, format)
 - `yarn build:docker` - Build everything using Docker (no local dependencies needed)
 - `yarn build:contract` - Build the Solana program and generate IDL
+- `yarn build:test` - Build the Solana program with test features and generate IDL
 - `yarn build:ts` - Build the TypeScript SDK only
 - `yarn build:rs` - Build the Rust SDK with WASM features
 - `yarn generate` - Generate client code from the Solana program IDL using Codama
 - `yarn clean` - Clean generated artifacts (generated code, IDL, WASM packages)
 - `yarn fmt` - Format code with Prettier and cargo fmt
+- `yarn test` - Run all tests (TypeScript and Rust)
+- `yarn test:contract` - Build with test features, generate code, and run tests
 
 ### Workspaces
 
 The project uses Yarn workspaces for managing multiple packages:
 
 - `js-client` - The main JavaScript/TypeScript client library (`@orca-so/xorca`)
-- `test-server` - Test server for development (referenced in workspaces)
+- `ts-scripts` - TypeScript scripts for program interaction
 
 ## Documentation
 

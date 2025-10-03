@@ -45,6 +45,20 @@ yarn add @solana/kit @solana-program/token
 
 ### Basic Setup
 
+```typescript
+import { Connection, PublicKey, Transaction } from '@solana/web3.js';
+import {
+  createStakeInstruction,
+  createUnstakeInstruction,
+  createWithdrawInstruction,
+  findStatePda,
+  findPendingWithdrawPda,
+} from '@orca-so/xorca';
+
+const connection = new Connection('https://api.devnet.solana.com');
+const programId = new PublicKey('StaKE6XNKVVhG8Qu9hDJBqCW3eRe7MDGLz17nJZetLT');
+```
+
 ### Staking Operations
 
 ```typescript
@@ -52,11 +66,15 @@ import { createStakeInstruction } from '@orca-so/xorca';
 
 // Create a stake instruction
 const stakeInstruction = createStakeInstruction({
-  stakingPool: stakingPoolPda,
-  user: userPublicKey,
-  userTokenAccount: userTokenAccount,
-  amount: 1000000, // 1 ORCA token (assuming 6 decimals)
-  // ... other required accounts
+  staker: userPublicKey,
+  vault: vaultPda,
+  stakerOrcaAta: stakerOrcaAta,
+  stakerXorcaAta: stakerXorcaAta,
+  xorcaMint: xorcaMint,
+  state: statePda,
+  orcaMint: orcaMint,
+  tokenProgram: TOKEN_PROGRAM_ID,
+  orcaStakeAmount: 1000000, // 1 ORCA token (6 decimals)
 });
 
 // Add to transaction
@@ -70,71 +88,90 @@ import { createUnstakeInstruction } from '@orca-so/xorca';
 
 // Create an unstake instruction
 const unstakeInstruction = createUnstakeInstruction({
-  stakingPool: stakingPoolPda,
-  user: userPublicKey,
-  userTokenAccount: userTokenAccount,
-  amount: 500000, // 0.5 ORCA tokens
-  // ... other required accounts
+  unstaker: userPublicKey,
+  state: statePda,
+  vault: vaultPda,
+  pendingWithdraw: pendingWithdrawPda,
+  unstakerXorcaAta: unstakerXorcaAta,
+  xorcaMint: xorcaMint,
+  orcaMint: orcaMint,
+  systemProgram: SystemProgram.programId,
+  tokenProgram: TOKEN_PROGRAM_ID,
+  xorcaUnstakeAmount: 500000, // 0.5 xORCA tokens
+  withdrawIndex: 0,
 });
 
 // Add to transaction
 transaction.add(unstakeInstruction);
 ```
 
-### Claiming Rewards
+### Withdrawing from Pending Withdrawals
 
 ```typescript
-import { createClaimInstruction } from '@orca-so/xorca';
+import { createWithdrawInstruction } from '@orca-so/xorca';
 
-// Create a claim instruction
-const claimInstruction = createClaimInstruction({
-  stakingPool: stakingPoolPda,
-  pendingClaim: pendingClaimPda,
-  user: userPublicKey,
-  // ... other required accounts
+// Create a withdraw instruction
+const withdrawInstruction = createWithdrawInstruction({
+  unstaker: userPublicKey,
+  state: statePda,
+  pendingWithdraw: pendingWithdrawPda,
+  unstakerOrcaAta: unstakerOrcaAta,
+  vault: vaultPda,
+  orcaMint: orcaMint,
+  systemProgram: SystemProgram.programId,
+  tokenProgram: TOKEN_PROGRAM_ID,
+  withdrawIndex: 0,
 });
 
 // Add to transaction
-transaction.add(claimInstruction);
+transaction.add(withdrawInstruction);
 ```
 
 ### PDA Derivation
 
 ```typescript
-import { findStakingPoolPda, findPendingClaimPda, findPendingWithdrawPda } from '@orca-so/xorca';
+import { findStatePda, findPendingWithdrawPda } from '@orca-so/xorca';
 
-// Derive staking pool PDA
-const [stakingPoolPda, stakingPoolBump] = findStakingPoolPda({
+// Derive state PDA
+const [statePda, stateBump] = findStatePda({
   programId,
-});
-
-// Derive pending claim PDA
-const [pendingClaimPda, pendingClaimBump] = findPendingClaimPda({
-  programId,
-  user: userPublicKey,
-  stakingPool: stakingPoolPda,
 });
 
 // Derive pending withdraw PDA
 const [pendingWithdrawPda, pendingWithdrawBump] = findPendingWithdrawPda({
   programId,
-  user: userPublicKey,
-  stakingPool: stakingPoolPda,
+  unstaker: userPublicKey,
+  withdrawIndex: 0,
 });
+
+// Derive vault ATA (Associated Token Account for state + ORCA mint)
+const vaultPda = getAssociatedTokenAddressSync(
+  orcaMint,
+  statePda,
+  true // allowOwnerOffCurve
+);
 ```
 
 ### Account Data Deserialization
 
 ```typescript
-import { StakingPool, PendingClaim } from '@orca-so/xorca';
+import { State, PendingWithdraw } from '@orca-so/xorca';
 
-// Fetch and deserialize staking pool account
-const stakingPoolAccount = await connection.getAccountInfo(stakingPoolPda);
-const stakingPool = StakingPool.fromAccountInfo(stakingPoolAccount.data);
+// Fetch and deserialize state account
+const stateAccount = await connection.getAccountInfo(statePda);
+const state = State.fromAccountInfo(stateAccount.data);
 
 // Access account fields
-console.log('Total staked:', stakingPool.totalStaked.toString());
-console.log('Reward rate:', stakingPool.rewardRate.toString());
+console.log('Cool down period:', state.coolDownPeriodS.toString());
+console.log('Escrowed ORCA amount:', state.escrowedOrcaAmount.toString());
+console.log('Update authority:', state.updateAuthority.toString());
+
+// Fetch and deserialize pending withdraw account
+const pendingWithdrawAccount = await connection.getAccountInfo(pendingWithdrawPda);
+const pendingWithdraw = PendingWithdraw.fromAccountInfo(pendingWithdrawAccount.data);
+
+console.log('Withdrawable ORCA amount:', pendingWithdraw.withdrawableOrcaAmount.toString());
+console.log('Withdrawable timestamp:', pendingWithdraw.withdrawableTimestamp.toString());
 ```
 
 ## 📋 API Reference
@@ -143,21 +180,18 @@ console.log('Reward rate:', stakingPool.rewardRate.toString());
 
 The client provides type-safe builders for all program instructions:
 
-- `createInitializeInstruction` - Initialize a new staking pool
-- `createStakeInstruction` - Stake ORCA tokens
-- `createUnstakeInstruction` - Unstake ORCA tokens
-- `createClaimInstruction` - Claim staking rewards
-- `createWithdrawInstruction` - Withdraw pending claims
-- `createCancelStakeInstruction` - Cancel a pending stake
-- `createSetInstruction` - Update pool parameters
+- `createInitializeInstruction` - Initialize the staking program
+- `createStakeInstruction` - Stake ORCA tokens to receive xORCA
+- `createUnstakeInstruction` - Unstake xORCA tokens (creates pending withdrawal)
+- `createWithdrawInstruction` - Withdraw ORCA from pending withdrawal after cooldown
+- `createSetInstruction` - Update program parameters (cooldown period, authority)
 
 ### Account Types
 
 The client includes all account types from the program:
 
-- `StakingPool` - Main staking pool account
-- `PendingClaim` - Pending reward claims
-- `PendingWithdraw` - Pending withdrawals
+- `State` - Main program state account (PDA)
+- `PendingWithdraw` - Pending withdrawal accounts for unstaking
 
 ### Error Handling
 
@@ -177,6 +211,12 @@ try {
         break;
       case 'InvalidAccount':
         console.error('Invalid account provided');
+        break;
+      case 'CooldownNotElapsed':
+        console.error('Cooldown period has not elapsed');
+        break;
+      case 'InvalidAuthority':
+        console.error('Invalid authority provided');
         break;
       default:
         console.error('Program error:', error.message);
