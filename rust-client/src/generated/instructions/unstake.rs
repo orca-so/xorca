@@ -81,8 +81,8 @@ impl Unstake {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = borsh::to_vec(&UnstakeInstructionData::new()).unwrap();
-        let mut args = borsh::to_vec(&args).unwrap();
+        let mut data = UnstakeInstructionData::new().try_to_vec().unwrap();
+        let mut args = args.try_to_vec().unwrap();
         data.append(&mut args);
 
         solana_instruction::Instruction {
@@ -103,6 +103,10 @@ impl UnstakeInstructionData {
     pub fn new() -> Self {
         Self { discriminator: 1 }
     }
+
+    pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
+        borsh::to_vec(self)
+    }
 }
 
 impl Default for UnstakeInstructionData {
@@ -116,6 +120,12 @@ impl Default for UnstakeInstructionData {
 pub struct UnstakeInstructionArgs {
     pub xorca_unstake_amount: u64,
     pub withdraw_index: u8,
+}
+
+impl UnstakeInstructionArgs {
+    pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
+        borsh::to_vec(self)
+    }
 }
 
 /// Instruction builder for `Unstake`.
@@ -404,8 +414,8 @@ impl<'a, 'b> UnstakeCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = borsh::to_vec(&UnstakeInstructionData::new()).unwrap();
-        let mut args = borsh::to_vec(&self.__args).unwrap();
+        let mut data = UnstakeInstructionData::new().try_to_vec().unwrap();
+        let mut args = self.__args.try_to_vec().unwrap();
         data.append(&mut args);
 
         let instruction = solana_instruction::Instruction {
