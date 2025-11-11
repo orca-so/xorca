@@ -1,7 +1,7 @@
 {
   "name": "@orca-so/xorca",
   "description": "The xORCA JS client for interacting with the xORCA staking program on Solana.",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "license": "CUSTOM",
   "keywords": [
     "solana",
