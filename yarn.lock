@@ -1180,17 +1180,17 @@ __metadata:
   linkType: hard
 
 "@orca-so/xorca@file:../js-client::locator=xorca-ts-scripts%40workspace%3Ats-scripts":
-  version: 0.1.10
-  resolution: "@orca-so/xorca@file:../js-client#../js-client::hash=c5919d&locator=xorca-ts-scripts%40workspace%3Ats-scripts"
+  version: 0.1.11
+  resolution: "@orca-so/xorca@file:../js-client#../js-client::hash=8c4ff6&locator=xorca-ts-scripts%40workspace%3Ats-scripts"
   peerDependencies:
     "@solana-program/token": ^0.6.0
-    "@solana/kit": ^2.1.0
+    "@solana/kit": ^3.0.0
   peerDependenciesMeta:
     "@solana-program/token":
       optional: false
     "@solana/kit":
       optional: false
-  checksum: 10c0/254895f2ff739a98c53c9cb4359718e1d587e5a4be229a288be745af2ef2687286d6956cd00aa46b1f6b45261748a833ddbbfb2b89acf8426e862f72d7e56d7f
+  checksum: 10c0/1fe0a49e6004d38812b2984a8548eb264fdf9921aae3d619c553a285f3cfe8259e83923d80e2b9c5aa03c32656bf53dfca1c232f186998baf2656a2c3594178b
   languageName: node
   linkType: hard
 
