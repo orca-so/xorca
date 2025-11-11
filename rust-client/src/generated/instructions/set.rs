@@ -40,8 +40,8 @@ impl Set {
             false,
         ));
         accounts.extend_from_slice(remaining_accounts);
-        let mut data = SetInstructionData::new().try_to_vec().unwrap();
-        let mut args = args.try_to_vec().unwrap();
+        let mut data = borsh::to_vec(&SetInstructionData::new()).unwrap();
+        let mut args = borsh::to_vec(&args).unwrap();
         data.append(&mut args);
 
         solana_instruction::Instruction {
@@ -62,10 +62,6 @@ impl SetInstructionData {
     pub fn new() -> Self {
         Self { discriminator: 4 }
     }
-
-    pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
-        borsh::to_vec(self)
-    }
 }
 
 impl Default for SetInstructionData {
@@ -78,12 +74,6 @@ impl Default for SetInstructionData {
 #[cfg_attr(feature = "serde", derive(serde::Serialize, serde::Deserialize))]
 pub struct SetInstructionArgs {
     pub instruction_data: StateUpdateInstruction,
-}
-
-impl SetInstructionArgs {
-    pub(crate) fn try_to_vec(&self) -> Result<Vec<u8>, std::io::Error> {
-        borsh::to_vec(self)
-    }
 }
 
 /// Instruction builder for `Set`.
@@ -227,8 +217,8 @@ impl<'a, 'b> SetCpi<'a, 'b> {
                 is_writable: remaining_account.2,
             })
         });
-        let mut data = SetInstructionData::new().try_to_vec().unwrap();
-        let mut args = self.__args.try_to_vec().unwrap();
+        let mut data = borsh::to_vec(&SetInstructionData::new()).unwrap();
+        let mut args = borsh::to_vec(&self.__args).unwrap();
         data.append(&mut args);
 
         let instruction = solana_instruction::Instruction {
