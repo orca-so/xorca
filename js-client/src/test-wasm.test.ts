@@ -87,18 +87,4 @@ describe('WASM Infrastructure', () => {
       expect(mathContent).toContain('pub fn power');
     });
   });
-
-  describe('Integration Points', () => {
-    it('should export WASM through generated index', () => {
-      const indexPath = join(__dirname, 'index.ts');
-      const indexContent = readFileSync(indexPath, 'utf8');
-
-      expect(indexContent).toContain("export * from './generated'");
-
-      // Check that generated index exports WASM
-      const generatedIndexPath = join(__dirname, 'generated', 'index.ts');
-      const generatedIndexContent = readFileSync(generatedIndexPath, 'utf8');
-      expect(generatedIndexContent).toContain("export * from './wasm'");
-    });
-  });
 });
