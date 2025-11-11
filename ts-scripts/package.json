@@ -21,7 +21,7 @@
   },
   "dependencies": {
     "@irys/sdk": "^0.2.11",
-    "@orca-so/xorca": "file:../js-client",
+    "@orca-so/xorca": "workspace:*",
     "@solana/spl-token": "^0.3.0",
     "@solana/web3.js": "^1.87.0",
     "got": "^14.4.9",
