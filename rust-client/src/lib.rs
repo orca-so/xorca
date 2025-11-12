@@ -43,6 +43,8 @@ mod generated;
 #[cfg(feature = "wasm")]
 mod math;
 pub mod pda;
+#[cfg(feature = "fetch")]
+pub mod utils;
 
 pub use generated::accounts::*;
 pub use generated::errors::*;
@@ -60,3 +62,6 @@ pub use pda::*;
 
 #[cfg(feature = "wasm")]
 pub use math::*;
+
+#[cfg(feature = "fetch")]
+pub use utils::*;
