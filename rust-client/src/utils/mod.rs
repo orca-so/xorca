@@ -1,6 +1,7 @@
+use crate::generated::accounts::{fetch_all_maybe_pending_withdraw, fetch_state};
+use crate::generated::shared;
 use crate::{
-    fetch_all_maybe_pending_withdraw, fetch_state, find_orca_vault_address,
-    find_pending_withdraw_pda, find_state_address, PendingWithdraw, State,
+    find_orca_vault_address, find_pending_withdraw_pda, find_state_address, PendingWithdraw, State,
 };
 use solana_client::rpc_client::RpcClient;
 use solana_program_pack::Pack;
@@ -96,8 +97,8 @@ pub fn fetch_pending_withdraws_for_staker(
     let pending_withdraws: Vec<PendingWithdraw> = maybe_accounts
         .into_iter()
         .filter_map(|maybe_account| match maybe_account {
-            crate::shared::MaybeAccount::Exists(decoded) => Some(decoded.data),
-            crate::shared::MaybeAccount::NotFound(_) => None,
+            shared::MaybeAccount::Exists(decoded) => Some(decoded.data),
+            shared::MaybeAccount::NotFound(_) => None,
         })
         .collect();
 
@@ -204,6 +205,10 @@ pub fn fetch_staking_exchange_rate(rpc: &RpcClient) -> Result<StakingExchangeRat
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_utils::make_mocked_client_from_fixtures;
+    use solana_pubkey::Pubkey;
+    use std::path::PathBuf;
+    use std::str::FromStr;
 
     #[test]
     fn test_constants() {
@@ -216,5 +221,71 @@ mod tests {
         assert!(Pubkey::from_str(ORCA_MINT_ADDRESS).is_ok());
         assert!(Pubkey::from_str(XORCA_MINT_ADDRESS).is_ok());
         assert!(Pubkey::from_str(TOKEN_PROGRAM_ADDRESS).is_ok());
+    }
+
+    fn fixtures_path() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("src")
+            .join("test_utils")
+            .join("fixtures")
+            .join("accounts.json")
+    }
+
+    #[test]
+    fn test_fetch_state_and_cooldown_unit() {
+        let rpc = make_mocked_client_from_fixtures(&fixtures_path()).expect("mock rpc");
+        let state = fetch_state_account_data(&rpc).expect("state");
+        assert_eq!(state.cool_down_period_s, 3600);
+        assert_eq!(state.escrowed_orca_amount, 5_000_000_000);
+        let cd = fetch_state_account_cool_down_period_s(&rpc).expect("cooldown");
+        assert_eq!(cd, 3600);
+    }
+
+    #[test]
+    fn test_fetch_vault_state_and_xorca_supply_unit() {
+        let rpc = make_mocked_client_from_fixtures(&fixtures_path()).expect("mock rpc");
+        let vs = fetch_vault_state(&rpc).expect("vault");
+        let orca_mint = Pubkey::from_str(ORCA_MINT_ADDRESS).unwrap();
+        assert_eq!(vs.mint, orca_mint);
+        assert_eq!(vs.amount, 8_000_000_000);
+        let supply = fetch_xorca_mint_supply(&rpc).expect("supply");
+        assert_eq!(supply, 10_000_000_000);
+    }
+
+    #[test]
+    fn test_fetch_pending_withdraws_some_missing_unit() {
+        let rpc = make_mocked_client_from_fixtures(&fixtures_path()).expect("mock rpc");
+        let staker =
+            Pubkey::from_str("9GJeoK3Qn2p8Rq6i7AbQm7x1SE7K75Eo3VdFUSf1xZ4i").expect("staker");
+        let pw = fetch_pending_withdraws_for_staker(&rpc, &staker, Some(6)).expect("pending");
+        assert_eq!(pw.len(), 3);
+        // Confirm one of them corresponds to index 2 and correct unstaker
+        assert!(pw
+            .iter()
+            .any(|p| p.withdraw_index == 2 && p.unstaker == staker));
+        // Ensure an absent index (e.g., 1) is not present
+        assert!(!pw.iter().any(|p| p.withdraw_index == 1));
+    }
+
+    #[test]
+    fn test_fetch_pending_withdraws_respects_max_limit_unit() {
+        // Uses existing fixture (indices 0,2,4 present). With max=2 we query indices [0,1],
+        // so only index 0 can be returned and index 2 must not appear.
+        let rpc = make_mocked_client_from_fixtures(&fixtures_path()).expect("mock rpc");
+        let staker = Pubkey::from_str("9GJeoK3Qn2p8Rq6i7AbQm7x1SE7K75Eo3VdFUSf1xZ4i").unwrap();
+        let pw = fetch_pending_withdraws_for_staker(&rpc, &staker, Some(2)).expect("pending");
+        assert_eq!(pw.len(), 1, "only index 0 exists within first two indices");
+        assert!(pw.iter().any(|p| p.withdraw_index == 0));
+        assert!(!pw.iter().any(|p| p.withdraw_index == 2));
+    }
+
+    #[test]
+    fn test_staking_exchange_rate_ok_unit() {
+        let rpc = make_mocked_client_from_fixtures(&fixtures_path()).expect("mock rpc");
+        let rate = fetch_staking_exchange_rate(&rpc).expect("rate");
+        // numerator = vault.amount - state.escrowed_orca_amount = 8e9 - 5e9 = 3e9
+        assert_eq!(rate.numerator, 3_000_000_000);
+        // denominator = xorca supply = 10e9
+        assert_eq!(rate.denominator, 10_000_000_000);
     }
 }

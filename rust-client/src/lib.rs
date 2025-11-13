@@ -65,3 +65,6 @@ pub use math::*;
 
 #[cfg(feature = "fetch")]
 pub use utils::*;
+
+#[cfg(test)]
+pub mod test_utils;
