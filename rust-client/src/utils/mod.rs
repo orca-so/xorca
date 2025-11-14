@@ -10,7 +10,6 @@ use spl_token_interface::state::{Account, Mint};
 use std::str::FromStr;
 
 pub const DEFAULT_MAX_WITHDRAWALS_TO_SEARCH: u8 = 15;
-pub const WITHDRAW_INDEX_MAX_UINT: u8 = 255;
 pub const ORCA_MINT_ADDRESS: &str = "orcaEKTdK7LKz57vaAYr9QeNsVEPfiu6QeMU1kektZE";
 pub const XORCA_MINT_ADDRESS: &str = "xorcaYqbXUNz3474ubUMJAdu2xgPsew3rUCe5ughT3N";
 pub const TOKEN_PROGRAM_ADDRESS: &str = "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA";
@@ -213,7 +212,6 @@ mod tests {
     #[test]
     fn test_constants() {
         assert_eq!(DEFAULT_MAX_WITHDRAWALS_TO_SEARCH, 15);
-        assert_eq!(WITHDRAW_INDEX_MAX_UINT, 255);
     }
 
     #[test]
