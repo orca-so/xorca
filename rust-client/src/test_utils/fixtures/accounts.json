@@ -1,0 +1,19 @@
+{
+  "staker": "9GJeoK3Qn2p8Rq6i7AbQm7x1SE7K75Eo3VdFUSf1xZ4i",
+  "pending_indices_present": [0, 2, 4],
+  "state": {
+    "cool_down_period_s": 3600,
+    "escrowed_orca_amount": 5000000000,
+    "update_authority": "3r5cY3J2E6qQ8C2Z8o5C7g9u1Yf4Wg8n2R5sH8d1K3Lm"
+  },
+  "vault": {
+    "owner": "2N9G2eE2R8s9Y6Q3L7u1C5v8J4w2T6z9P1m3B7k5H8xq",
+    "amount": 8000000000
+  },
+  "xorca_mint": {
+    "supply": 10000000000,
+    "decimals": 6
+  }
+}
+
+
