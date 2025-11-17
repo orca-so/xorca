@@ -73,18 +73,18 @@ pub fn fetch_state_account_cool_down_period_s(rpc: &RpcClient) -> Result<i64, Pr
 ///
 /// # Errors
 /// Returns an error if:
-/// - `max_withdrawals_to_search` is out of range (0-255) or not an integer
-/// - Any RPC call fails
+/// Any RPC call fails
 pub fn fetch_pending_withdraws_for_staker(
     rpc: &RpcClient,
     staker: &Pubkey,
     max_withdrawals_to_search: Option<u8>,
 ) -> Result<Vec<PendingWithdraw>, ProgramError> {
-    let max_withdrawals = max_withdrawals_to_search.unwrap_or(DEFAULT_MAX_WITHDRAWALS_TO_SEARCH);
+    let max_withdrawals_to_search =
+        max_withdrawals_to_search.unwrap_or(DEFAULT_MAX_WITHDRAWALS_TO_SEARCH);
 
     // Generate all potential pending withdraw addresses
     let mut addresses = Vec::new();
-    for i in 0..max_withdrawals {
+    for i in 0..max_withdrawals_to_search {
         let (address, _) = find_pending_withdraw_pda(staker, &i)?;
         addresses.push(address);
     }
