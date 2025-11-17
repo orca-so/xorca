@@ -12,9 +12,7 @@ use solana_program::program_option::COption;
 use solana_program_pack::Pack;
 use solana_pubkey::Pubkey;
 use spl_token_interface::state::{Account as TokenAccount, AccountState, Mint};
-use std::collections::HashMap;
-use std::path::Path;
-use std::str::FromStr;
+use std::{collections::HashMap, path::Path, str::FromStr, u8};
 
 use crate::{
     find_orca_vault_address, find_pending_withdraw_pda, find_state_address, PendingWithdraw, State,
@@ -146,7 +144,7 @@ impl Fixtures {
         );
 
         // Pending withdraw PDAs
-        for idx in 0u8..crate::utils::WITHDRAW_INDEX_MAX_UINT {
+        for idx in 0u8..u8::MAX {
             if !json.pending_indices_present.contains(&idx) {
                 continue;
             }

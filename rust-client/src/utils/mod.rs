@@ -3,7 +3,9 @@ use crate::generated::shared;
 use crate::{
     find_orca_vault_address, find_pending_withdraw_pda, find_state_address, PendingWithdraw, State,
 };
+use anyhow::Context;
 use solana_client::rpc_client::RpcClient;
+use solana_program_error::ProgramError;
 use solana_program_pack::Pack;
 use solana_pubkey::Pubkey;
 use spl_token_interface::state::{Account, Mint};
@@ -38,9 +40,8 @@ pub struct StakingExchangeRate {
 ///
 /// # Errors
 /// Returns an error if the state account is not found or cannot be decoded
-pub fn fetch_state_account_data(rpc: &RpcClient) -> Result<State, std::io::Error> {
-    let (state_address, _) = find_state_address()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+pub fn fetch_state_account_data(rpc: &RpcClient) -> Result<State, ProgramError> {
+    let (state_address, _) = find_state_address()?;
     let decoded = fetch_state(rpc, &state_address)?;
     Ok(decoded.data)
 }
@@ -55,7 +56,7 @@ pub fn fetch_state_account_data(rpc: &RpcClient) -> Result<State, std::io::Error
 ///
 /// # Errors
 /// Returns an error if the state account cannot be fetched
-pub fn fetch_state_account_cool_down_period_s(rpc: &RpcClient) -> Result<i64, std::io::Error> {
+pub fn fetch_state_account_cool_down_period_s(rpc: &RpcClient) -> Result<i64, ProgramError> {
     let state = fetch_state_account_data(rpc)?;
     Ok(state.cool_down_period_s)
 }
@@ -78,14 +79,13 @@ pub fn fetch_pending_withdraws_for_staker(
     rpc: &RpcClient,
     staker: &Pubkey,
     max_withdrawals_to_search: Option<u8>,
-) -> Result<Vec<PendingWithdraw>, std::io::Error> {
+) -> Result<Vec<PendingWithdraw>, ProgramError> {
     let max_withdrawals = max_withdrawals_to_search.unwrap_or(DEFAULT_MAX_WITHDRAWALS_TO_SEARCH);
 
     // Generate all potential pending withdraw addresses
     let mut addresses = Vec::new();
     for i in 0..max_withdrawals {
-        let (address, _) = find_pending_withdraw_pda(staker, &i)
-            .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+        let (address, _) = find_pending_withdraw_pda(staker, &i)?;
         addresses.push(address);
     }
 
@@ -114,25 +114,17 @@ pub fn fetch_pending_withdraws_for_staker(
 ///
 /// # Errors
 /// Returns an error if the vault account cannot be found or decoded
-pub fn fetch_vault_state(rpc: &RpcClient) -> Result<VaultState, std::io::Error> {
-    let (state_address, _) = find_state_address()
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+pub fn fetch_vault_state(rpc: &RpcClient) -> Result<VaultState, anyhow::Error> {
+    let (state_address, _) = find_state_address()?;
+    let token_program = Pubkey::from_str(TOKEN_PROGRAM_ADDRESS)?;
+    let orca_mint = Pubkey::from_str(ORCA_MINT_ADDRESS)?;
 
-    let token_program = Pubkey::from_str(TOKEN_PROGRAM_ADDRESS)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e.to_string()))?;
-    let orca_mint = Pubkey::from_str(ORCA_MINT_ADDRESS)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e.to_string()))?;
+    let (vault_address, _) = find_orca_vault_address(&state_address, &token_program, &orca_mint)?;
 
-    let (vault_address, _) = find_orca_vault_address(&state_address, &token_program, &orca_mint)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
-
-    let account = rpc
-        .get_account(&vault_address)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+    let account = rpc.get_account(&vault_address)?;
 
     // Decode the token account data
-    let token_account = Account::unpack(&account.data)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
+    let token_account = Account::unpack(&account.data)?;
 
     Ok(VaultState {
         address: vault_address,
@@ -152,17 +144,13 @@ pub fn fetch_vault_state(rpc: &RpcClient) -> Result<VaultState, std::io::Error> 
 ///
 /// # Errors
 /// Returns an error if the xORCA mint account cannot be found or decoded
-pub fn fetch_xorca_mint_supply(rpc: &RpcClient) -> Result<u64, std::io::Error> {
-    let xorca_mint = Pubkey::from_str(XORCA_MINT_ADDRESS)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidInput, e.to_string()))?;
+pub fn fetch_xorca_mint_supply(rpc: &RpcClient) -> Result<u64, anyhow::Error> {
+    let xorca_mint = Pubkey::from_str(XORCA_MINT_ADDRESS)?;
 
-    let account = rpc
-        .get_account(&xorca_mint)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e.to_string()))?;
+    let account = rpc.get_account(&xorca_mint)?;
 
     // Decode the mint account data
-    let mint = Mint::unpack(&account.data)
-        .map_err(|e| std::io::Error::new(std::io::ErrorKind::InvalidData, e.to_string()))?;
+    let mint = Mint::unpack(&account.data)?;
 
     Ok(mint.supply)
 }
@@ -181,18 +169,13 @@ pub fn fetch_xorca_mint_supply(rpc: &RpcClient) -> Result<u64, std::io::Error> {
 ///
 /// # Errors
 /// Returns an error if any of the required data cannot be fetched
-pub fn fetch_staking_exchange_rate(rpc: &RpcClient) -> Result<StakingExchangeRate, std::io::Error> {
+pub fn fetch_staking_exchange_rate(rpc: &RpcClient) -> Result<StakingExchangeRate, anyhow::Error> {
     let state = fetch_state_account_data(rpc)?;
     let vault = fetch_vault_state(rpc)?;
     let numerator = vault
         .amount
         .checked_sub(state.escrowed_orca_amount)
-        .ok_or_else(|| {
-            std::io::Error::new(
-                std::io::ErrorKind::InvalidData,
-                "Vault amount is less than escrowed amount",
-            )
-        })?;
+        .with_context(|| "Vault amount is less than escrowed amount")?;
     let denominator = fetch_xorca_mint_supply(rpc)?;
 
     Ok(StakingExchangeRate {
