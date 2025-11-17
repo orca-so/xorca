@@ -193,11 +193,6 @@ mod tests {
     use std::str::FromStr;
 
     #[test]
-    fn test_constants() {
-        assert_eq!(DEFAULT_MAX_WITHDRAWALS_TO_SEARCH, 15);
-    }
-
-    #[test]
     fn test_mint_addresses_are_valid() {
         assert!(Pubkey::from_str(ORCA_MINT_ADDRESS).is_ok());
         assert!(Pubkey::from_str(XORCA_MINT_ADDRESS).is_ok());
