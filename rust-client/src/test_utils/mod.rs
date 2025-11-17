@@ -11,12 +11,14 @@ use solana_client::rpc_sender::{RpcSender, RpcTransportStats};
 use solana_program::program_option::COption;
 use solana_program_pack::Pack;
 use solana_pubkey::Pubkey;
+use solana_sdk::commitment_config::CommitmentConfig;
 use spl_token_interface::state::{Account as TokenAccount, AccountState, Mint};
 use std::{collections::HashMap, path::Path, str::FromStr, u8};
 
 use crate::{
-    find_orca_vault_address, find_pending_withdraw_pda, find_state_address, PendingWithdraw, State,
-    XORCA_STAKING_PROGRAM_ID,
+    find_orca_vault_address, find_pending_withdraw_pda, find_state_address,
+    utils::{ORCA_MINT_ADDRESS, TOKEN_PROGRAM_ADDRESS, XORCA_MINT_ADDRESS},
+    PendingWithdraw, State, XORCA_STAKING_PROGRAM_ID,
 };
 
 #[derive(Debug, Deserialize)]
@@ -66,10 +68,10 @@ impl Fixtures {
         let staker = Pubkey::from_str(&json.staker)?;
         let update_authority = Pubkey::from_str(&json.state.update_authority)?;
         let (state_pda, _) = find_state_address()?;
-        let token_program = Pubkey::from_str(crate::utils::TOKEN_PROGRAM_ADDRESS)?;
-        let orca_mint = Pubkey::from_str(crate::utils::ORCA_MINT_ADDRESS)?;
+        let token_program = Pubkey::from_str(TOKEN_PROGRAM_ADDRESS)?;
+        let orca_mint = Pubkey::from_str(ORCA_MINT_ADDRESS)?;
         let (vault_pda, _) = find_orca_vault_address(&state_pda, &token_program, &orca_mint)?;
-        let xorca_mint = Pubkey::from_str(crate::utils::XORCA_MINT_ADDRESS)?;
+        let xorca_mint = Pubkey::from_str(XORCA_MINT_ADDRESS)?;
 
         let mut accounts: HashMap<Pubkey, AccountBytes> = HashMap::new();
 
@@ -246,8 +248,6 @@ impl RpcSender for MockSender {
 pub fn make_mocked_client_from_fixtures(path: &Path) -> anyhow::Result<RpcClient> {
     let fixtures = Fixtures::load_from_file(path)?;
     let sender = MockSender::new(fixtures);
-    let config = RpcClientConfig::with_commitment(
-        solana_sdk::commitment_config::CommitmentConfig::confirmed(),
-    );
+    let config = RpcClientConfig::with_commitment(CommitmentConfig::confirmed());
     Ok(RpcClient::new_sender(sender, config))
 }
