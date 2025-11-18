@@ -50,16 +50,14 @@ export default defineConfig(({ mode }) => {
     },
     resolve: {
       alias: {
-        src: resolve("src/"),
+        src: resolve('src/'),
         // resolve.conditions doesn't work well for @solana/assersions (and other @solana/* packages)
         // To avoid the following error:
         // [SolanaError]: Cryptographic operations are only allowed in secure browser contexts. Read more here: https://developer.mozilla.org/en-US/docs/Web/Security/Secure_Contexts.
-        "@solana/assertions":
-          mode === "node"
-            ? resolve("../node_modules/@solana/assertions/dist/index.node.mjs")
-            : resolve(
-              "../node_modules/@solana/assertions/dist/index.browser.mjs",
-            ),
+        '@solana/assertions':
+          mode === 'node'
+            ? resolve('../node_modules/@solana/assertions/dist/index.node.mjs')
+            : resolve('../node_modules/@solana/assertions/dist/index.browser.mjs'),
       },
     },
     test: {
