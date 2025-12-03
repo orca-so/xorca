@@ -5,7 +5,8 @@ services:
     image: solanafoundation/solana-verifiable-build:2.2.1
     working_dir: /usr/src/xorca
     command: >
-      sh -c "cargo build-sbf --verbose --force-tools-install
+      sh -c "cargo install shank-cli --quiet || true
+      && cargo build-sbf --verbose --force-tools-install
       && shank idl -o target/idl -r solana-program"
     profiles: [dev, test, build, publish]
     volumes:
@@ -57,7 +58,7 @@ services:
       dockerfile: Dockerfile
     working_dir: /usr/src/xorca
     command: >
-      sh -c "yarn install --frozen-lockfile
+      sh -c "yarn install --immutable
       && yarn workspace @orca-so/xorca build
       && yarn workspace @orca-so/xorca fmt
       && yarn fmt"
@@ -161,7 +162,7 @@ services:
       dockerfile: Dockerfile
     working_dir: /usr/src/xorca
     command: >
-      sh -c "yarn install --frozen-lockfile
+      sh -c "yarn install --immutable
       && yarn workspace @orca-so/xorca test"
     profiles: [test]
     depends_on:
