@@ -20,10 +20,11 @@ WORKDIR /usr/src/xorca
 # Copy package files for better caching
 COPY package.json yarn.lock ./
 COPY js-client/package.json ./js-client/
+COPY ts-scripts/package.json ./ts-scripts/
 COPY rust-client/Cargo.toml ./rust-client/
 
 # Install dependencies
-RUN yarn install --frozen-lockfile
+RUN yarn install --immutable
 
 # Copy the rest of the source code
 COPY . .
