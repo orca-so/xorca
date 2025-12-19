@@ -38,6 +38,7 @@
 
 #![allow(unexpected_cfgs)]
 
+pub mod conversion;
 #[allow(clippy::all, unused_imports)]
 mod generated;
 #[cfg(feature = "wasm")]
@@ -58,6 +59,7 @@ pub use generated::types::*;
 #[cfg(feature = "fetch")]
 pub(crate) use generated::*;
 
+pub use conversion::*;
 pub use pda::*;
 
 #[cfg(feature = "wasm")]
