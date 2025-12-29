@@ -16,6 +16,7 @@ import {
 } from '@solana/kit';
 import { getAddressEncoder } from '@solana/addresses';
 import { getTokenDecoder, getMintDecoder } from '@solana-program/token';
+export * from './conversion';
 
 const TOKEN_PROGRAM_ADDRESS = 'TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA' as Address;
 const ASSOCIATED_TOKEN_PROGRAM_ADDRESS = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL' as Address;
