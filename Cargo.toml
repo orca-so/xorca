@@ -5,3 +5,6 @@ members = [
   "solana-program-test",
   "rust-client",
 ]
+exclude = [
+  "titan-integration"
+]
