@@ -9,6 +9,9 @@ pub fn convert_orca_to_xorca(
     non_escrowed_orca_amount: u64,
     xorca_supply: u64,
 ) -> Result<u64, ProgramError> {
+    // Note: The following transaction sent 0.000_001 xORCA to the Incinerator.
+    //       Therefore, the xORCA token supply can never become 0 again.
+    //       https://solscan.io/tx/5bcCrmP9RySyHyoetvu9bTrihDFS9Mgv3S2fNDJtty2rR66Cm1z5SYp4ugXeZ5x9erDbAiuk4q6kASKLuQUBeUF8
     if (xorca_supply == 0) || (non_escrowed_orca_amount == 0) {
         return Ok(orca_amount_to_convert);
     }
