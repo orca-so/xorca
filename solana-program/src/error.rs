@@ -40,7 +40,7 @@ pub enum ErrorCode {
 
     #[error("Event serialization failed")]
     EmitEventError = 6012, // 0x177C
-    #[error("Invalid cooldown period: must be non-negative")]
+    #[error("Invalid cooldown period: must be non-negative and at most MAX_COOL_DOWN_PERIOD_S")]
     InvalidCoolDownPeriod = 6013, // 0x177D
 
     #[error("Stake amount too small to mint any xORCA")]
