@@ -38,10 +38,19 @@ pub fn process_instruction(
         StateUpdateInstruction::UpdateCoolDownPeriod {
             new_cool_down_period_s,
         } => {
-            if *new_cool_down_period_s < 0 {
+            // Reject negative values and values large enough to overflow the timestamp
+            // addition in `unstake` (current_unix_timestamp + cool_down_period_s).
+            // Cap at 10 years so that checked_add in `unstake` can never overflow.
+            const MAX_COOL_DOWN_PERIOD_S: i64 = 10 * 365 * 24 * 60 * 60; // ~315_360_000 s
+            if *new_cool_down_period_s < 0 || *new_cool_down_period_s > MAX_COOL_DOWN_PERIOD_S {
                 return Err(ErrorCode::InvalidCoolDownPeriod.into());
             }
             state_view.cool_down_period_s = *new_cool_down_period_s;
+            Event::CoolDownPeriodUpdated {
+                new_cool_down_period_s,
+                set_by: update_authority_account.key(),
+            }
+            .emit()?;
         }
         StateUpdateInstruction::UpdateUpdateAuthority { new_authority } => {
             let old_authority = state_view.update_authority;

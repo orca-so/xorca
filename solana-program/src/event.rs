@@ -31,6 +31,10 @@ pub enum Event<'a> {
         new_authority: &'a Pubkey,
         set_by: &'a Pubkey,
     },
+    CoolDownPeriodUpdated {
+        new_cool_down_period_s: &'a i64,
+        set_by: &'a Pubkey,
+    },
 }
 
 pub fn sol_log_data(data: &[&[u8]]) {
