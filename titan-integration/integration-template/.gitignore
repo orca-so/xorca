@@ -1,0 +1,73 @@
+# ============================================
+# Rust / Cargo
+# ============================================
+
+# Compiled artifacts
+/target/
+/**/target/
+
+# Cargo package / release artifacts
+/*.crate
+
+# Rust/Cargo backups, auto-generated files
+**/*.rs.bk
+
+# ============================================
+# Build Tools / Editors
+# ============================================
+
+# VS Code
+.vscode/
+*.code-workspace
+
+# JetBrains / CLion / IntelliJ
+.idea/
+
+# Sublime
+*.sublime-project
+*.sublime-workspace
+
+# Vim / Neovim swap files
+*.swp
+*.swo
+
+# Emacs
+*~
+\#*\#
+
+# ============================================
+# OS / Temp / Misc
+# ============================================
+
+# macOS
+.DS_Store
+
+# Linux
+*.tmp
+*.lock
+
+# Windows
+Thumbs.db
+Desktop.ini
+
+# ============================================
+# Logs / Runtime
+# ============================================
+
+# Logs
+*.log
+
+# dotenv
+.env
+.env.*
+
+# ============================================
+# Optional: ignore local dev tools
+# ============================================
+
+# Rust Analyzer cache
+# Uncomment if cache gets noisy
+# .rust-analyzer/
+
+# Local tooling
+.cache/
